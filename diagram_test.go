@@ -291,7 +291,7 @@ func TestHeatmapEmptyGrid(t *testing.T) {
 }
 
 func TestHeatmapAllNaN(t *testing.T) {
-	out := renderD(NewHeat([][]float64{{NaN(), NaN()}}), WithWidth(40))
+	out := renderD(NewHeat([][]float64{{math.NaN(), math.NaN()}}), WithWidth(40))
 	if !strings.Contains(out, "(no data)") {
 		t.Errorf("all-NaN grid should show no data:\n%s", out)
 	}

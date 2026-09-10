@@ -34,7 +34,6 @@ type liveEventKind uint8
 const (
 	evTick   liveEventKind = iota // scheduled repaint
 	evResize                      // terminal resized (SIGWINCH / poll)
-	evFlush                       // immediate repaint requested
 )
 
 // Live re-renders a Chart on a fixed interval, painting each frame over the
@@ -256,8 +255,6 @@ func (l *Live) Run(ctx context.Context) error {
 				l.repaintUpdate()
 			case evResize:
 				l.repaintFull()
-			case evFlush:
-				l.repaint()
 			}
 		}
 	}
@@ -269,14 +266,6 @@ func (l *Live) repaintUpdate() {
 	if l.update != nil {
 		l.update()
 	}
-	s := l.paintLocked(0)
-	l.mu.Unlock()
-	l.write(s)
-}
-
-// repaint paints a frame without running OnUpdate.
-func (l *Live) repaint() {
-	l.mu.Lock()
 	s := l.paintLocked(0)
 	l.mu.Unlock()
 	l.write(s)

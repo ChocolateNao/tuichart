@@ -188,8 +188,8 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 		yb0 := fr.myRow(bHiV)
 		yb1 := fr.myRow(bLoV)
 		x0 := cx - bw/2
-		xs := maxInt(x0, fr.area.X)
-		xe := minInt(x0+bw-1, fr.area.X2())
+		xs := max(x0, fr.area.X)
+		xe := min(x0+bw-1, fr.area.X2())
 		if bHiV == bLoV || yb1-yb0+1 < 1 {
 			// doji: flat line instead of an empty box
 			if yb0 >= fr.area.Y && yb0 <= fr.area.Y2() && xs <= xe {

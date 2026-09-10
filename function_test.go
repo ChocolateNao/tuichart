@@ -18,15 +18,15 @@ func TestFunctionTitleReturnsSelf(t *testing.T) {
 
 func TestFunctionResetDomain(t *testing.T) {
 	f := NewFunction(math.Sin).Domain(-5, 5)
-	if f.lo != -5 || f.hi != 5 || !f.domainSet {
+	if f.lo != -5 || f.hi != 5 {
 		t.Fatal("Domain not applied")
 	}
 	ret := f.ResetDomain()
 	if ret != f {
 		t.Fatal("ResetDomain did not return receiver")
 	}
-	if f.lo != -10 || f.hi != 10 || f.domainSet {
-		t.Errorf("ResetDomain failed: lo=%v hi=%v domainSet=%v", f.lo, f.hi, f.domainSet)
+	if f.lo != -10 || f.hi != 10 {
+		t.Errorf("ResetDomain failed: lo=%v hi=%v", f.lo, f.hi)
 	}
 }
 
@@ -85,13 +85,6 @@ func TestFunctionLogYReturnsSelf(t *testing.T) {
 	f.LogY(false)
 	if f.yKind != Linear {
 		t.Errorf("LogY(false) yKind = %v", f.yKind)
-	}
-}
-
-func TestNaNReturnValue(t *testing.T) {
-	v := NaN()
-	if !math.IsNaN(v) {
-		t.Error("NaN() did not return NaN")
 	}
 }
 

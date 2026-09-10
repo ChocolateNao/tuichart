@@ -321,21 +321,7 @@ func truncASCII(s string, n int) string {
 		return s
 	}
 	if n <= 3 {
-		return s[:maxInt(n, 0)]
+		return s[:max(n, 0)]
 	}
 	return s[:n-3] + "..."
-}
-
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func minInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

@@ -63,7 +63,7 @@ func (h *Histogram) Title(t string) *Histogram { h.SetTitle(t); return h }
 func (h *Histogram) Name(s string) *Histogram { h.name = s; return h }
 
 // ShowValues toggles printing the numeric count inside each bar (when it fits).
-func (h *Histogram) ShowValues(on bool) *Histogram { h.SetShowValues(true); return h }
+func (h *Histogram) ShowValues(on bool) *Histogram { h.SetShowValues(on); return h }
 
 // Counts bins the data and returns counts plus bin edges.
 func (h *Histogram) Counts() (counts []int, edges []float64) {

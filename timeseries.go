@@ -1,6 +1,7 @@
 package tuichart
 
 import (
+	"math"
 	"time"
 )
 
@@ -12,7 +13,6 @@ type TimeSeriesPoint struct {
 
 // TimeSeriesLine accumulates the points of one series.
 type TimeSeriesLine struct {
-	ts     *TimeSeries
 	name   string
 	pts    []TimeSeriesPoint
 	marker rune
@@ -58,7 +58,7 @@ func (ts *TimeSeries) Title(s string) *TimeSeries { ts.SetTitle(s); return ts }
 
 // Line starts a new named series and returns it for chaining Add calls.
 func (ts *TimeSeries) Line(name string) *TimeSeriesLine {
-	l := &TimeSeriesLine{ts: ts, name: name}
+	l := &TimeSeriesLine{name: name}
 	ts.lines = append(ts.lines, l)
 	return l
 }
@@ -103,8 +103,8 @@ func (ts *TimeSeries) Draw(rc *Ctx, cv *Canvas) {
 				minU, maxU = u, u
 				first = false
 			} else {
-				minU = realMin(minU, u)
-				maxU = realMax(maxU, u)
+				minU = math.Min(minU, u)
+				maxU = math.Max(maxU, u)
 			}
 		}
 		p.Add(line)
@@ -122,18 +122,4 @@ func (ts *TimeSeries) Draw(rc *Ctx, cv *Canvas) {
 		p.SetXFormatter(fmtFn)
 	}
 	p.Draw(rc, cv)
-}
-
-func realMin(a, b float64) float64 {
-	if b < a {
-		return b
-	}
-	return a
-}
-
-func realMax(a, b float64) float64 {
-	if b > a {
-		return b
-	}
-	return a
 }

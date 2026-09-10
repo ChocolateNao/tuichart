@@ -186,7 +186,7 @@ func (h *Heatmap) Draw(rc *Ctx, cv *Canvas) {
 		}
 	}
 
-	barW := minInt(inner.W-8, 24)
+	barW := min(inner.W-8, 24)
 	if barW > 2 {
 		y := barY
 		if y > gridTop {

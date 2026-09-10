@@ -103,7 +103,7 @@ func (g *Gauge) Draw(rc *Ctx, cv *Canvas) {
 	if g.label != "" && g.showPct {
 		suffix += " " + g.label
 	}
-	suffix = ellipTrunc(suffix, maxInt(inner.W/2-1, 0), rc.Info.Unicode)
+	suffix = ellipTrunc(suffix, max(inner.W/2-1, 0), rc.Info.Unicode)
 
 	barW := inner.W - runeLen(suffix)
 	if barW < 1 {

@@ -16,7 +16,7 @@ func Seq(vals ...float64) []Point {
 
 // Zip combines separate x and y slices into Points, truncating to the shorter length.
 func Zip(xs, ys []float64) []Point {
-	n := minInt(len(xs), len(ys))
+	n := min(len(xs), len(ys))
 	out := make([]Point, 0, n)
 	for i := 0; i < n; i++ {
 		//nolint:gosec // bounded by n = min(len(xs), len(ys))
@@ -26,7 +26,6 @@ func Zip(xs, ys []float64) []Point {
 }
 
 type seriesI interface {
-	seriesName() string
 	bounds(db *dataBounds)
 	hasColor() bool
 	setColor(c Color)
@@ -75,8 +74,6 @@ func (l *Line) Dashed(d bool) *Line { l.dashed = d; return l }
 
 // SetName changes the series legend label.
 func (l *Line) SetName(s string) *Line { l.name = s; return l }
-
-func (l *Line) seriesName() string { return l.name }
 
 func (l *Line) bounds(db *dataBounds) {
 	for _, p := range l.pts {
@@ -193,7 +190,6 @@ func (s *Scatter) Marker(m rune) *Scatter { s.marker = m; return s }
 // SetName changes the series legend label.
 func (s *Scatter) SetName(n string) *Scatter { s.name = n; return s }
 
-func (s *Scatter) seriesName() string { return s.name }
 func (s *Scatter) bounds(db *dataBounds) {
 	for _, p := range s.pts {
 		db.add(p.X, p.Y)

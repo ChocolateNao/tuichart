@@ -200,7 +200,7 @@ func (b *chartBase) frameTitle(cv *Canvas, uni bool) Rect {
 	if b.title != "" && r.H > 2 {
 		t := " " + b.title + " "
 		if runeLen(t)+4 > r.W {
-			t = " " + ellipTrunc(b.title, maxInt(r.W-6, 1), uni) + " "
+			t = " " + ellipTrunc(b.title, max(r.W-6, 1), uni) + " "
 		}
 		drawAlignedText(cv, 0, t, S(Default).Bolder(), b.titleAlign, r.W)
 		return Rect{X: 1, Y: 1, W: r.W - 2, H: r.H - 2}.clip(r)

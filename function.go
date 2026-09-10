@@ -7,12 +7,11 @@ type FunctionPlot struct {
 	fn   func(float64) float64
 	name string
 	chartBase
-	lo        float64
-	hi        float64
-	samples   int
-	color     Color
-	domainSet bool
-	yKind     Kind
+	lo      float64
+	hi      float64
+	samples int
+	color   Color
+	yKind   Kind
 }
 
 // NewFunction creates a function plot with default domain [-10, 10].
@@ -31,13 +30,13 @@ func (p *FunctionPlot) Title(t string) *FunctionPlot { p.SetTitle(t); return p }
 
 // Domain sets the plotted x range.
 func (p *FunctionPlot) Domain(lo, hi float64) *FunctionPlot {
-	p.lo, p.hi, p.domainSet = lo, hi, true
+	p.lo, p.hi = lo, hi
 	return p
 }
 
 // ResetDomain restores the default x range of [-10, 10].
 func (p *FunctionPlot) ResetDomain() *FunctionPlot {
-	p.lo, p.hi, p.domainSet = -10, 10, false
+	p.lo, p.hi = -10, 10
 	return p
 }
 
@@ -68,7 +67,7 @@ func (p *FunctionPlot) LogY(on bool) *FunctionPlot {
 func (p *FunctionPlot) sample(width int) [][]Point {
 	n := p.samples
 	if n == 0 {
-		n = maxInt(width*4, 100)
+		n = max(width*4, 100)
 	}
 	var segs [][]Point
 	cur := make([]Point, 0, n)
@@ -128,25 +127,19 @@ func (p *FunctionPlot) Draw(rc *Ctx, cv *Canvas) {
 			midX := (seg[i].X + seg[i+1].X) / 2
 			fy := p.fn(midX)
 			if !math.IsNaN(fy) && math.Abs(fy-midY) > 5*math.Abs(seg[i].Y)+5 {
-				line.pts = append(line.pts, Point{X: midX, Y: NaN()})
+				line.pts = append(line.pts, Point{X: midX, Y: math.NaN()})
 			}
 		}
 	}
 	fr := prepareFrame(cv, rc, &p.chartBase, db, Linear, p.yKind, true)
 	line.draw(cv, fr, S(color))
+	glyph := "───"
+	if !fr.uni {
+		glyph = "---"
+	}
 	drawLegendInside(cv, fr.area, []LegendEntry{{
 		Label: p.name,
 		Style: S(color),
-		Glyph: tern(fr.uni, "───", "---"),
+		Glyph: glyph,
 	}}, fr.uni)
-}
-
-// NaN returns a not-a-number float64 for use as a gap marker in plots.
-func NaN() float64 { return math.NaN() }
-
-func tern(cond bool, a, b string) string {
-	if cond {
-		return a
-	}
-	return b
 }

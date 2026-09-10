@@ -89,7 +89,7 @@ func (t *Timeline) HeightHint(width int) int {
 		return h
 	}
 	h := 7
-	lineW := maxInt(width-6, 8)
+	lineW := max(width-6, 8)
 	for _, e := range t.events {
 		if e.Detail == "" {
 			continue
@@ -151,33 +151,6 @@ func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
 		return inner.X + int(f*float64(inner.W-1)+0.5)
 	}
 
-	for _, tk := range niceTicks(minU, maxU, t.tickN) {
-		col := mapCol(tk.Value)
-		if col < inner.X || col > inner.X2() {
-			continue
-		}
-		ch := '┬'
-		if !rc.Info.Unicode {
-			ch = '+'
-		}
-		cv.Set(col, axisRow, ch, dim)
-		lbl := ellipTrunc(fmtFn(tk.Value), maxInt(inner.W/3, 4), rc.Info.Unicode)
-		start := col - runeLen(lbl)/2
-		if start < inner.X {
-			start = inner.X
-		}
-		// Prefer the bottom row for tick labels so they never collide
-		// with event labels below the axis.
-		row := axisRow + 1
-		if inner.H >= 5 {
-			row = inner.Y2()
-		}
-		if row > inner.Y2() || start+runeLen(lbl)-1 > inner.X2() {
-			continue
-		}
-		clearAndWrite(cv, row, start, lbl, S(Default))
-	}
-
 	detailSt := S(t.detailColor)
 	if t.detailColor.IsZero() {
 		detailSt = S(DimGray)
@@ -195,7 +168,7 @@ func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
 			ch = '+'
 		}
 		cv.Set(col, axisRow, ch, dim)
-		lbl := ellipTrunc(fmtFn(tk.Value), maxInt(inner.W/3, 4), rc.Info.Unicode)
+		lbl := ellipTrunc(fmtFn(tk.Value), max(inner.W/3, 4), rc.Info.Unicode)
 		start := col - runeLen(lbl)/2
 		if start < inner.X {
 			start = inner.X
@@ -238,7 +211,7 @@ func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
 			labelRow = axisRow + 1
 		}
 
-		lineW := maxInt(minInt(inner.W-4, detailWrapWidth), 8)
+		lineW := max(min(inner.W-4, detailWrapWidth), 8)
 		dlines := wrapText(e.Detail, lineW)
 		if len(dlines) > maxDetailLines {
 			rest := strings.Join(dlines[maxDetailLines-1:], " ")
@@ -296,7 +269,7 @@ func (o *cellOcc) freeRun(row, lo, hi, x0, x1 int) (rs, re, score int) {
 			runStart = x
 		}
 		if blocked && runStart >= 0 {
-			s := minInt(hi, x-1) - maxInt(lo, runStart) + 1
+			s := min(hi, x-1) - max(lo, runStart) + 1
 			if s > best {
 				best = s
 				rs, re = runStart, x-1
@@ -308,13 +281,7 @@ func (o *cellOcc) freeRun(row, lo, hi, x0, x1 int) (rs, re, score int) {
 	return
 }
 
-// placeEventBlock draws one event's label plus wrapped detail lines so the
-// block reads naturally top-to-bottom and never overlaps other text: the
-// whole block first tries shifting sideways together, then each row falls
-// back independently (details are dropped rather than garbled).
-//
-// Above the axis the detail stack is bottom-aligned toward the label with
-// the first line on top, so wrapped text reads like normal prose.
+// blockLine is a prepared row of a detail/label stack.
 type blockLine struct {
 	text   string
 	row    int
@@ -335,14 +302,14 @@ func anchorSpan(col, w, x0, x1 int) (int, int) {
 		return ideal, w // centered, no drift
 	}
 	if ideal < x0 { // hugging the left edge: start at the marker
-		st := maxInt(x0, col-1)
+		st := max(x0, col-1)
 		if st+w-1 > x1 {
 			return st, x1 - st + 1
 		}
 		return st, w
 	}
 	// hugging the right edge: end at the marker
-	en := minInt(col, x1)
+	en := min(col, x1)
 	st := en - w + 1
 	if st < x0 {
 		return x0, en - x0 + 1 // keep the head, run up to the marker
@@ -365,12 +332,12 @@ func (t *Timeline) placeEventBlock(cv *Canvas, occ *cellOcc, inner Rect, uni boo
 	// the sentence.
 	if up {
 		if room := labelRow - inner.Y; n > room {
-			n = maxInt(room, 0)
+			n = max(room, 0)
 			dlines = dlines[:n]
 		}
 	} else {
 		if room := inner.Y2() - labelRow; n > room {
-			n = maxInt(room, 0)
+			n = max(room, 0)
 			dlines = dlines[:n]
 		}
 	}
@@ -473,8 +440,8 @@ func (t *Timeline) placeEventBlock(cv *Canvas, occ *cellOcc, inner Rect, uni boo
 			txt = ellipTrunc(txt, avail, uni)
 		}
 		st := col - runeLen(txt)/2
-		st = maxInt(st, rs)
-		st = minInt(st, re-runeLen(txt)+1)
+		st = max(st, rs)
+		st = min(st, re-runeLen(txt)+1)
 		clearAndWrite(cv, b.row, st, txt, styleOf(b))
 		occ.mark(b.row, st-1, st+runeLen(txt))
 	}
@@ -486,7 +453,7 @@ const maxDetailLines = 2
 // wrapText breaks s into lines of at most w cells, preferring spaces;
 // words longer than w are hard-split.
 func wrapText(s string, w int) []string {
-	w = maxInt(w, 4)
+	w = max(w, 4)
 	var lines []string
 	for _, para := range strings.Split(s, "\n") {
 		cur := ""

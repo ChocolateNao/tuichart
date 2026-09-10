@@ -71,7 +71,6 @@ func TestPlotMaybeSwapNoData(t *testing.T) {
 
 type fakeSeries struct{}
 
-func (fakeSeries) seriesName() string                  { return "fake" }
 func (fakeSeries) bounds(db *dataBounds)               { db.add(0, 0); db.add(1, 1) }
 func (fakeSeries) hasColor() bool                      { return true }
 func (fakeSeries) setColor(Color)                      {}
@@ -242,8 +241,8 @@ func TestLineDashed(t *testing.T) {
 
 func TestLineSetName(t *testing.T) {
 	l := NewLineVals("old", []float64{1, 2}).SetName("new")
-	if l.seriesName() != "new" {
-		t.Errorf("seriesName = %q, want %q", l.seriesName(), "new")
+	if l.name != "new" {
+		t.Errorf("name = %q, want %q", l.name, "new")
 	}
 	out := renderASCII(seriesPlot(l), 40)
 	if !strings.Contains(out, "new") {
@@ -283,8 +282,8 @@ func TestLineValues(t *testing.T) {
 
 func TestNewScatter(t *testing.T) {
 	sc := NewScatter("s", Point{X: 5, Y: 10}, Point{X: 6, Y: 20})
-	if sc.seriesName() != "s" {
-		t.Errorf("name = %q", sc.seriesName())
+	if sc.name != "s" {
+		t.Errorf("name = %q", sc.name)
 	}
 	if len(sc.pts) != 2 {
 		t.Fatalf("expected 2 points, got %d", len(sc.pts))
@@ -296,8 +295,8 @@ func TestNewScatter(t *testing.T) {
 
 func TestNewScatterVals(t *testing.T) {
 	sc := NewScatterVals("sv", []float64{4, 8, 12})
-	if sc.seriesName() != "sv" {
-		t.Errorf("name = %q", sc.seriesName())
+	if sc.name != "sv" {
+		t.Errorf("name = %q", sc.name)
 	}
 	if len(sc.pts) != 3 {
 		t.Fatalf("expected 3 points, got %d", len(sc.pts))
@@ -338,8 +337,8 @@ func TestScatterMarker(t *testing.T) {
 
 func TestScatterSetName(t *testing.T) {
 	sc := NewScatterVals("old", []float64{1, 2}).SetName("fresh")
-	if sc.seriesName() != "fresh" {
-		t.Errorf("seriesName = %q", sc.seriesName())
+	if sc.name != "fresh" {
+		t.Errorf("name = %q", sc.name)
 	}
 	out := renderASCII(seriesPlot(sc), 40)
 	if !strings.Contains(out, "fresh") {

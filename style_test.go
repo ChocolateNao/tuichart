@@ -277,18 +277,6 @@ func TestRGBTo256Grayscale(t *testing.T) {
 	}
 }
 
-func TestMaxInt(t *testing.T) {
-	if maxInt(3, 5) != 5 || maxInt(5, 3) != 5 {
-		t.Error("maxInt wrong")
-	}
-}
-
-func TestMinInt(t *testing.T) {
-	if minInt(3, 5) != 3 || minInt(5, 3) != 3 {
-		t.Error("minInt wrong")
-	}
-}
-
 func TestTruncStrEdgeCases(t *testing.T) {
 	if s := truncStr("ab", 0); s != "" {
 		t.Errorf("truncStr(s, 0) = %q", s)

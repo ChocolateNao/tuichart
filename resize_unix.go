@@ -13,7 +13,7 @@ import (
 // background goroutine and returns a stop function. Callers that pass a
 // non-TTY writer should skip this entirely.
 func watchResize(f *os.File, onResize func()) (stop func()) {
-	if !isTTYFile(f) {
+	if !platformIsTTY(f) {
 		return func() {}
 	}
 	ch := make(chan os.Signal, 1)
@@ -27,8 +27,4 @@ func watchResize(f *os.File, onResize func()) (stop func()) {
 		signal.Stop(ch)
 		close(ch)
 	}
-}
-
-func isTTYFile(f *os.File) bool {
-	return platformIsTTY(f)
 }

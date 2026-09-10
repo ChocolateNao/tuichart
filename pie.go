@@ -88,8 +88,8 @@ func (p *PieChart) Draw(rc *Ctx, cv *Canvas) {
 	rx := (inner.W - reserve - 1) / 2
 	ry := (inner.H - 1) / 2
 	if rx < 1 || ry < 1 {
-		rx = maxInt(rx, 1)
-		ry = maxInt(ry, 1)
+		rx = max(rx, 1)
+		ry = max(ry, 1)
 	}
 
 	var entries []LegendEntry
@@ -122,7 +122,7 @@ func (p *PieChart) Draw(rc *Ctx, cv *Canvas) {
 			Glyph: glyph,
 		})
 	}
-	lx := minInt(cx+rx+2, inner.X2()-12)
+	lx := min(cx+rx+2, inner.X2()-12)
 	drawLegendColumn(
 		cv,
 		Rect{X: lx, Y: cy - len(entries)/2, W: inner.X2() - lx + 1, H: len(entries)},

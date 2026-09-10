@@ -13,7 +13,7 @@ import (
 // Windows has no SIGWINCH equivalent, so the console dimensions are polled
 // in a background goroutine while f is attached to a real TTY.
 func watchResize(f *os.File, onResize func()) (stop func()) {
-	if !isTTYFile(f) {
+	if !platformIsTTY(f) {
 		return func() {}
 	}
 	var done int32
@@ -35,8 +35,4 @@ func watchResize(f *os.File, onResize func()) (stop func()) {
 		atomic.StoreInt32(&done, 1)
 		wg.Wait()
 	}
-}
-
-func isTTYFile(f *os.File) bool {
-	return platformIsTTY(f)
 }

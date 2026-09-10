@@ -176,6 +176,10 @@ func TestHistogramShowValuesReturnsSelf(t *testing.T) {
 	if !h.showVals {
 		t.Error("ShowValues(true) did not enable showVals")
 	}
+	h.ShowValues(false)
+	if h.showVals {
+		t.Error("ShowValues(false) did not disable showVals")
+	}
 }
 
 func TestHistogramEmptyData(t *testing.T) {

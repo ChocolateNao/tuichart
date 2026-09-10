@@ -219,7 +219,7 @@ func (c *Chart) layout(width int) []string {
 
 	for ri, row := range c.rows {
 		if ri > 0 || len(lines) > 0 && c.title != "" {
-			for g := 0; g < maxInt(c.opts.gap, 1); g++ {
+			for g := 0; g < max(c.opts.gap, 1); g++ {
 				lines = append(lines, "")
 			}
 		}
@@ -241,7 +241,7 @@ func (c *Chart) layout(width int) []string {
 		rendered := make([][]string, k)
 		for i, cv := range canvases {
 			s := cv.Render(info.Level)
-			s = trimTrailingNewlines(s)
+			s = strings.TrimRight(s, "\n")
 			rendered[i] = splitLines(s)
 			if len(rendered[i]) > maxLines {
 				maxLines = len(rendered[i])
@@ -256,10 +256,10 @@ func (c *Chart) layout(width int) []string {
 				if ln < len(rendered[i]) {
 					sb = append(sb, rendered[i][ln]...)
 				} else {
-					sb = append(sb, padSpaces(seg+2)...)
+					sb = append(sb, strings.Repeat(" ", seg+2)...)
 				}
 			}
-			lines = append(lines, stringsTrimRight(string(sb)))
+			lines = append(lines, strings.TrimRight(string(sb), " "))
 		}
 	}
 	return lines
@@ -317,7 +317,7 @@ func (c *Chart) RenderCanvas(width int) (*Canvas, Info) {
 	rowHeights := make([]int, len(c.rows))
 	for ri, row := range c.rows {
 		if ri > 0 || c.title != "" {
-			totalH += maxInt(c.opts.gap, 1)
+			totalH += max(c.opts.gap, 1)
 		}
 		seg := segmentWidth(w, len(row))
 		mh := 0
@@ -340,14 +340,14 @@ func (c *Chart) RenderCanvas(width int) (*Canvas, Info) {
 		case AlignLeft:
 			cx = 0
 		default:
-			cx = maxInt((w-runeLen(c.title))/2, 0)
+			cx = max((w-runeLen(c.title))/2, 0)
 		}
 		cv.Text(cx, 0, c.title, Style{})
 		y = 2
 	}
 	for ri, row := range c.rows {
 		if ri > 0 || c.title != "" {
-			y += maxInt(c.opts.gap, 1)
+			y += max(c.opts.gap, 1)
 		}
 		seg := segmentWidth(w, len(row))
 		x := 0
@@ -411,7 +411,7 @@ func alignStyled(s string, w int, a Align, uni bool) string {
 	}
 	switch a {
 	case AlignRight:
-		return repeatStr(" ", w-n) + s
+		return strings.Repeat(" ", w-n) + s
 	case AlignLeft:
 		return s
 	default:
@@ -419,56 +419,10 @@ func alignStyled(s string, w int, a Align, uni bool) string {
 		if pad < 0 {
 			pad = 0
 		}
-		return repeatStr(" ", pad) + s
+		return strings.Repeat(" ", pad) + s
 	}
-}
-
-func padSpaces(n int) []byte {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = ' '
-	}
-	return b
-}
-
-func repeatStr(s string, n int) string {
-	return string(padSpaces(n))[:0] + mulStr(s, n)
-}
-
-func mulStr(s string, n int) string {
-	b := make([]byte, 0, len(s)*n)
-	for i := 0; i < n; i++ {
-		b = append(b, s...)
-	}
-	return string(b)
-}
-
-func trimTrailingNewlines(s string) string {
-	for len(s) > 0 && s[len(s)-1] == '\n' {
-		s = s[:len(s)-1]
-	}
-	return s
 }
 
 func splitLines(s string) []string {
-	var out []string
-	start := 0
-	for i := 0; i < len(s); i++ {
-		if s[i] == '\n' {
-			out = append(out, s[start:i])
-			start = i + 1
-		}
-	}
-	if start < len(s) {
-		out = append(out, s[start:])
-	}
-	return out
-}
-
-func stringsTrimRight(s string) string {
-	end := len(s)
-	for end > 0 && (s[end-1] == ' ') {
-		end--
-	}
-	return s[:end]
+	return strings.Split(strings.TrimRight(s, "\n"), "\n")
 }
