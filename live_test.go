@@ -55,8 +55,10 @@ func TestLiveRunPaintsFramesAndRestores(t *testing.T) {
 			t.Errorf("output missing %q", want)
 		}
 	}
-	if n := strings.Count(out, seqHome); n < 2 {
-		t.Errorf("expected >=2 repaints, got %d", n)
+	// A static chart repaints exactly once: diff rendering keeps unchanged
+	// frames from writing anything to the terminal (no flicker).
+	if n := strings.Count(out, seqHome); n != 1 {
+		t.Errorf("expected exactly one full paint, got %d", n)
 	}
 }
 
@@ -215,10 +217,17 @@ func TestLiveGaugeUpdates(t *testing.T) {
 	<-l.Done()
 
 	out := buf.String()
-	if strings.Count(out, seqHome) < 2 {
-		t.Fatalf("expected multiple repaints, got %d", strings.Count(out, seqHome))
+	// The initial frame is a full paint (cursor home); the evolving gauge
+	// values are then painted as incremental diffs into specific rows.
+	if strings.Count(out, seqHome) != 1 {
+		t.Fatalf("expected single full paint, got %d", strings.Count(out, seqHome))
 	}
-	for _, want := range []string{"25%", "50%"} {
+	if n := strings.Count(out, ";1H"); n < 2 {
+		t.Fatalf("expected >=2 incremental repaints, got %d", n)
+	}
+	// Only changed cells are written (the "%" is static between frames), so
+	// emerging percentage digits appear as diff payloads.
+	for _, want := range []string{"25", "50"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("gauge output missing evolving %s", want)
 		}

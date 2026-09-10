@@ -153,18 +153,12 @@ func defaultDiagramHeight(width int) int {
 	return h
 }
 
-// layout resolves the effective width and renders every diagram row into
-// a slice of finished line strings (ANSI-styled per the resolved profile).
-func (c *Chart) layout(width int) []string {
-	w := 0
-	if width > 0 {
-		w = width
-	}
+// resolveWidthInfo resolves the effective rendering width and the terminal
+// info (after option overrides). A width <= 0 falls back to the detected
+// terminal width, then the chart's WithWidth option.
+func (c *Chart) resolveWidthInfo(width int) (int, Info) {
 	info := c.opts.apply(Detect())
-	rc := newCtx(info)
-	if len(c.opts.palette) > 0 {
-		rc.Palette = c.opts.palette
-	}
+	w := width
 	if w <= 0 {
 		w = info.W
 		if c.opts.width > 0 {
@@ -174,7 +168,48 @@ func (c *Chart) layout(width int) []string {
 	if w < 10 {
 		w = 10
 	}
+	return w, info
+}
+
+// diagramHeight determines the draw height for a single diagram using the
+// diagram's own hint, the chart's default height, and the WithDiagramHeight
+// option.
+func (c *Chart) diagramHeight(d Drawable, seg, w int) int {
+	h := d.HeightHint(seg)
+	if h <= 0 {
+		h = defaultDiagramHeight(w)
+	}
+	if c.opts.diagramHeight > 0 && d.HeightHint(seg) == 0 {
+		h = c.opts.diagramHeight
+	}
+	if h < 3 {
+		h = 3
+	}
+	return h
+}
+
+// segmentWidth is the per-diagram width when k diagrams share a row, leaving
+// a 2-cell gap between neighbors.
+func segmentWidth(w, k int) int {
+	if k < 1 {
+		return 0
+	}
 	const sepW = 2
+	seg := (w - (k-1)*sepW) / k
+	if seg < 8 {
+		seg = 8
+	}
+	return seg
+}
+
+// layout resolves the effective width and renders every diagram row into
+// a slice of finished line strings (ANSI-styled per the resolved profile).
+func (c *Chart) layout(width int) []string {
+	w, info := c.resolveWidthInfo(width)
+	rc := newCtx(info)
+	if len(c.opts.palette) > 0 {
+		rc.Palette = c.opts.palette
+	}
 
 	var lines []string
 	if c.title != "" {
@@ -189,7 +224,7 @@ func (c *Chart) layout(width int) []string {
 			}
 		}
 		k := len(row)
-		seg := (w - (k-1)*sepW) / k
+		seg := segmentWidth(w, k)
 		if seg < 8 {
 			seg = 8
 		}
@@ -197,16 +232,7 @@ func (c *Chart) layout(width int) []string {
 		canvases := make([]*Canvas, k)
 		maxLines := 0
 		for i, e := range row {
-			h := e.d.HeightHint(seg)
-			if h <= 0 {
-				h = defaultDiagramHeight(w)
-			}
-			if c.opts.diagramHeight > 0 && e.d.HeightHint(seg) == 0 {
-				h = c.opts.diagramHeight
-			}
-			if h < 3 {
-				h = 3
-			}
+			h := c.diagramHeight(e.d, seg, w)
 			heights[i] = h
 			cv := NewCanvas(seg, h)
 			e.d.Draw(rc, cv)
@@ -268,6 +294,73 @@ func (c *Chart) RenderLines(width ...int) []string {
 		w = width[0]
 	}
 	return c.layout(w)
+}
+
+// RenderCanvas renders the chart into a single Canvas preserving per-cell
+// style information, plus the Info the render resolved. It mirrors layout
+// exactly — same width, title, gaps, and diagram placement — so the result
+// serializes to the same output as Render. It exists for incremental
+// painters (the Live renderer) that diff frames cell-by-cell instead of
+// rewriting the whole screen.
+func (c *Chart) RenderCanvas(width int) (*Canvas, Info) {
+	w, info := c.resolveWidthInfo(width)
+	rc := newCtx(info)
+	if len(c.opts.palette) > 0 {
+		rc.Palette = c.opts.palette
+	}
+	const sepW = 2
+
+	totalH := 0
+	if c.title != "" {
+		totalH = 2
+	}
+	rowHeights := make([]int, len(c.rows))
+	for ri, row := range c.rows {
+		if ri > 0 || c.title != "" {
+			totalH += maxInt(c.opts.gap, 1)
+		}
+		seg := segmentWidth(w, len(row))
+		mh := 0
+		for _, e := range row {
+			if h := c.diagramHeight(e.d, seg, w); h > mh {
+				mh = h
+			}
+		}
+		rowHeights[ri] = mh
+		totalH += mh
+	}
+
+	cv := NewCanvas(w, totalH)
+	y := 0
+	if c.title != "" {
+		cx := 0
+		switch c.titleAlign {
+		case AlignRight:
+			cx = w - runeLen(c.title)
+		case AlignLeft:
+			cx = 0
+		default:
+			cx = maxInt((w-runeLen(c.title))/2, 0)
+		}
+		cv.Text(cx, 0, c.title, Style{})
+		y = 2
+	}
+	for ri, row := range c.rows {
+		if ri > 0 || c.title != "" {
+			y += maxInt(c.opts.gap, 1)
+		}
+		seg := segmentWidth(w, len(row))
+		x := 0
+		for _, e := range row {
+			h := c.diagramHeight(e.d, seg, w)
+			dcv := NewCanvas(seg, h)
+			e.d.Draw(rc, dcv)
+			cv.Blit(dcv, x, y)
+			x += seg + sepW
+		}
+		y += rowHeights[ri]
+	}
+	return cv, info
 }
 
 // String renders at the detected terminal width.
