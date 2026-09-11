@@ -51,13 +51,13 @@ covered in [Styling & degradation](styling.md).
 ## Support
 
 - Repository: <https://github.com/ChocolateNao/tuichart>
-- Run every example: `cd _example && ls` then `go run ./01_sparkline` … `go run ./07_static`
-- Live demo (needs a real TTY, Ctrl+C to quit): `go run ./_example/06_live`
+- Run every example: `cd examples && ls` then `go run ./01_sparkline` … `go run ./07_static`
+- Live demo (needs a real TTY, Ctrl+C to quit): `go run ./examples/06_live`
 - API overview doc for TUI embedding: [`INTEGRATION.md`](../INTEGRATION.md)
 
 ## Also in this repo
 
-- `_example/` — runnable examples, one per directory (`01_sparkline` …
+- `examples/` — runnable examples, one per directory (`01_sparkline` …
   `12_file`). `09_bubbletea`, `10_tview`, `11_server`, and `12_file` are
   separate modules: TUI embedding (bubbletea, tview), an HTTP server, and a
   file writer.

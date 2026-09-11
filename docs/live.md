@@ -45,7 +45,7 @@ func main() {
 Run it (needs a real TTY):
 
 ```bash
-go run ./_example/06_live
+go run ./examples/06_live
 ```
 
 ## How painting works

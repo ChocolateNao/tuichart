@@ -259,7 +259,7 @@ import (
 	"fmt"
 
 	"github.com/ChocolateNao/tuichart"
-	"github.com/ChocolateNao/tuichart/_example/08_bullet/bullet"
+	"github.com/ChocolateNao/tuichart/examples/08_bullet/bullet"
 )
 
 func main() {
@@ -344,7 +344,7 @@ code changes, no extra branches — just the `uni` check we wrote once.
 
 ## Where to go next
 
-- See the full, polished version in `_example/08_bullet/` — the tutorial
+- See the full, polished version in `examples/08_bullet/` — the tutorial
   code with all setters, error handling, and the `Zone` feature fully
   exercised.
 - Read [Charts: composition & layout](charts.md) for the `Row` and `Add`
