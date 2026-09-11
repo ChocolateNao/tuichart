@@ -38,7 +38,7 @@ func (c *chartView) Draw(screen tcell.Screen) {
 	if c.chart == nil {
 		return
 	}
-	x, y, w, h := c.Box.GetInnerRect()
+	x, y, w, h := c.GetInnerRect()
 	cv, _ := c.chart.RenderCanvas(w)
 
 	pal := tcell.StyleDefault
@@ -80,7 +80,11 @@ func main() {
 	plot.Add(line)
 	spark := tuichart.NewSpark(0).Title("spark")
 
-	chart := tuichart.New(tuichart.WithWidth(70), tuichart.WithNoColor(), tuichart.WithUnicode(true))
+	chart := tuichart.New(
+		tuichart.WithWidth(70),
+		tuichart.WithNoColor(),
+		tuichart.WithUnicode(true),
+	)
 	chart.Add(plot)
 	chart.Add(spark)
 

@@ -12,7 +12,11 @@ func main() {
 	bar := tuichart.NewBar(
 		[]string{"Mon", "Tue", "Wed", "Thu", "Fri"},
 		tuichart.BarSeries{Name: "sales", Values: []float64{120, 95, 140, 160, 130}},
-		tuichart.BarSeries{Name: "returns", Values: []float64{15, 8, 12, 5, 10}, Color: tuichart.Red},
+		tuichart.BarSeries{
+			Name:   "returns",
+			Values: []float64{15, 8, 12, 5, 10},
+			Color:  tuichart.Red,
+		},
 	).
 		Title("weekly sales").
 		ShowValues(true)

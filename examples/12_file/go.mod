@@ -1,4 +1,4 @@
-module github.com/ChocolateNao/tuichart/_example/12_file
+module github.com/ChocolateNao/tuichart/examples/12_file
 
 go 1.27.0
 

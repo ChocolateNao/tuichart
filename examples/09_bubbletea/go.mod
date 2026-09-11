@@ -1,4 +1,4 @@
-module github.com/ChocolateNao/tuichart/_example/09_bubbletea
+module github.com/ChocolateNao/tuichart/examples/09_bubbletea
 
 go 1.27.0
 

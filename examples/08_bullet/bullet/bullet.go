@@ -16,12 +16,12 @@ import (
 type Bullet struct {
 	title  string
 	name   string
+	zones  []float64
 	value  float64
 	target float64
 	max    float64
-	zones  []float64
-	color  tuichart.Color
 	height int
+	color  tuichart.Color
 }
 
 // NewBullet creates a Bullet named name measuring value against target on a
@@ -127,5 +127,10 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 	mid := " " + tuichart.FormatValue(b.max/2) + " "
 	cv.Text(barX+barW/2-(utf8.RuneCountInString(mid)/2), tickRow, mid, tuichart.S(tuichart.Gray))
 	cv.TextRight(inner.X2(), tickRow, tuichart.FormatValue(b.max), tuichart.S(tuichart.Gray))
-	cv.TextRight(inner.X2(), barRow, "target "+tuichart.FormatValue(b.target), tuichart.S(tuichart.DimGray))
+	cv.TextRight(
+		inner.X2(),
+		barRow,
+		"target "+tuichart.FormatValue(b.target),
+		tuichart.S(tuichart.DimGray),
+	)
 }

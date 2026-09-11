@@ -70,7 +70,7 @@ linters:
   exclusions:
     warn-unused: false
     rules:
-      - path: cmd
+      - path: examples
         linters:
           - gosec
 

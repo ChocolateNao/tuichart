@@ -184,6 +184,38 @@ func main() {
 	candles.Format("Jan 02")
 	g.Add(candles)
 
+	funnel := tuichart.NewFunnel().
+		Title("conversion funnel").
+		Step("visitors", 100).
+		Step("signups", 55).
+		Step("activated", 40).
+		Step("paid", 22).
+		ShowValues(true)
+	g.Add(funnel)
+
+	radar := tuichart.NewRadar().
+		Title("service maturity").
+		Axes("api", "auth", "data", "queue", "monitoring", "docs").
+		Series("this release", 7, 5, 6, 8, 4, 3).
+		Series("last release", 5, 4, 5, 6, 3, 5).
+		Fill(true)
+	g.Add(radar)
+
+	tree := tuichart.NewTreemap().
+		Title("disk usage by project").
+		Add(&tuichart.TreemapNode{Name: "web", Children: []*tuichart.TreemapNode{
+			{Name: "assets", Value: 40},
+			{Name: "logs", Value: 30},
+			{Name: "db", Value: 25},
+		}}).
+		Add(&tuichart.TreemapNode{Name: "mobile", Children: []*tuichart.TreemapNode{
+			{Name: "ios", Value: 35},
+			{Name: "android", Value: 20},
+		}}).
+		Item("docs", 10).
+		ShowValues(true)
+	g.Add(tree)
+
 	fmt.Print(g.Render())
 	fmt.Println("\nsparkline:", tuichart.Spark(sparkVals()))
 }

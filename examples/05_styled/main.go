@@ -37,7 +37,11 @@ func main() {
 		Events(
 			tuichart.TimelineEvent{At: base, Label: "start"},
 			tuichart.TimelineEvent{At: base.Add(1 * time.Hour), Label: "deploy", Detail: "v1.2"},
-			tuichart.TimelineEvent{At: base.Add(2*time.Hour + 30*time.Minute), Label: "rollback", Side: tuichart.SideAbove},
+			tuichart.TimelineEvent{
+				At:    base.Add(2*time.Hour + 30*time.Minute),
+				Label: "rollback",
+				Side:  tuichart.SideAbove,
+			},
 		))
 
 	// Candlestick

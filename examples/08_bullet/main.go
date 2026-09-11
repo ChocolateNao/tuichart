@@ -4,14 +4,14 @@
 //
 // Run it from the repo root:
 //
-//	go run ./_example/08_bullet
+//	go run ./examples/08_bullet
 package main
 
 import (
 	"fmt"
 
 	"github.com/ChocolateNao/tuichart"
-	"github.com/ChocolateNao/tuichart/_example/08_bullet/bullet"
+	"github.com/ChocolateNao/tuichart/examples/08_bullet/bullet"
 )
 
 func main() {

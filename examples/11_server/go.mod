@@ -1,4 +1,4 @@
-module github.com/ChocolateNao/tuichart/_example/11_server
+module github.com/ChocolateNao/tuichart/examples/11_server
 
 go 1.27.0
 
