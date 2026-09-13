@@ -350,17 +350,17 @@ func (p *Plot) Draw(rc *Ctx, cv *Canvas) {
 	}
 	fr := prepareFrame(cv, rc, base, db, xk, yk, true)
 	for _, s := range p.order {
-		st := S(s.colorOf())
+		st := NewStyle(s.colorOf())
 		maybeSwap(s, swap).draw(cv, fr, st)
 	}
 	entries := make([]LegendEntry, 0, len(p.order))
 	for _, s := range p.order {
-		entries = append(entries, s.legendEntry(S(s.colorOf()), rc.Info.Unicode))
+		entries = append(entries, s.legendEntry(NewStyle(s.colorOf()), rc.Info.Unicode))
 	}
 	drawLegendInside(cv, fr.area, entries, rc.Info.Unicode)
 
 	if db.empty && p.title == "" && len(p.order) == 0 {
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", S(Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 	}
 }
 

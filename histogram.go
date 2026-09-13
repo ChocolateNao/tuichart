@@ -122,7 +122,7 @@ func (h *Histogram) Draw(rc *Ctx, cv *Canvas) {
 	counts, edges := h.Counts()
 	if counts == nil {
 		h.frameTitle(cv, rc.Info.Unicode)
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", S(Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
 	step := edges[1] - edges[0]

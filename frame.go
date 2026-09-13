@@ -121,7 +121,7 @@ func prepareFrame(cv *Canvas, rc *Ctx, b *chartBase, db dataBounds, xk, yk Kind,
 		H: inner.H - top - bottom,
 	}
 
-	dim := S(DimGray)
+	dim := NewStyle(DimGray)
 	gridCh := '·'
 	if !uni {
 		gridCh = '.'
@@ -137,7 +137,7 @@ func prepareFrame(cv *Canvas, rc *Ctx, b *chartBase, db dataBounds, xk, yk Kind,
 		}
 	}
 
-	axisSt := S(Silver)
+	axisSt := NewStyle(Silver)
 	hz, vt := '─', '│'
 	if !uni {
 		hz, vt = '-', '|'
@@ -150,7 +150,7 @@ func prepareFrame(cv *Canvas, rc *Ctx, b *chartBase, db dataBounds, xk, yk Kind,
 		cv.Set(plot.X-1, axisRow, '+', axisSt)
 	}
 
-	labelSt := S(Default)
+	labelSt := NewStyle(Default)
 	for _, t := range yt {
 		row := fr2myRow(plot, ysc, t.Value)
 		if row < plot.Y || row > axisRow-1 {
@@ -196,7 +196,12 @@ func prepareFrame(cv *Canvas, rc *Ctx, b *chartBase, db dataBounds, xk, yk Kind,
 		}
 	}
 	if b.xLabel != "" {
-		cv.TextCenter(plot.X+plot.W/2, axisRow+2, ellipTrunc(b.xLabel, plot.W, uni), S(Silver))
+		cv.TextCenter(
+			plot.X+plot.W/2,
+			axisRow+2,
+			ellipTrunc(b.xLabel, plot.W, uni),
+			NewStyle(Silver),
+		)
 	}
 
 	return frame{area: plot, xsc: xsc, ysc: ysc, xt: xt, yt: yt, uni: uni}

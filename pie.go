@@ -75,7 +75,7 @@ func (p *PieChart) Draw(rc *Ctx, cv *Canvas) {
 	inner := p.frameTitle(cv, rc.Info.Unicode)
 
 	if total <= 0 || inner.W < 6 || inner.H < 4 {
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", S(Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
 
@@ -100,7 +100,7 @@ func (p *PieChart) Draw(rc *Ctx, cv *Canvas) {
 		from := acc / total
 		acc += v
 		to := acc / total
-		st := S(s.color)
+		st := NewStyle(s.color)
 		mono := rc.Info.Level == LevelNone
 		fillCh := '█'
 		if mono || !rc.Info.Unicode {

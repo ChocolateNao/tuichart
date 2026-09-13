@@ -45,7 +45,7 @@ func TestEachCellCoversGrid(t *testing.T) {
 
 func TestCellAtCarriesStyle(t *testing.T) {
 	cv := NewCanvas(10, 1)
-	cv.Text(0, 0, "hi", S(RGB(1, 2, 3)).On(RGB(4, 5, 6)).Bolder())
+	cv.Text(0, 0, "hi", NewStyle(RGB(1, 2, 3)).On(RGB(4, 5, 6)).Bolder())
 	cl := cv.CellAt(0, 0)
 	if cl.Ch != 'h' || !cl.Bold {
 		t.Fatalf("cell = %+v", cl)

@@ -128,8 +128,8 @@ type Style struct {
 	Bold bool
 }
 
-// S creates a Style with the given foreground color.
-func S(fg Color) Style { return Style{Fg: fg} }
+// NewStyle creates a Style with the given foreground color.
+func NewStyle(fg Color) Style { return Style{Fg: fg} }
 
 // On returns a copy of s with the background set to bg.
 func (s Style) On(bg Color) Style { s.Bg = bg; return s }

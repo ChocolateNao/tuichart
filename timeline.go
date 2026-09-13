@@ -107,7 +107,7 @@ func (t *Timeline) HeightHint(width int) int {
 func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
 	inner := t.frameTitle(cv, rc.Info.Unicode)
 	if len(t.events) == 0 || inner.W < 8 || inner.H < 3 {
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", S(Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
 
@@ -143,7 +143,7 @@ func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
 	}
 	axisRow := inner.Y + inner.H/2
 
-	dim := S(DimGray)
+	dim := NewStyle(DimGray)
 	cv.HLine(axisRow, inner.X, inner.X2(), lineCh, dim)
 
 	mapCol := func(u float64) int {
@@ -151,9 +151,9 @@ func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
 		return inner.X + int(f*float64(inner.W-1)+0.5)
 	}
 
-	detailSt := S(t.detailColor)
+	detailSt := NewStyle(t.detailColor)
 	if t.detailColor.IsZero() {
-		detailSt = S(DimGray)
+		detailSt = NewStyle(DimGray)
 	}
 
 	occ := newCellOcc()
@@ -182,15 +182,15 @@ func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
 		if row > inner.Y2() || start+runeLen(lbl)-1 > inner.X2() {
 			continue
 		}
-		clearAndWrite(cv, row, start, lbl, S(Default))
+		clearAndWrite(cv, row, start, lbl, NewStyle(Default))
 		occ.mark(row, start, start+runeLen(lbl)-1)
 	}
 
 	for i, e := range evs {
 		col := mapCol(float64(e.At.Unix()))
-		st := S(t.color)
+		st := NewStyle(t.color)
 		if t.color.IsZero() {
-			st = S(rc.Palette[i%len(rc.Palette)])
+			st = NewStyle(rc.Palette[i%len(rc.Palette)])
 		}
 		cv.Set(col, axisRow, markCh, st.Bolder())
 

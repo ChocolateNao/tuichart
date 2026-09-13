@@ -56,14 +56,19 @@ func (s *Sparkline) HeightHint(int) int {
 func (s *Sparkline) Draw(rc *Ctx, cv *Canvas) {
 	row := cv.Height() - 1
 	if s.title != "" && cv.Height() >= 2 {
-		cv.TextCenter(cv.Width()/2, 0, ellipTrunc(s.title, cv.Width(), rc.Info.Unicode), S(Gray))
+		cv.TextCenter(
+			cv.Width()/2,
+			0,
+			ellipTrunc(s.title, cv.Width(), rc.Info.Unicode),
+			NewStyle(Gray),
+		)
 	}
 	line := renderSpark(s.vals, rc.Info.Unicode, s.color, rc)
 	for x, r := range line {
 		if x >= cv.Width() {
 			break
 		}
-		cv.Set(x, row, r.r, S(r.c))
+		cv.Set(x, row, r.r, NewStyle(r.c))
 	}
 }
 
@@ -117,7 +122,7 @@ func Spark(vals []float64) string {
 	cur := Style{}
 	active := false
 	for _, sr := range runes {
-		st := S(sr.c)
+		st := NewStyle(sr.c)
 		if !st.eq(cur) {
 			if active {
 				b.WriteString(ansiReset)

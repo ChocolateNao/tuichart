@@ -17,7 +17,7 @@ func setDot(cv *Canvas, gx, gy int, c Color) {
 		bits = byte(cur.ch - brailleBase)
 	}
 	bits |= brailleBits[gy&3][gx&1]
-	cv.Set(cx, cy, brailleBase+rune(bits), S(c))
+	cv.Set(cx, cy, brailleBase+rune(bits), NewStyle(c))
 }
 
 func intBresenham(x0, y0, x1, y1 int, fn func(x, y, i int)) {

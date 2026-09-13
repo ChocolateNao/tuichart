@@ -132,14 +132,14 @@ func (p *FunctionPlot) Draw(rc *Ctx, cv *Canvas) {
 		}
 	}
 	fr := prepareFrame(cv, rc, &p.chartBase, db, Linear, p.yKind, true)
-	line.draw(cv, fr, S(color))
+	line.draw(cv, fr, NewStyle(color))
 	glyph := "───"
 	if !fr.uni {
 		glyph = "---"
 	}
 	drawLegendInside(cv, fr.area, []LegendEntry{{
 		Label: p.name,
-		Style: S(color),
+		Style: NewStyle(color),
 		Glyph: glyph,
 	}}, fr.uni)
 }

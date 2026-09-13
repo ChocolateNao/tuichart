@@ -64,21 +64,21 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 		return zoneChs[depth]
 	}
 
-	cv.Border(tuichart.S(tuichart.Gray), uni)
+	cv.Border(tuichart.NewStyle(tuichart.Gray), uni)
 	if b.title != "" {
-		cv.Text(2, 0, " "+b.title+" ", tuichart.S(tuichart.Default).Bolder())
+		cv.Text(2, 0, " "+b.title+" ", tuichart.NewStyle(tuichart.Default).Bolder())
 	}
 	inner := tuichart.Rect{X: 1, Y: 1, W: cv.Width() - 2, H: cv.Height() - 2}
 	barRow := inner.Y
 	tickRow := inner.Y + inner.H - 1
 	if tickRow <= barRow {
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no room)", tuichart.S(tuichart.Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no room)", tuichart.NewStyle(tuichart.Gray))
 		return
 	}
 
-	valStyle := tuichart.S(b.color)
+	valStyle := tuichart.NewStyle(b.color)
 	if b.color.IsZero() {
-		valStyle = tuichart.S(rc.Palette[0])
+		valStyle = tuichart.NewStyle(rc.Palette[0])
 	}
 
 	labelCols := 0
@@ -110,27 +110,32 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 				depth++
 			}
 		}
-		cv.Set(barX+x, barRow, zoneCh(depth), tuichart.S(tuichart.DimGray))
+		cv.Set(barX+x, barRow, zoneCh(depth), tuichart.NewStyle(tuichart.DimGray))
 	}
 	// The measured value as a bold block bar (covers the zone glyphs).
 	for x := 0; x < frac(b.value); x++ {
 		cv.Set(barX+x, barRow, valCh, valStyle)
 	}
 	// The target as a vertical rule pinned to its column.
-	cv.Set(barX+frac(b.target), barRow, markCh, tuichart.S(tuichart.Default).Bolder())
+	cv.Set(barX+frac(b.target), barRow, markCh, tuichart.NewStyle(tuichart.Default).Bolder())
 	if b.name != "" {
-		cv.Text(inner.X, barRow, b.name, tuichart.S(tuichart.Default))
+		cv.Text(inner.X, barRow, b.name, tuichart.NewStyle(tuichart.Default))
 	}
 
 	// Tick row: 0, middle, maximum — plus the target readout on the right.
-	cv.Text(barX, tickRow, tuichart.FormatValue(0), tuichart.S(tuichart.Gray))
+	cv.Text(barX, tickRow, tuichart.FormatValue(0), tuichart.NewStyle(tuichart.Gray))
 	mid := " " + tuichart.FormatValue(b.max/2) + " "
-	cv.Text(barX+barW/2-(utf8.RuneCountInString(mid)/2), tickRow, mid, tuichart.S(tuichart.Gray))
-	cv.TextRight(inner.X2(), tickRow, tuichart.FormatValue(b.max), tuichart.S(tuichart.Gray))
+	cv.Text(
+		barX+barW/2-(utf8.RuneCountInString(mid)/2),
+		tickRow,
+		mid,
+		tuichart.NewStyle(tuichart.Gray),
+	)
+	cv.TextRight(inner.X2(), tickRow, tuichart.FormatValue(b.max), tuichart.NewStyle(tuichart.Gray))
 	cv.TextRight(
 		inner.X2(),
 		barRow,
 		"target "+tuichart.FormatValue(b.target),
-		tuichart.S(tuichart.DimGray),
+		tuichart.NewStyle(tuichart.DimGray),
 	)
 }

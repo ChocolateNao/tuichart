@@ -80,14 +80,14 @@ func (g *Gauge) HeightHint(width int) int {
 func (g *Gauge) Draw(rc *Ctx, cv *Canvas) {
 	inner := g.frameTitle(cv, rc.Info.Unicode)
 	if inner.W < 3 || inner.H < 1 {
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", S(Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
 	row := inner.Y + inner.H/2
 
-	st := S(g.color)
+	st := NewStyle(g.color)
 	if g.color.IsZero() {
-		st = S(rc.Palette[0])
+		st = NewStyle(rc.Palette[0])
 	}
 
 	suffix := ""
@@ -111,7 +111,7 @@ func (g *Gauge) Draw(rc *Ctx, cv *Canvas) {
 	}
 	g.drawBar(cv, row, inner.X, barW, pct/100, st, rc.Info.Unicode)
 	if suffix != "" {
-		cv.Text(inner.X+barW, row, suffix, S(Default))
+		cv.Text(inner.X+barW, row, suffix, NewStyle(Default))
 	}
 }
 
@@ -128,7 +128,7 @@ func (g *Gauge) drawBar(cv *Canvas, row, x, w int, frac float64, st Style, uni b
 			}
 			return
 		}
-		br := S(Default)
+		br := NewStyle(Default)
 		cv.Set(x, row, '[', br)
 		cv.Set(x+w-1, row, ']', br)
 		if uni {
@@ -150,7 +150,7 @@ func (g *Gauge) drawBar(cv *Canvas, row, x, w int, frac float64, st Style, uni b
 				case i == full-1:
 					cv.Set(x+i, row, tip, st.Bolder())
 				default:
-					cv.Set(x+i, row, track, S(DimGray))
+					cv.Set(x+i, row, track, NewStyle(DimGray))
 				}
 			}
 		} else {

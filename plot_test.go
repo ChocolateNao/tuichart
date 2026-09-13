@@ -420,12 +420,12 @@ func TestPlotLegend(t *testing.T) {
 		t.Error("Legend did not return the receiver")
 	}
 	// Line series legend entry is shown by default
-	le := NewLineVals("lg", nil).legendEntry(S(Gray), false)
+	le := NewLineVals("lg", nil).legendEntry(NewStyle(Gray), false)
 	if le.Glyph != "---" {
 		t.Errorf("ascii line glyph = %q, want %q", le.Glyph, "---")
 	}
 	// Scatter legend entry
-	se := NewScatterVals("sg", nil).legendEntry(S(Gray), false)
+	se := NewScatterVals("sg", nil).legendEntry(NewStyle(Gray), false)
 	if se.Glyph != "oo" {
 		t.Errorf("ascii scatter glyph = %q, want %q", se.Glyph, "oo")
 	}

@@ -140,7 +140,7 @@ func (b *BarChart) drawVertical(rc *Ctx, cv *Canvas) {
 	fr := prepareFrame(cv, rc, &b.chartBase, db, Linear, Linear, false)
 	area := fr.area
 	if area.W < 2 || area.H < 2 || len(b.cats) == 0 || len(b.series) == 0 {
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", S(Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
 	nC := len(b.cats)
@@ -182,7 +182,7 @@ func (b *BarChart) drawVertical(rc *Ctx, cv *Canvas) {
 
 	for si := range b.series {
 		s := &b.series[si]
-		st := S(s.Color)
+		st := NewStyle(s.Color)
 		for c := 0; c < nC && c < len(s.Values); c++ {
 			v := s.Values[c]
 			if math.IsNaN(v) || v == 0 {
@@ -234,12 +234,12 @@ func (b *BarChart) drawVertical(rc *Ctx, cv *Canvas) {
 		}
 	}
 
-	valSt := S(Gray)
+	valSt := NewStyle(Gray)
 	for _, l := range labels {
 		cv.TextCenter(l.x, l.y, l.text, valSt)
 	}
 
-	labelSt := S(Default)
+	labelSt := NewStyle(Default)
 	lastEnd := -1 << 30
 	maxCatLen := 0
 	for _, cat := range b.cats {
@@ -261,7 +261,7 @@ func (b *BarChart) drawVertical(rc *Ctx, cv *Canvas) {
 	}
 	for c := 0; c < nC; c++ {
 		col := area.X + c*slot + slot/2
-		cv.Set(col, axisRow, mark, S(Silver))
+		cv.Set(col, axisRow, mark, NewStyle(Silver))
 		if stride > 1 && c%stride != 0 {
 			continue
 		}
@@ -280,7 +280,10 @@ func (b *BarChart) drawVertical(rc *Ctx, cv *Canvas) {
 		if !fr.uni {
 			glyph = "##"
 		}
-		entries = append(entries, LegendEntry{Label: s.Name, Style: S(s.Color), Glyph: glyph})
+		entries = append(
+			entries,
+			LegendEntry{Label: s.Name, Style: NewStyle(s.Color), Glyph: glyph},
+		)
 	}
 	drawLegendInside(cv, area, entries, fr.uni)
 }
@@ -384,14 +387,14 @@ func (b *BarChart) drawHorizontal(rc *Ctx, cv *Canvas) {
 	inner := b.frameTitle(cv, rc.Info.Unicode)
 	uni := rc.Info.Unicode
 	if len(b.cats) == 0 || len(b.series) == 0 || inner.W < 10 || inner.H < 2 {
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", S(Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
 	s := b.series[0]
 	if s.Color.IsZero() {
 		s.Color = rc.Palette[0]
 	}
-	st := S(s.Color)
+	st := NewStyle(s.Color)
 	hi := math.SmallestNonzeroFloat64
 	for _, v := range s.Values {
 		if !math.IsNaN(v) {
@@ -424,7 +427,7 @@ func (b *BarChart) drawHorizontal(rc *Ctx, cv *Canvas) {
 		}
 		y := inner.Y + ri
 		ri++
-		cv.TextRight(inner.X+gutter-2, y, ellipTrunc(cat, gutter-1, uni), S(Default))
+		cv.TextRight(inner.X+gutter-2, y, ellipTrunc(cat, gutter-1, uni), NewStyle(Default))
 		v := 0.0
 		if c < len(s.Values) && !math.IsNaN(s.Values[c]) {
 			v = s.Values[c]
@@ -451,6 +454,6 @@ func (b *BarChart) drawHorizontal(rc *Ctx, cv *Canvas) {
 				w++
 			}
 		}
-		cv.Text(inner.X+gutter+w+1, y, FormatValue(v), S(Gray))
+		cv.Text(inner.X+gutter+w+1, y, FormatValue(v), NewStyle(Gray))
 	}
 }

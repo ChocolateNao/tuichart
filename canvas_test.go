@@ -142,7 +142,7 @@ func TestRectClipOutsideZero(t *testing.T) {
 
 func TestFillRectInside(t *testing.T) {
 	cv := NewCanvas(6, 4)
-	cv.FillRect(Rect{X: 1, Y: 1, W: 3, H: 2}, '#', S(Red))
+	cv.FillRect(Rect{X: 1, Y: 1, W: 3, H: 2}, '#', NewStyle(Red))
 	for y := 0; y < 4; y++ {
 		for x := 0; x < 6; x++ {
 			ch := cv.At(x, y).ch
@@ -292,7 +292,7 @@ func TestCanvasSubNegativeDims(t *testing.T) {
 
 func TestCanvasClear(t *testing.T) {
 	cv := NewCanvas(3, 1)
-	cv.Set(1, 0, 'X', S(Red))
+	cv.Set(1, 0, 'X', NewStyle(Red))
 	cv.Clear()
 	if cv.At(1, 0).ch != ' ' {
 		t.Error("Clear did not reset cells")

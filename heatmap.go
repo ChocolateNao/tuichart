@@ -85,7 +85,7 @@ func (h *Heatmap) Draw(rc *Ctx, cv *Canvas) {
 		}
 	}
 	if math.IsInf(lo, 1) || nCols == 0 || inner.W < 2 || inner.H < 2 {
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", S(Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
 	if hi == lo {
@@ -133,7 +133,7 @@ func (h *Heatmap) Draw(rc *Ctx, cv *Canvas) {
 				inner.X+labelGutter+c*cw+cw/2,
 				gridTop-1,
 				ellipTrunc(lbl, cw, uni),
-				S(Silver),
+				NewStyle(Silver),
 			)
 		}
 	}
@@ -152,7 +152,7 @@ func (h *Heatmap) Draw(rc *Ctx, cv *Canvas) {
 				inner.X+labelGutter-2,
 				y,
 				ellipTrunc(h.rowLabels[ri], labelGutter-1, uni),
-				S(Default),
+				NewStyle(Default),
 			)
 		}
 		for ci, v := range row {
@@ -160,7 +160,7 @@ func (h *Heatmap) Draw(rc *Ctx, cv *Canvas) {
 				continue
 			}
 			t := (v - lo) / (hi - lo)
-			st := S(mix(h.low, h.high, t))
+			st := NewStyle(mix(h.low, h.high, t))
 			ch := '█'
 			if mono || !uni {
 				idx := int(t*float64(len(heatRampASCII)-1) + 0.5)
@@ -180,7 +180,7 @@ func (h *Heatmap) Draw(rc *Ctx, cv *Canvas) {
 			if h.showVals {
 				lbl := FormatValue(v)
 				if runeLen(lbl) <= cw {
-					cv.TextCenter(inner.X+labelGutter+ci*cw+cw/2, y, lbl, S(Default))
+					cv.TextCenter(inner.X+labelGutter+ci*cw+cw/2, y, lbl, NewStyle(Default))
 				}
 			}
 		}
@@ -197,11 +197,11 @@ func (h *Heatmap) Draw(rc *Ctx, cv *Canvas) {
 					idx := int(t*float64(len(heatRampASCII)-1) + 0.5)
 					ch = heatRampASCII[idx]
 				}
-				cv.Set(inner.X+i, y, ch, S(mix(h.low, h.high, t)))
+				cv.Set(inner.X+i, y, ch, NewStyle(mix(h.low, h.high, t)))
 			}
 			lblLo := FormatValue(lo)
 			lblHi := FormatValue(hi)
-			cv.Text(inner.X+barW+1, y, lblLo+".."+lblHi, S(Gray))
+			cv.Text(inner.X+barW+1, y, lblLo+".."+lblHi, NewStyle(Gray))
 		}
 	}
 }

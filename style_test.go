@@ -6,44 +6,44 @@ import (
 )
 
 func TestSeqNoColor(t *testing.T) {
-	if LevelNone.seq(S(Red)) != "" {
+	if LevelNone.seq(NewStyle(Red)) != "" {
 		t.Error("no-color profile must emit nothing")
 	}
 }
 
 func TestSeq16(t *testing.T) {
-	got := Level16.seq(S(Red))
+	got := Level16.seq(NewStyle(Red))
 	if got != "\x1b[91m" {
 		t.Errorf("bright red got %q", got)
 	}
-	if got := Level16.seq(S(Green)); got != "\x1b[32m" {
+	if got := Level16.seq(NewStyle(Green)); got != "\x1b[32m" {
 		t.Errorf("green got %q", got)
 	}
 }
 
 func TestRGBDowngrade(t *testing.T) {
 	c := RGB(255, 0, 0)
-	if got := LevelTrue.seq(S(c)); got != "\x1b[38;2;255;0;0m" {
+	if got := LevelTrue.seq(NewStyle(c)); got != "\x1b[38;2;255;0;0m" {
 		t.Errorf("truecolor got %q", got)
 	}
-	if !strings.Contains(Level256.seq(S(c)), "38;5;") {
-		t.Errorf("256 downgrade got %q", Level256.seq(S(c)))
+	if !strings.Contains(Level256.seq(NewStyle(c)), "38;5;") {
+		t.Errorf("256 downgrade got %q", Level256.seq(NewStyle(c)))
 	}
-	if !strings.Contains(Level16.seq(S(c)), "[") {
-		t.Errorf("16 downgrade got %q", Level16.seq(S(c)))
+	if !strings.Contains(Level16.seq(NewStyle(c)), "[") {
+		t.Errorf("16 downgrade got %q", Level16.seq(NewStyle(c)))
 	}
 }
 
 func TestIndexedDowngrade(t *testing.T) {
 	c := HotPink
-	s := Level16.seq(S(c))
+	s := Level16.seq(NewStyle(c))
 	if s == "" || s == "\x1b[m" {
 		t.Errorf("indexed 200 at level 16 got %q", s)
 	}
 }
 
 func TestBgCodes(t *testing.T) {
-	st := S(Default).On(Blue)
+	st := NewStyle(Default).On(Blue)
 	if got := Level16.seq(st); got != "\x1b[104m" {
 		t.Errorf("bg blue got %q", got)
 	}
@@ -157,7 +157,7 @@ func TestEnvLevelDetection(t *testing.T) {
 // ── style.go ────────────────────────────────────────────────────────────────
 
 func TestStyleWithFg(t *testing.T) {
-	st := S(Red)
+	st := NewStyle(Red)
 	orig := st
 	newSt := st.WithFg(Blue)
 	if newSt.Fg != Blue {
@@ -170,14 +170,14 @@ func TestStyleWithFg(t *testing.T) {
 }
 
 func TestStyleWithFgZero(t *testing.T) {
-	st := S(Red).WithFg(Default)
+	st := NewStyle(Red).WithFg(Default)
 	if !st.Fg.IsZero() {
 		t.Error("WithFg(Default) should produce zero fg")
 	}
 }
 
 func TestStyleOnReturnsCopy(t *testing.T) {
-	st := S(Red)
+	st := NewStyle(Red)
 	newSt := st.On(Blue)
 	if newSt.Bg != Blue {
 		t.Error("On did not set bg")
@@ -188,7 +188,7 @@ func TestStyleOnReturnsCopy(t *testing.T) {
 }
 
 func TestStyleBolderReturnsCopy(t *testing.T) {
-	st := S(Red)
+	st := NewStyle(Red)
 	newSt := st.Bolder()
 	if !newSt.Bold {
 		t.Error("Bolder did not set bold")
@@ -234,7 +234,7 @@ func TestStyleIsZero(t *testing.T) {
 	if !zero.isZero() {
 		t.Error("zero Style should be isZero")
 	}
-	if S(Red).isZero() {
+	if NewStyle(Red).isZero() {
 		t.Error("non-zero Style should not be isZero")
 	}
 	if (Style{Bold: true}).isZero() {

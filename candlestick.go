@@ -83,7 +83,7 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 	inner := c.frameTitle(cv, uni)
 
 	if len(c.candles) == 0 || inner.W < 8 || inner.H < 4 {
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", S(Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
 
@@ -101,7 +101,7 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 		hi = math.Max(hi, k.High)
 	}
 	if lo > hi { // no valid candle
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", S(Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
 	padv := (hi - lo) * 0.05
@@ -172,7 +172,7 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 			col = c.down
 			bodyCh = bodyDown
 		}
-		st := S(col)
+		st := NewStyle(col)
 		cx := fr.mxCol(float64(k.At.Unix()))
 
 		yHi := fr.myRow(math.Max(k.High, math.Max(k.Open, k.Close)))
@@ -213,8 +213,8 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 			gu, gd = "#", "%"
 		}
 		drawLegendInside(cv, fr.area, []LegendEntry{
-			{Label: "up", Style: S(c.up), Glyph: gu},
-			{Label: "down", Style: S(c.down), Glyph: gd},
+			{Label: "up", Style: NewStyle(c.up), Glyph: gu},
+			{Label: "down", Style: NewStyle(c.down), Glyph: gd},
 		}, uni)
 	}
 }

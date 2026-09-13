@@ -71,7 +71,7 @@ func (g *Gantt) Draw(rc *Ctx, cv *Canvas) {
 	inner := g.frameTitle(cv, rc.Info.Unicode)
 	uni := rc.Info.Unicode
 	if len(g.bars) == 0 || inner.W < 10 || inner.H < 3 {
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", S(Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
 
@@ -114,7 +114,7 @@ func (g *Gantt) Draw(rc *Ctx, cv *Canvas) {
 		return inner.X + gutter + int(f*float64(gridW-1)+0.5)
 	}
 
-	dim := S(DimGray)
+	dim := NewStyle(DimGray)
 	tickRow := inner.Y2()
 	barCh := '█'
 	if !uni {
@@ -126,13 +126,13 @@ func (g *Gantt) Draw(rc *Ctx, cv *Canvas) {
 		if y >= tickRow {
 			break
 		}
-		st := S(b.Color)
+		st := NewStyle(b.Color)
 		if b.Color.IsZero() {
-			st = S(rc.Palette[ci%len(rc.Palette)])
+			st = NewStyle(rc.Palette[ci%len(rc.Palette)])
 			ci++
 		}
 		if gutter > 1 {
-			cv.TextRight(inner.X+gutter-2, y, ellipTrunc(b.Name, gutter-1, uni), S(Default))
+			cv.TextRight(inner.X+gutter-2, y, ellipTrunc(b.Name, gutter-1, uni), NewStyle(Default))
 		}
 		s, e := float64(b.Start.Unix()), float64(b.End.Unix())
 		if e < s {
@@ -158,6 +158,6 @@ func (g *Gantt) Draw(rc *Ctx, cv *Canvas) {
 		}
 		cv.Set(col, tickRow, ch, dim)
 		lbl := fmtFn(tk.Value)
-		writeLabel(cv, tickRow, col, lbl, S(Default), inner, uni)
+		writeLabel(cv, tickRow, col, lbl, NewStyle(Default), inner, uni)
 	}
 }

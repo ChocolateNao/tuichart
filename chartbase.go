@@ -187,7 +187,7 @@ func (b *chartBase) frameTitle(cv *Canvas, uni bool) Rect {
 				cv,
 				0,
 				ellipTrunc(b.title, r.W, uni),
-				S(Default).Bolder(),
+				NewStyle(Default).Bolder(),
 				b.titleAlign,
 				r.W,
 			)
@@ -195,14 +195,14 @@ func (b *chartBase) frameTitle(cv *Canvas, uni bool) Rect {
 		}
 		return r
 	}
-	st := S(Gray)
+	st := NewStyle(Gray)
 	cv.Border(st, uni)
 	if b.title != "" && r.H > 2 {
 		t := " " + b.title + " "
 		if runeLen(t)+4 > r.W {
 			t = " " + ellipTrunc(b.title, max(r.W-6, 1), uni) + " "
 		}
-		drawAlignedText(cv, 0, t, S(Default).Bolder(), b.titleAlign, r.W)
+		drawAlignedText(cv, 0, t, NewStyle(Default).Bolder(), b.titleAlign, r.W)
 		return Rect{X: 1, Y: 1, W: r.W - 2, H: r.H - 2}.clip(r)
 	}
 	return Rect{X: 1, Y: 1, W: r.W - 2, H: r.H - 2}.clip(r)
