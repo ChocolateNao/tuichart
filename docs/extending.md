@@ -38,7 +38,7 @@ func (b *Bullet) HeightHint(int) int { return 1 }
 func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 	frac := int(float64(cv.Width()) * b.value / b.max)
 	for x := 0; x < frac; x++ {
-		cv.Set(x, 0, '█', tuichart.S(tuichart.Lime))
+		cv.Set(x, 0, '█', tuichart.NewStyle(tuichart.Lime))
 	}
 }
 ```
@@ -67,14 +67,14 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 	barW := cv.Width() - 2 // reserve space for the border
 	frac := int(float64(barW) * b.value / b.max)
 
-	cv.Border(tuichart.S(tuichart.Gray), uni)
-	cv.Text(2, 0, " p95 latency (ms) ", tuichart.S(tuichart.Default).Bolder())
+	cv.Border(tuichart.NewStyle(tuichart.Gray), uni)
+	cv.Text(2, 0, " p95 latency (ms) ", tuichart.NewStyle(tuichart.Default).Bolder())
 	for x := 0; x < frac; x++ {
-		cv.Set(x+1, 1, '█', tuichart.S(tuichart.Lime))
+		cv.Set(x+1, 1, '█', tuichart.NewStyle(tuichart.Lime))
 	}
-	cv.Text(1, 3, tuichart.FormatValue(0), tuichart.S(tuichart.Gray))
-	cv.Text(barW/2, 3, tuichart.FormatValue(b.max/2), tuichart.S(tuichart.Gray))
-	cv.TextRight(barW, 3, tuichart.FormatValue(b.max), tuichart.S(tuichart.Gray))
+	cv.Text(1, 3, tuichart.FormatValue(0), tuichart.NewStyle(tuichart.Gray))
+	cv.Text(barW/2, 3, tuichart.FormatValue(b.max/2), tuichart.NewStyle(tuichart.Gray))
+	cv.TextRight(barW, 3, tuichart.FormatValue(b.max), tuichart.NewStyle(tuichart.Gray))
 }
 ```
 
@@ -104,28 +104,28 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 	barW := cv.Width() - 2
 	frac := func(v float64) int { return int(v/b.max*float64(barW) + 0.5) }
 
-	cv.Border(tuichart.S(tuichart.Gray), uni)
-	cv.Text(2, 0, " p95 latency (ms) ", tuichart.S(tuichart.Default).Bolder())
+	cv.Border(tuichart.NewStyle(tuichart.Gray), uni)
+	cv.Text(2, 0, " p95 latency (ms) ", tuichart.NewStyle(tuichart.Default).Bolder())
 
 	// qualitative zones — faint band spanning the full scale
 	for x := 0; x < barW; x++ {
-		cv.Set(x+1, 1, '░', tuichart.S(tuichart.DimGray))
+		cv.Set(x+1, 1, '░', tuichart.NewStyle(tuichart.DimGray))
 	}
 	// a danger zone in the top 20%
 	for x := frac(b.max * 0.8); x < barW; x++ {
-		cv.Set(x+1, 1, '░', tuichart.S(tuichart.Maroon))
+		cv.Set(x+1, 1, '░', tuichart.NewStyle(tuichart.Maroon))
 	}
 	// measured value
 	for x := 0; x < frac(b.value); x++ {
-		cv.Set(x+1, 1, '█', tuichart.S(tuichart.Lime))
+		cv.Set(x+1, 1, '█', tuichart.NewStyle(tuichart.Lime))
 	}
 	// target rule
-	cv.Set(frac(b.target)+1, 1, '┃', tuichart.S(tuichart.Default).Bolder())
+	cv.Set(frac(b.target)+1, 1, '┃', tuichart.NewStyle(tuichart.Default).Bolder())
 
 	// ticks
-	cv.Text(1, 3, tuichart.FormatValue(0), tuichart.S(tuichart.Gray))
-	cv.Text(barW/2, 3, tuichart.FormatValue(b.max/2), tuichart.S(tuichart.Gray))
-	cv.TextRight(barW, 3, tuichart.FormatValue(b.max), tuichart.S(tuichart.Gray))
+	cv.Text(1, 3, tuichart.FormatValue(0), tuichart.NewStyle(tuichart.Gray))
+	cv.Text(barW/2, 3, tuichart.FormatValue(b.max/2), tuichart.NewStyle(tuichart.Gray))
+	cv.TextRight(barW, 3, tuichart.FormatValue(b.max), tuichart.NewStyle(tuichart.Gray))
 }
 ```
 
@@ -192,21 +192,21 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 		return zoneChs[d]
 	}
 
-	cv.Border(tuichart.S(tuichart.Gray), uni)
+	cv.Border(tuichart.NewStyle(tuichart.Gray), uni)
 	if b.title != "" {
-		cv.Text(2, 0, " "+b.title+" ", tuichart.S(tuichart.Default).Bolder())
+		cv.Text(2, 0, " "+b.title+" ", tuichart.NewStyle(tuichart.Default).Bolder())
 	}
 	inner := tuichart.Rect{X: 1, Y: 1, W: cv.Width()-2, H: cv.Height()-2}
 	barRow := inner.Y
 	tickRow := inner.Y + inner.H - 1
 	if tickRow <= barRow {
-		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no room)", tuichart.S(tuichart.Gray))
+		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no room)", tuichart.NewStyle(tuichart.Gray))
 		return
 	}
 
-	valStyle := tuichart.S(b.color)
+	valStyle := tuichart.NewStyle(b.color)
 	if b.color.IsZero() {
-		valStyle = tuichart.S(rc.Palette[0])
+		valStyle = tuichart.NewStyle(rc.Palette[0])
 	}
 
 	labelCols := 0
@@ -230,23 +230,23 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 		for _, bd := range b.zones {
 			if colV >= bd { depth++ }
 		}
-		cv.Set(barX+x, barRow, zoneCh(depth), tuichart.S(tuichart.DimGray))
+		cv.Set(barX+x, barRow, zoneCh(depth), tuichart.NewStyle(tuichart.DimGray))
 	}
 	// value bar
 	for x := 0; x < frac(b.value); x++ {
 		cv.Set(barX+x, barRow, valCh, valStyle)
 	}
 	// target rule
-	cv.Set(barX+frac(b.target), barRow, markCh, tuichart.S(tuichart.Default).Bolder())
+	cv.Set(barX+frac(b.target), barRow, markCh, tuichart.NewStyle(tuichart.Default).Bolder())
 	if b.name != "" {
-		cv.Text(inner.X, barRow, b.name, tuichart.S(tuichart.Default))
+		cv.Text(inner.X, barRow, b.name, tuichart.NewStyle(tuichart.Default))
 	}
 	// ticks
-	cv.Text(barX, tickRow, tuichart.FormatValue(0), tuichart.S(tuichart.Gray))
+	cv.Text(barX, tickRow, tuichart.FormatValue(0), tuichart.NewStyle(tuichart.Gray))
 	mid := " " + tuichart.FormatValue(b.max/2) + " "
-	cv.Text(barX+barW/2-(utf8.RuneCountInString(mid)/2), tickRow, mid, tuichart.S(tuichart.Gray))
-	cv.TextRight(inner.X2(), tickRow, tuichart.FormatValue(b.max), tuichart.S(tuichart.Gray))
-	cv.TextRight(inner.X2(), barRow, "target "+tuichart.FormatValue(b.target), tuichart.S(tuichart.DimGray))
+	cv.Text(barX+barW/2-(utf8.RuneCountInString(mid)/2), tickRow, mid, tuichart.NewStyle(tuichart.Gray))
+	cv.TextRight(inner.X2(), tickRow, tuichart.FormatValue(b.max), tuichart.NewStyle(tuichart.Gray))
+	cv.TextRight(inner.X2(), barRow, "target "+tuichart.FormatValue(b.target), tuichart.NewStyle(tuichart.DimGray))
 }
 ```
 

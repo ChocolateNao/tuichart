@@ -52,10 +52,10 @@ LightGreen, Khaki, CornflowerBlue, Blue, Cyan, Lime, BrightRed, DimGray, ...
 
 ## Styles
 
-`tuichart.S(fg)` creates a `Style` with a foreground color:
+`tuichart.NewStyle(fg)` creates a `Style` with a foreground color:
 
 ```go
-s := tuichart.S(tuichart.Lime)           // just foreground
+s := tuichart.NewStyle(tuichart.Lime)           // just foreground
 s = s.On(tuichart.Gray)                  // add background
 s = s.Bolder()                           // add bold
 ```
@@ -63,8 +63,8 @@ s = s.Bolder()                           // add bold
 Every `Canvas` paint method takes a style as its last argument:
 
 ```go
-cv.Set(x, y, '█', tuichart.S(tuichart.Lime).Bolder())
-cv.Text(5, 0, "hello", tuichart.S(tuichart.DodgerBlue))
+cv.Set(x, y, '█', tuichart.NewStyle(tuichart.Lime).Bolder())
+cv.Text(5, 0, "hello", tuichart.NewStyle(tuichart.DodgerBlue))
 ```
 
 When the level is `LevelNone` the SGR emission is empty — the character is
