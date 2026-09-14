@@ -80,6 +80,29 @@ func TestASCIIPurityAllDiagrams(t *testing.T) {
 		"gauge-brackets": gaugeByStyle(GaugeBrackets),
 		"gauge-arrow":    gaugeByStyle(GaugeArrow),
 		"gauge-segments": gaugeByStyle(GaugeSegments),
+		"funnel": NewFunnel().
+			Title("conversion funnel with a rather long title").
+			Step("visitors", 100).Step("signups", 55).
+			Step("activated", 40).Step("paid", 22).ShowValues(true),
+		"radar": NewRadar().
+			Title("skill profile with a long title").
+			Axes("frontend", "backend", "data", "testing", "devops", "ux").
+			Series("you", 4, 6, 8, 5, 7, 3).
+			Series("team average", 5, 6, 6, 6, 5, 5).
+			Fill(true),
+		"treemap": NewTreemap().
+			Title("disk usage").
+			Add(&TreemapNode{Name: "web", Children: []*TreemapNode{
+				{Name: "assets", Value: 40},
+				{Name: "logs", Value: 30},
+				{Name: "db-data", Value: 25},
+			}}).
+			Add(&TreemapNode{Name: "mobile", Children: []*TreemapNode{
+				{Name: "ios-build", Value: 35},
+				{Name: "android", Value: 20},
+			}}).
+			Item("docs", 10).
+			ShowValues(true),
 	}
 
 	for name, d := range diagrams {
