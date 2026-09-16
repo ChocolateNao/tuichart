@@ -9,8 +9,8 @@ type Drawable interface {
 }
 ```
 
-`HeightHint` tells the chart how many rows you would like; `Draw` paints
-into whatever canvas the chart gives you. That is the whole contract.
+`HeightHint` tells the board how many rows you would like; `Draw` paints
+into whatever canvas the board gives you. That is the whole contract.
 
 This page walks you through building a complete custom diagram — a **bullet
 graph** (Stephen Few's compact single-value indicator) — from a one-line
@@ -32,7 +32,7 @@ package bullet
 
 import "github.com/ChocolateNao/tuichart"
 
-// HeightHint tells the chart how many rows we want.
+// HeightHint tells the board how many rows we want.
 func (b *Bullet) HeightHint(int) int { return 1 }
 
 func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
@@ -49,7 +49,7 @@ Output (44 cols, one row, plain text):
 ████████████████
 ```
 
-The chart allocates a canvas of `HeightHint` rows, and we paint a block bar
+The board allocates a canvas of `HeightHint` rows, and we paint a block bar
 into it. Already you can tell the fraction is working.
 
 ---
@@ -259,7 +259,7 @@ import (
 	"fmt"
 
 	"github.com/ChocolateNao/tuichart"
-	"github.com/ChocolateNao/tuichart/examples/08_bullet/bullet"
+	"github.com/ChocolateNao/tuichart/examples/08_custom/bullet"
 )
 
 func main() {
@@ -319,7 +319,7 @@ g.Row(
 └──────────────────────────┘
 ```
 
-The chart treats your diagram identically to a built-in: it asks for
+The board treats your diagram identically to a built-in: it asks for
 `HeightHint`, allocates a canvas, calls `Draw`, and paints the border.
 
 ---
@@ -344,7 +344,7 @@ code changes, no extra branches — just the `uni` check we wrote once.
 
 ## Where to go next
 
-- See the full, polished version in `examples/08_bullet/` — the tutorial
+- See the full, polished version in `examples/08_custom/` — the tutorial
   code with all setters, error handling, and the `Zone` feature fully
   exercised.
 - Read [Charts: composition & layout](charts.md) for the `Row` and `Add`

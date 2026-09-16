@@ -1,6 +1,6 @@
 # Live rendering
 
-The `Live` renderer drives a `Chart` as a real-time, continuously updated
+The `Live` renderer drives a `Board` as a real-time, continuously updated
 display: it paints diffs at your chosen refresh rate, redraws the entire
 frame when the terminal is resized, swallows stray input bytes so that
 background typing doesn't break the display, and always restores the
@@ -159,6 +159,6 @@ are restored to their original values.
 
 The diagram's own `Draw` method decides whether to paint a border around
 itself. `Live` calls `Draw` as usual, passing the same rendering context.
-You can use the `Chart.Frame(width)` method if you want the border without
-entering the live loop — this is useful for embedding in other renderers
+Use `Live.Frame(width)` to render one frame as a string without entering the
+live loop or touching the screen — useful for embedding in other renderers
 (see [Embedding in other UIs](embedding.md)).

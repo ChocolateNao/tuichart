@@ -74,11 +74,11 @@ You should see a plot of `sin`, rendered with Unicode braille cells:
 
 The three moving parts:
 
-1. **`tuichart.New(options...)`** builds a chart container (see
+1. **`tuichart.New(options...)`** builds a `Board` container (see
    [Composition & layout](charts.md)).
 2. **`p := tuichart.NewPlot()`** creates a diagram, which you configure and
    fill with data.
-3. **`g.Add(p)`** places the diagram in the chart, and **`g.Render()`** turns
+3. **`g.Add(p)`** places the diagram in the board, and **`g.Render()`** turns
    the whole composition into a string you can print, write, or stream.
 
 ## What you can build

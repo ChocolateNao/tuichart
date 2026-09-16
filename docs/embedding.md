@@ -12,7 +12,7 @@ or a custom logging pipeline.
 terminal's profile and unicode capability. You can iterate every cell:
 
 ```go
-cv, info := chart.RenderCanvas(width)
+cv, info := board.RenderCanvas(width)
 for y := 0; y < cv.Height(); y++ {
 	for x := 0; x < cv.Width(); x++ {
 		c := cv.At(x, y)
@@ -31,18 +31,18 @@ bold). You can convert the style to your framework's color model via
 newlines. Use this when your renderer expects an array of horizontal spans:
 
 ```go
-rows := chart.RenderLines(60)
+rows := board.RenderLines(60)
 for _, line := range rows {
 	widget.AppendLine(line)
 }
 ```
 
-### Chart.Frame — draw a diagram-only border
+### Live.Frame — render one frame without painting
 
-`Frame(width)` paints a border and the title around the diagram's content
-area only (no padding rows above/below the chart). It returns a string. This
-is useful when the outer layout is handled by your host and you just need the
-diagram isolated in a frame.
+If you have a [Live renderer](live.md) but want to pull the current frame
+without entering the live loop or touching the screen, call
+`Live.Frame(width)` — it returns the rendered string and does not invoke the
+OnUpdate callback.
 
 ### Canvas primitives for custom painting
 
@@ -59,14 +59,14 @@ Once you have a `*Canvas` you can paint freely:
 | `Clear(st)`         | Fill the entire canvas with a space and a style. |
 
 The `Canvas` is allocated for you by `RenderCanvas` or by `Draw` inside a
-custom diagram. When you write your own `Drawable`, the chart gives you a
+custom diagram. When you write your own `Drawable`, the board gives you a
 canvas of exactly `HeightHint` rows — you never resize it.
 
 ## Embedding patterns
 
 ### bubbletea
 
-bubbletea's `View()` returns a `string`. You can render the chart once per
+bubbletea's `View()` returns a `string`. You can render the board once per
 tick:
 
 ```go
@@ -74,7 +74,7 @@ func (m Model) View() string {
 	if m.live != nil {
 		return m.live.Frame(m.width)
 	}
-	return m.chart.Render(m.width)
+	return m.board.Render(m.width)
 }
 ```
 
@@ -87,7 +87,7 @@ tview widgets have a `Draw` method receiving an `*tcell.EventUpdate`. Use
 `RenderCanvas` to build a tcell buffer:
 
 ```go
-cv, _ := chart.RenderCanvas(width)
+cv, _ := board.RenderCanvas(width)
 for y := 0; y < cv.Height(); y++ {
 	for x := 0; x < cv.Width(); x++ {
 		c := cv.At(x, y)
@@ -101,13 +101,13 @@ for y := 0; y < cv.Height(); y++ {
 
 ### Plain HTTP
 
-Render the chart to a string with ANSI escapes, then wrap it in
+Render the board to a string with ANSI escapes, then wrap it in
 `<pre><code>`:
 
 ```go
 w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 fmt.Fprint(w, "<pre>")
-chart.RenderTo(w, 80)
+board.RenderTo(w, 80)
 fmt.Fprint(w, "</pre>")
 ```
 

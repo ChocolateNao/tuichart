@@ -1,13 +1,13 @@
 # Charts: composition & layout
 
-The `Chart` is the container. It owns the shared title and the layout of
+The `Board` is the container. It owns the shared title and the layout of
 whatever diagrams you add to it, and it renders only as wide as you ask —
 diagram frames, tick labels, and legends all negotiate the space together.
 
 ## The render pipeline
 
 ```
-Chart
+Board
  ├─ title row (optional)
  ├─ diagram 1  (full width)
  ├─ diagram 2  (full width)
@@ -22,7 +22,7 @@ Diagrams are placed in **rows**. A row holds one or more diagrams:
 
 Rows render in order, top to bottom, and the tallest diagram in a row makes
 the row's height. Diagrams also *suggest* a preferred height through
-`HeightHint(width)`, which the chart clamps when space is tight.
+`HeightHint(width)`, which the board clamps when space is tight.
 
 ## Composing mixed diagrams
 
@@ -72,7 +72,7 @@ fmt.Print(g.Render())
 ▃▆▂▇▅█▆▂▁
 ```
 
-## Chart options
+## Board options
 
 `tuichart.New(opts ...Option)`:
 
@@ -96,13 +96,13 @@ file or piping to another program, pick an explicit width.
 ## Title and layout controls
 
 - `g.Title("service health")` — centered by default.
-- `g.TitleAlign(tuichart.AlignLeft | AlignCenter | AlignRight)` — chart-level title alignment.
+- `g.TitleAlign(tuichart.AlignLeft | AlignCenter | AlignRight)` — board-level title alignment.
 - `g.Add(d)` / `g.Row(ds...)` — lay out diagrams; `g.Row` splits width equally.
 - `g.Clear()` / `g.Reset()` — drop everything and start again.
 
 ## Rendering
 
-The `*Chart` type is both an `io.WriterTo` and can produce strings, buffers,
+The `*Board` type is both an `io.WriterTo` and can produce strings, buffers,
 and canvases:
 
 | Method                      | Returns                                                            |
@@ -122,5 +122,5 @@ see [Embedding in other UIs](embedding.md).
 Rows may contain any `Drawable`, not just built-ins — including your own
 [`extending.md`](extending.md) implementations and even
 [custom diagrams that wrap other diagrams](extending.md#beyond-the-simple-case).
-There is no hard limit on the number of rows; tall charts are clipped only by
+There is no hard limit on the number of rows; tall boards are clipped only by
 the Live renderer's viewport (see [Live rendering](live.md)).

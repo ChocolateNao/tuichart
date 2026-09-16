@@ -7,7 +7,7 @@ dependencies.
 
 Every diagram is a *Drawable* — an object that paints itself onto a cell
 buffer given a rendering context. You compose diagram types freely with the
-`Chart` container, render them once to a string, or drive them continuously
+`Board` container, render them once to a string, or drive them continuously
 with the `Live` renderer.
 
 ## Guide
@@ -51,7 +51,7 @@ covered in [Styling & degradation](styling.md).
 ## Support
 
 - Repository: <https://github.com/ChocolateNao/tuichart>
-- Run every example: `cd examples && ls` then `go run ./01_sparkline` … `go run ./07_static`
+- Run every example: `cd examples && ls` then `go run ./01_sparkline` … `go run ./08_custom`
 - Live demo (needs a real TTY, Ctrl+C to quit): `go run ./examples/06_live`
 - API overview doc for TUI embedding: [`INTEGRATION.md`](../INTEGRATION.md)
 
