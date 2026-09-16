@@ -1,6 +1,6 @@
-// Command 12_file renders a chart to a file through chart.RenderTo, following
+// Command 12_file renders a board to a file through board.RenderTo, following
 // the same io.Writer path as the other integration examples but with a
-// plain-text sink. The chart is written with WithNoColor so the file carries
+// plain-text sink. The board is written with WithNoColor so the file carries
 // no ANSI escapes and renders cleanly in any pager or editor.
 //
 // Run it from this directory (it has its own module so the writer stays out
@@ -25,9 +25,9 @@ func main() {
 	}
 	plot.Add(tuichart.NewLineVals("rps", v))
 
-	chart := tuichart.New(tuichart.WithWidth(72), tuichart.WithNoColor(), tuichart.WithUnicode(true))
-	chart.Add(plot)
-	chart.Add(tuichart.NewSpark(v...).Title("spark"))
+	board := tuichart.New(tuichart.WithWidth(72), tuichart.WithNoColor(), tuichart.WithUnicode(true))
+	board.Add(plot)
+	board.Add(tuichart.NewSpark(v...).Title("spark"))
 
 	f, err := os.Create("report.txt")
 	if err != nil {
@@ -36,7 +36,7 @@ func main() {
 	}
 	defer f.Close()
 
-	if err := chart.RenderTo(f, 72); err != nil {
+	if err := board.RenderTo(f, 72); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

@@ -1,7 +1,7 @@
 // Command 09_bubbletea renders a live tuichart chart inside a bubbletea
 // application, framed by a small fixed UI: a title bar above the chart and
 // a status footer with the latest sample below it. The chart is written
-// through chart.RenderTo into an in-memory buffer (bubbletea's View must
+// through board.RenderTo into an in-memory buffer (bubbletea's View must
 // return a string), so the same io.Writer path serves files, sockets and
 // HTTP handlers.
 //
@@ -29,7 +29,7 @@ const width = 60
 type tickMsg time.Time
 
 type model struct {
-	chart *tuichart.Chart
+	board *tuichart.Board
 	plot  *tuichart.Plot
 	line  *tuichart.Line
 	vals  []float64
@@ -74,7 +74,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // the three integration demos share one visual language.
 func (m model) View() string {
 	var buf bytes.Buffer
-	if err := m.chart.RenderTo(&buf, m.width); err != nil {
+	if err := m.board.RenderTo(&buf, m.width); err != nil {
 		return "tuichart: " + err.Error()
 	}
 	body := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
@@ -107,9 +107,9 @@ func main() {
 	gauge := tuichart.NewGauge(65, 100).Title("gauge")
 	m.line = tuichart.NewLineVals("rps", []float64{0})
 	m.plot.Add(m.line)
-	m.chart = tuichart.New(tuichart.WithWidth(width), tuichart.WithNoColor(), tuichart.WithUnicode(true))
-	m.chart.Row(m.plot, gauge)
-	m.chart.Add(tuichart.NewSpark(0).Title("spark"))
+	m.board = tuichart.New(tuichart.WithWidth(width), tuichart.WithNoColor(), tuichart.WithUnicode(true))
+	m.board.Row(m.plot, gauge)
+	m.board.Add(tuichart.NewSpark(0).Title("spark"))
 
 	if _, err := tea.NewProgram(m).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

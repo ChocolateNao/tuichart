@@ -1,17 +1,17 @@
-// Command 08_bullet demonstrates a custom diagram type — a "bullet graph"
+// Command 08_custom demonstrates a custom diagram type — a "bullet graph"
 // implemented from the public Drawable contract. See docs/extending.md for
 // the step-by-step walk-through of how this package is built.
 //
 // Run it from the repo root:
 //
-//	go run ./examples/08_bullet
+//	go run ./examples/08_custom
 package main
 
 import (
 	"fmt"
 
 	"github.com/ChocolateNao/tuichart"
-	"github.com/ChocolateNao/tuichart/examples/08_bullet/bullet"
+	"github.com/ChocolateNao/tuichart/examples/08_custom/bullet"
 )
 
 func main() {

@@ -25,21 +25,21 @@ import (
 // chartView is a tview Box that repaints a tuichart canvas on every Draw.
 type chartView struct {
 	*tv.Box
-	chart *tuichart.Chart
+	board *tuichart.Board
 }
 
-func (c *chartView) SetChart(ch *tuichart.Chart) *chartView {
-	c.chart = ch
+func (c *chartView) SetBoard(b *tuichart.Board) *chartView {
+	c.board = b
 	return c
 }
 
 func (c *chartView) Draw(screen tcell.Screen) {
 	c.Box.Draw(screen)
-	if c.chart == nil {
+	if c.board == nil {
 		return
 	}
 	x, y, w, h := c.GetInnerRect()
-	cv, _ := c.chart.RenderCanvas(w)
+	cv, _ := c.board.RenderCanvas(w)
 
 	pal := tcell.StyleDefault
 	for i := 0; i < cv.Height() && y+i < h; i++ {
@@ -80,19 +80,19 @@ func main() {
 	plot.Add(line)
 	spark := tuichart.NewSpark(0).Title("spark")
 
-	chart := tuichart.New(
+	board := tuichart.New(
 		tuichart.WithWidth(70),
 		tuichart.WithNoColor(),
 		tuichart.WithUnicode(true),
 	)
-	chart.Add(plot)
-	chart.Add(spark)
+	board.Add(plot)
+	board.Add(spark)
 
 	app := tv.NewApplication()
 
 	view := tv.NewBox()
 	cvw := &chartView{Box: view}
-	cvw.SetChart(chart)
+	cvw.SetBoard(board)
 
 	header := tv.NewTextView().
 		SetDynamicColors(true).

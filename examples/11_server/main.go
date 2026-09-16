@@ -1,5 +1,5 @@
 // Command 11_server serves a tuichart chart over HTTP as a framed plain-text
-// page, written through chart.RenderTo into the http.ResponseWriter. The
+// page, written through board.RenderTo into the http.ResponseWriter. The
 // framing matches the ─── title bar and status footer of the bubbletea and
 // tview integration examples.
 //
@@ -41,16 +41,16 @@ func main() {
 	}
 	plot.Add(tuichart.NewLineVals("rps", v))
 
-	chart := tuichart.New(tuichart.WithWidth(72), tuichart.WithNoColor())
-	chart.Add(plot)
-	chart.Add(tuichart.NewSpark(v...).Title("spark"))
+	board := tuichart.New(tuichart.WithWidth(72), tuichart.WithNoColor())
+	board.Add(plot)
+	board.Add(tuichart.NewSpark(v...).Title("spark"))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		head := bar("─── requests/s · http", 72)
 		foot := bar(fmt.Sprintf("─── served %d samples · %s", len(v), time.Now().Format("15:04:05")), 72)
 		fmt.Fprintln(w, head)
-		if err := chart.RenderTo(w, 72); err != nil {
+		if err := board.RenderTo(w, 72); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -59,7 +59,7 @@ func main() {
 
 	http.HandleFunc("/raw", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		if err := chart.RenderTo(w, 72); err != nil {
+		if err := board.RenderTo(w, 72); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
