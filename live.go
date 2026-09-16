@@ -36,7 +36,7 @@ const (
 	evResize                      // terminal resized (SIGWINCH / poll)
 )
 
-// Live re-renders a Chart on a fixed interval, painting each frame over the
+// Live re-renders a Board on a fixed interval, painting each frame over the
 // previous one in the terminal's alternate screen buffer. Frames are diffed
 // against the last painted frame cell-by-cell: only changed cells reach the
 // terminal, and an unchanged frame writes nothing at all. This keeps bytes
@@ -62,7 +62,7 @@ const (
 // All of Live's methods are safe for concurrent use.
 type Live struct {
 	out      io.Writer
-	chart    *Chart
+	board    *Board
 	update   func()
 	events   chan liveEvent
 	stop     chan struct{}
@@ -100,16 +100,16 @@ func WithLiveOutput(w io.Writer) LiveOption {
 }
 
 // OnUpdate registers a data-pump callback invoked under the render lock
-// before every frame. Mutate the chart's diagrams there. Do not call Live
+// before every frame. Mutate the board's diagrams there. Do not call Live
 // methods from inside it.
 func OnUpdate(fn func()) LiveOption {
 	return func(l *Live) { l.update = fn }
 }
 
-// NewLive wraps a chart for continuous rendering.
-func NewLive(c *Chart, opts ...LiveOption) *Live {
+// NewLive wraps a board for continuous rendering.
+func NewLive(b *Board, opts ...LiveOption) *Live {
 	l := &Live{
-		chart:    c,
+		board:    b,
 		interval: defaultInterval,
 		out:      os.Stdout,
 		events:   make(chan liveEvent, 8),
@@ -128,7 +128,7 @@ func NewLive(c *Chart, opts ...LiveOption) *Live {
 func (l *Live) Frame(width int) string {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	return l.chart.Render(width)
+	return l.board.Render(width)
 }
 
 // Update runs fn while holding the render lock, then repaints immediately.
@@ -324,7 +324,7 @@ func (l *Live) paintLocked(width int) string {
 		l.prev = nil
 	}
 	if w <= 0 {
-		w = l.chart.opts.width
+		w = l.board.opts.width
 		if w <= 0 {
 			if termW > 0 {
 				w = termW
@@ -333,7 +333,7 @@ func (l *Live) paintLocked(width int) string {
 			}
 		}
 	}
-	cv, info := l.chart.RenderCanvas(w)
+	cv, info := l.board.RenderCanvas(w)
 	if termH > 0 && cv.h > termH {
 		cv = cv.Sub(Rect{W: cv.w, H: termH})
 	}

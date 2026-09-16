@@ -24,7 +24,7 @@ func NewSpark(vals ...float64) *Sparkline {
 }
 
 // Title is accepted for symmetry with other diagrams; it renders above the
-// sparkline when placed in a Chart row by itself only if height allows.
+// sparkline when placed in a Board row by itself only if height allows.
 func (s *Sparkline) Title(t string) *Sparkline { s.SetTitle(t); return s }
 
 // Values appends additional data points to the sparkline.

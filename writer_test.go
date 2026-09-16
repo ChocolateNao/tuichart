@@ -10,9 +10,9 @@ import (
 	"testing"
 )
 
-var _ io.WriterTo = (*Chart)(nil)
+var _ io.WriterTo = (*Board)(nil)
 
-func sampleRenderChart() *Chart {
+func sampleRenderBoard() *Board {
 	g := New(WithNoColor(), WithUnicode(false), WithWidth(40))
 	g.Title("t")
 	g.Add(NewSpark(1, 2, 3).Title("s"))
@@ -20,7 +20,7 @@ func sampleRenderChart() *Chart {
 }
 
 func TestRenderToBufferMatchesRender(t *testing.T) {
-	c := sampleRenderChart()
+	c := sampleRenderBoard()
 	var buf bytes.Buffer
 	if err := c.RenderTo(&buf); err != nil {
 		t.Fatalf("RenderTo: %v", err)
@@ -31,7 +31,7 @@ func TestRenderToBufferMatchesRender(t *testing.T) {
 }
 
 func TestRenderToExplicitWidth(t *testing.T) {
-	c := sampleRenderChart()
+	c := sampleRenderBoard()
 	var buf bytes.Buffer
 	if err := c.RenderTo(&buf, 60); err != nil {
 		t.Fatalf("RenderTo: %v", err)
@@ -47,7 +47,7 @@ func TestRenderToExplicitWidth(t *testing.T) {
 }
 
 func TestRenderToFile(t *testing.T) {
-	c := sampleRenderChart()
+	c := sampleRenderBoard()
 	path := filepath.Join(t.TempDir(), "chart.txt")
 	f, err := os.Create(path)
 	if err != nil {
@@ -82,7 +82,7 @@ func (fw *failWriter) Write(p []byte) (int, error) {
 }
 
 func TestRenderToWriterError(t *testing.T) {
-	c := sampleRenderChart()
+	c := sampleRenderBoard()
 	err := c.RenderTo(&failWriter{})
 	if err == nil {
 		t.Fatal("expected error from failing writer")
@@ -97,7 +97,7 @@ func TestRenderToWriterError(t *testing.T) {
 }
 
 func TestChartWriteToViaIoCopy(t *testing.T) {
-	c := sampleRenderChart()
+	c := sampleRenderBoard()
 	var buf bytes.Buffer
 	n, err := io.Copy(&buf, c.Reader())
 	if err != nil {
@@ -109,7 +109,7 @@ func TestChartWriteToViaIoCopy(t *testing.T) {
 }
 
 func TestShortWriteDetected(t *testing.T) {
-	c := sampleRenderChart()
+	c := sampleRenderBoard()
 	err := c.RenderTo(shortWriter{})
 	if err == nil || !errors.Is(err, io.ErrShortWrite) {
 		t.Errorf("short write not detected: %v", err)

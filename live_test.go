@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func liveChart() (*Chart, *Line) {
+func liveBoard() (*Board, *Line) {
 	g := New(WithNoColor(), WithUnicode(true))
 	line := NewLineVals("feed", []float64{1, 2, 1})
 	p := NewPlot().Title("live")
@@ -22,7 +22,7 @@ func liveChart() (*Chart, *Line) {
 }
 
 func TestLiveFrameDeterministic(t *testing.T) {
-	g, _ := liveChart()
+	g, _ := liveBoard()
 	l := NewLive(g, WithLiveOutput(&bytes.Buffer{}))
 	a := l.Frame(50)
 	b := l.Frame(50)
@@ -35,7 +35,7 @@ func TestLiveFrameDeterministic(t *testing.T) {
 }
 
 func TestLiveRunPaintsFramesAndRestores(t *testing.T) {
-	g, _ := liveChart()
+	g, _ := liveBoard()
 	var buf bytes.Buffer
 	l := NewLive(g,
 		WithLiveOutput(&buf),
@@ -63,7 +63,7 @@ func TestLiveRunPaintsFramesAndRestores(t *testing.T) {
 }
 
 func TestLiveStopReturnsNil(t *testing.T) {
-	g, _ := liveChart()
+	g, _ := liveBoard()
 	var buf bytes.Buffer
 	l := NewLive(g, WithLiveOutput(&buf), WithInterval(5*time.Millisecond))
 	errc := make(chan error, 1)
@@ -82,7 +82,7 @@ func TestLiveStopReturnsNil(t *testing.T) {
 }
 
 func TestOnUpdateRunsPerTick(t *testing.T) {
-	g, line := liveChart()
+	g, line := liveBoard()
 	var n int
 	var mu sync.Mutex
 	var buf bytes.Buffer
@@ -110,7 +110,7 @@ func TestOnUpdateRunsPerTick(t *testing.T) {
 }
 
 func TestLiveUpdateImmediate(t *testing.T) {
-	g, _ := liveChart()
+	g, _ := liveBoard()
 	var buf bytes.Buffer
 	l := NewLive(g, WithLiveOutput(&buf))
 	l.Update(func() { g.Title("mutated") })
@@ -120,7 +120,7 @@ func TestLiveUpdateImmediate(t *testing.T) {
 }
 
 func TestLiveDoubleStopAndRerun(t *testing.T) {
-	g, _ := liveChart()
+	g, _ := liveBoard()
 	l := NewLive(g, WithLiveOutput(&bytes.Buffer{}), WithInterval(5*time.Millisecond))
 	go l.Run(context.Background())
 	time.Sleep(15 * time.Millisecond)

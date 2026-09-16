@@ -16,7 +16,9 @@ func (n *TreemapNode) value() float64 {
 	if len(n.Children) > 0 {
 		s := 0.0
 		for _, c := range n.Children {
-			s += c.value()
+			if v := c.value(); v > 0 {
+				s += v
+			}
 		}
 		return s
 	}
@@ -168,6 +170,9 @@ func layoutTreemap(
 	curX, curY := x0, y0
 	for i, n := range nodes {
 		v := n.value()
+		if v <= 0 {
+			continue
+		}
 		if i == len(nodes)-1 {
 			rc := treemapRect{node: n, x0: curX, y0: curY, x1: x0 + w - 1, y1: y0 + h - 1}
 			*out = append(*out, rc)

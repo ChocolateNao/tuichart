@@ -216,7 +216,7 @@ func TestPaintFrameFullRepaintVariants(t *testing.T) {
 	}
 }
 
-// screenLines returns the chart laid out at width as plain rows.
-func screenLines(c *Chart, width int) []string {
-	return c.RenderLines(width)
+// screenLines returns the board laid out at width as plain rows.
+func screenLines(b *Board, width int) []string {
+	return b.RenderLines(width)
 }

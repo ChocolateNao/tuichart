@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Options configures a Chart at construction time.
+// Options configures a Board at construction time.
 type Options struct {
 	palette         []Color
 	levelOverride   Level
@@ -17,7 +17,7 @@ type Options struct {
 	unicodeOverride int8
 }
 
-// Option mutates Chart options.
+// Option mutates Board options.
 type Option func(*Options)
 
 // WithWidth overrides the detected terminal width with a fixed column count.
@@ -86,61 +86,61 @@ func (o *Options) apply(info Info) Info {
 
 type rowEntry struct{ d Drawable }
 
-// Chart renders multiple diagrams into one string, stacked vertically or
+// Board renders multiple diagrams into one string, stacked vertically or
 // arranged side by side with Row.
-type Chart struct {
+type Board struct {
 	title      string
 	rows       [][]rowEntry
 	opts       Options
 	titleAlign Align
 }
 
-// New creates an empty chart container. Options configure rendering behavior;
+// New creates an empty board container. Options configure rendering behavior;
 // they override automatic terminal detection.
-func New(opts ...Option) *Chart {
-	c := &Chart{opts: Options{unicodeOverride: -1}, titleAlign: AlignCenter}
+func New(opts ...Option) *Board {
+	b := &Board{opts: Options{unicodeOverride: -1}, titleAlign: AlignCenter}
 	for _, opt := range opts {
-		opt(&c.opts)
+		opt(&b.opts)
 	}
-	return c
+	return b
 }
 
 // Title sets the container title rendered above all diagrams.
-func (c *Chart) Title(t string) *Chart { c.title = t; return c }
+func (b *Board) Title(t string) *Board { b.title = t; return b }
 
 // TitleAlign sets where the container title sits: AlignLeft, AlignCenter
 // (default) or AlignRight.
-func (c *Chart) TitleAlign(a Align) *Chart { c.titleAlign = a; return c }
+func (b *Board) TitleAlign(a Align) *Board { b.titleAlign = a; return b }
 
 // Add appends a diagram on its own row.
-func (c *Chart) Add(d Drawable) *Chart {
-	return c.Row(d)
+func (b *Board) Add(d Drawable) *Board {
+	return b.Row(d)
 }
 
 // Row places diagrams side by side, splitting available width evenly.
-func (c *Chart) Row(ds ...Drawable) *Chart {
+func (b *Board) Row(ds ...Drawable) *Board {
 	entry := make([]rowEntry, len(ds))
 	for i, d := range ds {
 		entry[i] = rowEntry{d: d}
 	}
-	c.rows = append(c.rows, entry)
-	return c
+	b.rows = append(b.rows, entry)
+	return b
 }
 
-// Clear removes all diagrams and the title from the chart.
-func (c *Chart) Clear() *Chart { c.rows = nil; return c }
+// Clear removes all diagrams and the title from the board.
+func (b *Board) Clear() *Board { b.rows = nil; return b }
 
 // Len returns the total number of diagrams across all rows.
-func (c *Chart) Len() int {
+func (b *Board) Len() int {
 	n := 0
-	for _, r := range c.rows {
+	for _, r := range b.rows {
 		n += len(r)
 	}
 	return n
 }
 
 // Reset removes all diagrams but keeps options.
-func (c *Chart) Reset() *Chart { c.Clear(); return c }
+func (b *Board) Reset() *Board { b.Clear(); return b }
 
 func defaultDiagramHeight(width int) int {
 	h := width / 3
@@ -155,14 +155,14 @@ func defaultDiagramHeight(width int) int {
 
 // resolveWidthInfo resolves the effective rendering width and the terminal
 // info (after option overrides). A width <= 0 falls back to the detected
-// terminal width, then the chart's WithWidth option.
-func (c *Chart) resolveWidthInfo(width int) (int, Info) {
-	info := c.opts.apply(Detect())
+// terminal width, then the board's WithWidth option.
+func (b *Board) resolveWidthInfo(width int) (int, Info) {
+	info := b.opts.apply(Detect())
 	w := width
 	if w <= 0 {
 		w = info.W
-		if c.opts.width > 0 {
-			w = c.opts.width
+		if b.opts.width > 0 {
+			w = b.opts.width
 		}
 	}
 	if w < 10 {
@@ -172,15 +172,15 @@ func (c *Chart) resolveWidthInfo(width int) (int, Info) {
 }
 
 // diagramHeight determines the draw height for a single diagram using the
-// diagram's own hint, the chart's default height, and the WithDiagramHeight
+// diagram's own hint, the board's default height, and the WithDiagramHeight
 // option.
-func (c *Chart) diagramHeight(d Drawable, seg, w int) int {
+func (b *Board) diagramHeight(d Drawable, seg, w int) int {
 	h := d.HeightHint(seg)
 	if h <= 0 {
 		h = defaultDiagramHeight(w)
 	}
-	if c.opts.diagramHeight > 0 && d.HeightHint(seg) == 0 {
-		h = c.opts.diagramHeight
+	if b.opts.diagramHeight > 0 && d.HeightHint(seg) == 0 {
+		h = b.opts.diagramHeight
 	}
 	if h < 3 {
 		h = 3
@@ -204,22 +204,22 @@ func segmentWidth(w, k int) int {
 
 // layout resolves the effective width and renders every diagram row into
 // a slice of finished line strings (ANSI-styled per the resolved profile).
-func (c *Chart) layout(width int) []string {
-	w, info := c.resolveWidthInfo(width)
+func (b *Board) layout(width int) []string {
+	w, info := b.resolveWidthInfo(width)
 	rc := newCtx(info)
-	if len(c.opts.palette) > 0 {
-		rc.Palette = c.opts.palette
+	if len(b.opts.palette) > 0 {
+		rc.Palette = b.opts.palette
 	}
 
 	var lines []string
-	if c.title != "" {
-		lines = append(lines, alignStyled(c.title, w, c.titleAlign, info.Unicode))
+	if b.title != "" {
+		lines = append(lines, alignStyled(b.title, w, b.titleAlign, info.Unicode))
 		lines = append(lines, "")
 	}
 
-	for ri, row := range c.rows {
-		if ri > 0 || len(lines) > 0 && c.title != "" {
-			for g := 0; g < max(c.opts.gap, 1); g++ {
+	for ri, row := range b.rows {
+		if ri > 0 || len(lines) > 0 && b.title != "" {
+			for g := 0; g < max(b.opts.gap, 1); g++ {
 				lines = append(lines, "")
 			}
 		}
@@ -232,7 +232,7 @@ func (c *Chart) layout(width int) []string {
 		canvases := make([]*Canvas, k)
 		maxLines := 0
 		for i, e := range row {
-			h := c.diagramHeight(e.d, seg, w)
+			h := b.diagramHeight(e.d, seg, w)
 			heights[i] = h
 			cv := NewCanvas(seg, h)
 			e.d.Draw(rc, cv)
@@ -267,12 +267,12 @@ func (c *Chart) layout(width int) []string {
 
 // Render lays out every added diagram. With no argument the detected
 // terminal width is used.
-func (c *Chart) Render(width ...int) string {
+func (b *Board) Render(width ...int) string {
 	w := 0
 	if len(width) > 0 {
 		w = width[0]
 	}
-	lines := c.layout(w)
+	lines := b.layout(w)
 	var out []byte
 	for i, l := range lines {
 		if i > 0 {
@@ -288,41 +288,41 @@ func (c *Chart) Render(width ...int) string {
 // string per terminal row, ANSI-styled according to the resolved profile,
 // without trailing newlines. Feed the result to frameworks that manage
 // their own line buffers (Bubble Tea views, tview TextView, ...).
-func (c *Chart) RenderLines(width ...int) []string {
+func (b *Board) RenderLines(width ...int) []string {
 	w := 0
 	if len(width) > 0 {
 		w = width[0]
 	}
-	return c.layout(w)
+	return b.layout(w)
 }
 
-// RenderCanvas renders the chart into a single Canvas preserving per-cell
+// RenderCanvas renders the board into a single Canvas preserving per-cell
 // style information, plus the Info the render resolved. It mirrors layout
 // exactly — same width, title, gaps, and diagram placement — so the result
 // serializes to the same output as Render. It exists for incremental
 // painters (the Live renderer) that diff frames cell-by-cell instead of
 // rewriting the whole screen.
-func (c *Chart) RenderCanvas(width int) (*Canvas, Info) {
-	w, info := c.resolveWidthInfo(width)
+func (b *Board) RenderCanvas(width int) (*Canvas, Info) {
+	w, info := b.resolveWidthInfo(width)
 	rc := newCtx(info)
-	if len(c.opts.palette) > 0 {
-		rc.Palette = c.opts.palette
+	if len(b.opts.palette) > 0 {
+		rc.Palette = b.opts.palette
 	}
 	const sepW = 2
 
 	totalH := 0
-	if c.title != "" {
+	if b.title != "" {
 		totalH = 2
 	}
-	rowHeights := make([]int, len(c.rows))
-	for ri, row := range c.rows {
-		if ri > 0 || c.title != "" {
-			totalH += max(c.opts.gap, 1)
+	rowHeights := make([]int, len(b.rows))
+	for ri, row := range b.rows {
+		if ri > 0 || b.title != "" {
+			totalH += max(b.opts.gap, 1)
 		}
 		seg := segmentWidth(w, len(row))
 		mh := 0
 		for _, e := range row {
-			if h := c.diagramHeight(e.d, seg, w); h > mh {
+			if h := b.diagramHeight(e.d, seg, w); h > mh {
 				mh = h
 			}
 		}
@@ -332,27 +332,27 @@ func (c *Chart) RenderCanvas(width int) (*Canvas, Info) {
 
 	cv := NewCanvas(w, totalH)
 	y := 0
-	if c.title != "" {
+	if b.title != "" {
 		cx := 0
-		switch c.titleAlign {
+		switch b.titleAlign {
 		case AlignRight:
-			cx = w - runeLen(c.title)
+			cx = w - runeLen(b.title)
 		case AlignLeft:
 			cx = 0
 		default:
-			cx = max((w-runeLen(c.title))/2, 0)
+			cx = max((w-runeLen(b.title))/2, 0)
 		}
-		cv.Text(cx, 0, c.title, Style{})
+		cv.Text(cx, 0, b.title, Style{})
 		y = 2
 	}
-	for ri, row := range c.rows {
-		if ri > 0 || c.title != "" {
-			y += max(c.opts.gap, 1)
+	for ri, row := range b.rows {
+		if ri > 0 || b.title != "" {
+			y += max(b.opts.gap, 1)
 		}
 		seg := segmentWidth(w, len(row))
 		x := 0
 		for _, e := range row {
-			h := c.diagramHeight(e.d, seg, w)
+			h := b.diagramHeight(e.d, seg, w)
 			dcv := NewCanvas(seg, h)
 			e.d.Draw(rc, dcv)
 			cv.Blit(dcv, x, y)
@@ -364,20 +364,20 @@ func (c *Chart) RenderCanvas(width int) (*Canvas, Info) {
 }
 
 // String renders at the detected terminal width.
-func (c *Chart) String() string { return c.Render(0) }
+func (b *Board) String() string { return b.Render(0) }
 
-// RenderTo writes the rendered chart to any io.Writer — stdout, a file, a
+// RenderTo writes the rendered board to any io.Writer — stdout, a file, a
 // network connection, an http.ResponseWriter — instead of returning a
 // string. The width follows the variadic convention of Render: detected
 // terminal width when omitted, explicit otherwise. Styling is decided by
-// the chart's own options (WithNoColor / WithProfile), so the same call
+// the board's own options (WithNoColor / WithProfile), so the same call
 // serves ANSI terminals and plain-text sinks like log files.
 //
-// The chart is rendered fully in memory and then written; a short write
+// The board is rendered fully in memory and then written; a short write
 // or any writer error aborts and is returned wrapped with context.
 // Rendering itself never fails.
-func (c *Chart) RenderTo(w io.Writer, width ...int) error {
-	out := c.Render(width...)
+func (b *Board) RenderTo(w io.Writer, width ...int) error {
+	out := b.Render(width...)
 	n, err := w.Write([]byte(out))
 	if err == nil && n != len(out) {
 		err = io.ErrShortWrite
@@ -391,17 +391,17 @@ func (c *Chart) RenderTo(w io.Writer, width ...int) error {
 // WriteTo implements io.WriterTo so charts compose with io.Copy and any
 // other writer-based plumbing. It renders at the detected terminal width;
 // use RenderTo for an explicit width or wrapped errors.
-func (c *Chart) WriteTo(w io.Writer) (int64, error) {
-	n, err := w.Write([]byte(c.Render()))
+func (b *Board) WriteTo(w io.Writer) (int64, error) {
+	n, err := w.Write([]byte(b.Render()))
 	return int64(n), err
 }
 
-// Reader returns an io.Reader over the rendered chart (detected terminal
+// Reader returns an io.Reader over the rendered board (detected terminal
 // width), so charts plug into reader-based APIs: io.Copy, http response
 // bodies, multipart writers, and friends. The content is fully rendered
 // up front; reading never fails.
-func (c *Chart) Reader() io.Reader {
-	return strings.NewReader(c.Render())
+func (b *Board) Reader() io.Reader {
+	return strings.NewReader(b.Render())
 }
 
 func alignStyled(s string, w int, a Align, uni bool) string {

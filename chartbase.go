@@ -141,10 +141,10 @@ func (b *chartBase) ResetScale() {
 	b.xTicks, b.yTicks = nil, nil
 }
 
-// SetSize pins this diagram's height in rows when rendered in a Chart.
+// SetSize pins this diagram's height in rows when rendered in a Board.
 func (b *chartBase) SetSize(rows int) { b.height = rows }
 
-// ResetSize clears the pinned height, letting the Chart container decide.
+// ResetSize clears the pinned height, letting the Board container decide.
 func (b *chartBase) ResetSize() { b.height = 0 }
 
 // HeightHint returns the pinned height or 0 to let the container decide.

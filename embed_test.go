@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func sampleChart(opts ...Option) *Chart {
+func sampleBoard(opts ...Option) *Board {
 	g := New(opts...)
 	p := NewPlot()
 	p.Add(NewLineVals("s", []float64{1, 3, 2, 5}))
@@ -14,7 +14,7 @@ func sampleChart(opts ...Option) *Chart {
 }
 
 func TestRenderLinesMatchesRender(t *testing.T) {
-	g := sampleChart(WithNoColor(), WithUnicode(true))
+	g := sampleBoard(WithNoColor(), WithUnicode(true))
 	joined := strings.Join(g.RenderLines(60), "\n") + "\n"
 	if joined != g.Render(60) {
 		t.Error("RenderLines and Render disagree")

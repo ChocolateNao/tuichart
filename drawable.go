@@ -13,7 +13,7 @@ func newCtx(info Info) *Ctx {
 }
 
 // NewRenderCtx builds a Ctx manually, e.g. when rendering a Drawable
-// directly into a Canvas without going through a Chart.
+// directly into a Canvas without going through a Board.
 func NewRenderCtx(info Info) *Ctx { return newCtx(info) }
 
 // Next returns the next unused palette color, cycling when exhausted.
@@ -30,7 +30,7 @@ type LegendEntry struct {
 	Style Style
 }
 
-// Drawable is implemented by everything that can be placed in a Chart.
+// Drawable is implemented by everything that can be placed in a Board.
 // Implement it to add custom diagram types; use Canvas primitives inside
 // Draw to paint into the area you are given.
 type Drawable interface {
