@@ -5,8 +5,8 @@ color, a background color, and a bold flag. The `Style` type bundles these
 properties, and every paint method on `Canvas` takes a style as its last
 argument.
 
-At the chart level, a *color profile* controls how styles are emitted as
-ANSI escape codes — or whether they are emitted at all.
+At the chart level, a _color profile_ controls how styles are emitted as ANSI
+escape codes — or whether they are emitted at all.
 
 ## The color pipeline
 
@@ -17,12 +17,12 @@ Style{Fg, Bg, Bold}
 
 Profiles, in order of fidelity:
 
-| Level          | Name         | When chosen                                                         |
-| -------------- | ------------ | ------------------------------------------------------------------- |
-| `LevelNone`    | No color     | Explicit `WithNoColor()`, `NO_COLOR` non-empty (no-color.org spec), or terminal explicitly reports no support. |
-| `Level16`      | 16 colors    | Minimal terminals, `TERM=dumb`-like.                                 |
-| `Level256`     | 256 colors   | Most modern terminals without truecolor support.                     |
-| `LevelTrue`    | Truecolor    | Default for terminals advertising 24-bit color.                      |
+| Level       | Name       | When chosen                                                                                                    |
+| ----------- | ---------- | -------------------------------------------------------------------------------------------------------------- |
+| `LevelNone` | No color   | Explicit `WithNoColor()`, `NO_COLOR` non-empty (no-color.org spec), or terminal explicitly reports no support. |
+| `Level16`   | 16 colors  | Minimal terminals, `TERM=dumb`-like.                                                                           |
+| `Level256`  | 256 colors | Most modern terminals without truecolor support.                                                               |
+| `LevelTrue` | Truecolor  | Default for terminals advertising 24-bit color.                                                                |
 
 You can force a profile:
 
@@ -39,7 +39,7 @@ Detection is cached globally; tests that touch detection should call
 Colors are values of `tuichart.Color`. Three constructors exist:
 
 ```go
-Indexed(5)   // ANSI 256 palette index
+Indexed(5)       // ANSI 256 palette index
 RGB(255, 100, 0) // truecolor triplet
 ```
 
@@ -73,9 +73,9 @@ path renders everywhere; you never need to branch on the level yourself.
 
 ## Palettes
 
-Diagrams that show multiple data series draw from a shared *palette* — a
-`[]Color` embedded in the rendering context. Each new series advances a
-palette cursor (`rc.Next()`) that cycles when it runs out.
+Diagrams that show multiple data series draw from a shared _palette_ — a
+`[]Color` embedded in the rendering context. Each new series advances a palette
+cursor (`rc.Next()`) that cycles when it runs out.
 
 Default palette (in order):
 
@@ -96,68 +96,67 @@ available on most diagram types.
 ## Degradation tables
 
 When the terminal lacks truecolor, tuichart approximates the nearest ANSI
-256-color index; when it lacks ANSI entirely, it falls back to character
-glyphs that are visually distinct even in monochrome.
+256-color index; when it lacks ANSI entirely, it falls back to character glyphs
+that are visually distinct even in monochrome.
 
 ### Box-drawing
 
-| Unicode  | ASCII  | Use            |
-| -------- | ------ | -------------- |
-| `┌─…─┐`  | `+-..+` | Frame corners  |
-| `│`       | `\|`    | Vertical edges |
-| `─`       | `-`     | Horizontal edges |
+| Unicode | ASCII   | Use              |
+| ------- | ------- | ---------------- |
+| `┌─…─┐` | `+-..+` | Frame corners    |
+| `│`     | `\|`    | Vertical edges   |
+| `─`     | `-`     | Horizontal edges |
 
 ### Braille (line plots)
 
-Braille dots are absent in pure ASCII. tuichart substitutes slope
-characters built from `|`, `/`, `\`, `-`, `.`, `*` so that lines remain
-readable.
+Braille dots are absent in pure ASCII. tuichart substitutes slope characters
+built from `|`, `/`, `\`, `-`, `.`, `*` so that lines remain readable.
 
 ### Gauge fill
 
-| Style         | Unicode chars             | ASCII fallback       |
-| ------------- | ------------------------- | -------------------- |
-| `GaugeBlocks` | `████░░░░`                | `####----`           |
-| `GaugeSegments`| `▰▰▱▱▱`                 | `==:::`              |
-| `GaugeArrow`  | `━━━━╸───`                | `----->---`          |
+| Style           | Unicode chars | ASCII fallback |
+| --------------- | ------------- | -------------- |
+| `GaugeBlocks`   | `████░░░░`    | `####----`     |
+| `GaugeSegments` | `▰▰▱▱▱`       | `==:::`        |
+| `GaugeArrow`    | `━━━━╸───`    | `----->---`    |
 
 ### Pie slices
 
-| Unicode  | ASCII  |
-| -------- | ------ |
+| Unicode        | ASCII                      |
+| -------------- | -------------------------- |
 | Palette colors | `#`, `@`, `*`, `o` cycling |
-| `SliceColor` | same glyph set |
+| `SliceColor`   | same glyph set             |
 
 ### Heatmap cells
 
 The default gradient maps to a text-density ramp:
 
-| Level      | Characters                          |
-| ---------- | ----------------------------------- |
-| Truecolor  | Full RGB blend from blue to red.    |
-| 256/16     | Approximated ANSI block+fg.         |
-| Mono       | `.`, `:`, `-`, `=`, `+`, `*`, `#`, `@` |
+| Level     | Characters                             |
+| --------- | -------------------------------------- |
+| Truecolor | Full RGB blend from blue to red.       |
+| 256/16    | Approximated ANSI block+fg.            |
+| Mono      | `.`, `:`, `-`, `=`, `+`, `*`, `#`, `@` |
 
 ## Tips for writing custom diagrams
 
-- Always use `rc.Palette[i]` or `rc.Next()` for series colors; never hard-code
-  a color index. That way your diagram adapts to the user's palette.
-- Always check `rc.Info.Unicode` when choosing between Unicode glyphs and
-  ASCII fallback characters. Example from the tutorial's `bullet` package:
+- Always use `rc.Palette[i]` or `rc.Next()` for series colors; never hard-code a
+  color index. That way your diagram adapts to the user's palette.
+- Always check `rc.Info.Unicode` when choosing between Unicode glyphs and ASCII
+  fallback characters. Example from the tutorial's `bullet` package:
 
 ```go
 zoneCh, valCh, markCh := '░', '█', '┃'
 if !uni {
-	zoneCh, valCh, markCh = '.', '#', '|'
+ zoneCh, valCh, markCh = '.', '#', '|'
 }
 ```
 
-- Use `FormatValue(v)` for tick labels; it rounds and abbreviates
-  automatically and respects the available width.
+- Use `FormatValue(v)` for tick labels; it rounds and abbreviates automatically
+  and respects the available width.
 
 ## `NO_COLOR` and the environment
 
-`NO_COLOR` is honored per [no-color.org](https://no-color.org): it must be
-a non-empty string (`os.Getenv` returns `""` if unset, so it is ignored when
-unset). Detection is global and cached; see `ResetDetection()` to invalidate
-the cache between tests.
+`NO_COLOR` is honored per [no-color.org](https://no-color.org): it must be a
+non-empty string (`os.Getenv` returns `""` if unset, so it is ignored when
+unset). Detection is global and cached; see `ResetDetection()` to invalidate the
+cache between tests.

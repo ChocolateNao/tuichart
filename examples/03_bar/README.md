@@ -4,9 +4,9 @@ Grouped bar chart with values shown.
 
 ## What it shows
 
-A `BarChart` with two named series ("sales" and "returns") plotted over
-five categorical labels, with `ShowValues(true)` printing the raw numbers
-inside each bar.
+A `BarChart` with two named series ("sales" and "returns") plotted over five
+categorical labels, with `ShowValues(true)` printing the raw numbers inside each
+bar.
 
 ## How to run
 

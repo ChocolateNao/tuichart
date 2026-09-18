@@ -17,5 +17,5 @@ go run ./examples/05_styled
 ## Caveats
 
 - `WithGap(1)` inserts blank rows between diagrams for visual separation.
-- The candlestick `UpColor`/`DownColor` overrides the palette for up/down
-  bars; set them individually to control direction styling.
+- The candlestick `UpColor`/`DownColor` overrides the palette for up/down bars;
+  set them individually to control direction styling.

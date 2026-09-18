@@ -1,10 +1,10 @@
 # Live rendering
 
 The `Live` renderer drives a `Board` as a real-time, continuously updated
-display: it paints diffs at your chosen refresh rate, redraws the entire
-frame when the terminal is resized, swallows stray input bytes so that
-background typing doesn't break the display, and always restores the
-terminal when it exits.
+display: it paints diffs at your chosen refresh rate, redraws the entire frame
+when the terminal is resized, swallows stray input bytes so that background
+typing doesn't break the display, and always restores the terminal when it
+exits.
 
 ## Quick sketch
 
@@ -12,33 +12,33 @@ terminal when it exits.
 package main
 
 import (
-	"context"
-	"fmt"
-	"time"
+  "context"
+  "fmt"
+  "time"
 
-	"github.com/ChocolateNao/tuichart"
+  "github.com/ChocolateNao/tuichart"
 )
 
 func main() {
-	g := tuichart.New(tuichart.WithWidth(60))
-	p := tuichart.NewPlot().Title("requests/s")
-	g.Add(p)
+  g := tuichart.New(tuichart.WithWidth(60))
+  p := tuichart.NewPlot().Title("requests/s")
+  g.Add(p)
 
-	l := tuichart.NewLive(g,
-		tuichart.WithInterval(500*time.Millisecond),
-		tuichart.WithLiveOutput(os.Stdout),
-		tuichart.OnUpdate(func() {
-			// pull fresh data into p, called under the render lock
-			val := math.Sin(float64(time.Now().UnixMilli())/500) * 100 + 150
-			line.SetValues(append(line.Values(), val))
-		}),
-	)
+  l := tuichart.NewLive(g,
+    tuichart.WithInterval(500*time.Millisecond),
+    tuichart.WithLiveOutput(os.Stdout),
+    tuichart.OnUpdate(func() {
+    // pull fresh data into p, called under the render lock
+    val := math.Sin(float64(time.Now().UnixMilli())/500) * 100 + 150
+    line.SetValues(append(line.Values(), val))
+    }),
+  )
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-	if err := l.Run(ctx); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
+  ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+  defer cancel()
+  if err := l.Run(ctx); err != nil {
+    fmt.Fprintln(os.Stderr, err)
+  }
 }
 ```
 
@@ -60,21 +60,20 @@ A `Live` instance holds:
 `Run` enters a loop that:
 
 1. Waits on the event channel for the next tick, resize, or flush.
-2. If the event is a *tick* (time interval elapsed), calls `OnUpdate` under
-   the lock so your pump can update the diagram's data.
-3. Paints the updated chart frame to the terminal using *cell-level diffing*:
+2. If the event is a _tick_ (time interval elapsed), calls `OnUpdate` under the
+   lock so your pump can update the diagram's data.
+3. Paints the updated chart frame to the terminal using _cell-level diffing_:
    only changed cells are emitted; identical frames produce no output.
-4. On resize (`SIGWINCH` on Unix, console polling on Windows), clears the
-   screen and repaints the full frame immediately.
-5. When the context is cancelled, the loop stops and the terminal is
-   restored.
+4. On resize (`SIGWINCH` on Unix, console polling on Windows), clears the screen
+   and repaints the full frame immediately.
+5. When the context is cancelled, the loop stops and the terminal is restored.
 
 ## Static frames without a TTY
 
-`Live.Frame(width)` renders one frame at the given width *without* touching
-the screen or invoking `OnUpdate`. It returns a plain string. This is useful
-for testing, for previewing what a live display would look like, and for
-embedding the live chart in another renderer.
+`Live.Frame(width)` renders one frame at the given width _without_ touching the
+screen or invoking `OnUpdate`. It returns a plain string. This is useful for
+testing, for previewing what a live display would look like, and for embedding
+the live chart in another renderer.
 
 ```
 ┌─ requests ───────────────────────────────────────┐
@@ -103,29 +102,29 @@ embedding the live chart in another renderer.
 
 `tuichart.NewLive(chart, opts...)`:
 
-| Option                     | Effect                                                              |
-| -------------------------- | ------------------------------------------------------------------- |
-| `WithLiveOutput(w)`        | Redirect output away from `os.Stdout`.                              |
-| `WithInterval(d)`          | Minimum interval between repaints (clamped to 10 ms).               |
-| `WithFPS(fps)`             | Set the interval from a target frame rate.                          |
-| `OnUpdate(fn)`             | Register a callback invoked under the render lock on each tick.     |
+| Option              | Effect                                                          |
+| ------------------- | --------------------------------------------------------------- |
+| `WithLiveOutput(w)` | Redirect output away from `os.Stdout`.                          |
+| `WithInterval(d)`   | Minimum interval between repaints (clamped to 10 ms).           |
+| `WithFPS(fps)`      | Set the interval from a target frame rate.                      |
+| `OnUpdate(fn)`      | Register a callback invoked under the render lock on each tick. |
 
 ## Updating the chart
 
 ```go
 // Update under the lock, then repaint immediately.
 l.Update(func() {
-	// mutate diagram data here
+  // mutate diagram data here
 })
 
 // Repaint without running OnUpdate.
 l.Repaint()
 ```
 
-`Update` runs its function while holding the lock, then paints a single
-frame. `Repaint` paints the current state without changing any data — useful
-when the chart's data was mutated externally (e.g. from a goroutine that
-already holds its own synchronization).
+`Update` runs its function while holding the lock, then paints a single frame.
+`Repaint` paints the current state without changing any data — useful when the
+chart's data was mutated externally (e.g. from a goroutine that already holds
+its own synchronization).
 
 ## Resizing and clipping
 
@@ -136,7 +135,7 @@ When the terminal is resized, the live renderer:
 2. Clears the alt-screen region.
 3. Repaints the full frame at the new width immediately.
 
-Frames taller than the terminal's visible rows are *clipped* so that
+Frames taller than the terminal's visible rows are _clipped_ so that
 re-scrolling and partial reflow never appear.
 
 ## Terminal handling
@@ -145,20 +144,20 @@ The `Live` renderer modifies the terminal in these ways:
 
 - **Alt screen**: enters the alternate screen buffer when `Run` starts.
 - **Input quieting**: disables echo, canonical mode, and (on Unix) swallows
-  stray bytes using `select`/`read`, so background keystrokes don't appear
-  as noise.
-- **SIGWINCH/resize**: registers a platform-specific watcher; on Unix this
-  is a signal; on Windows it is a polling loop.
-- **ISIG**: the `ISIG` flag is *kept on* so `Ctrl+C` still produces a
-  signal and the context can cancel cleanly.
+  stray bytes using `select`/`read`, so background keystrokes don't appear as
+  noise.
+- **SIGWINCH/resize**: registers a platform-specific watcher; on Unix this is a
+  signal; on Windows it is a polling loop.
+- **ISIG**: the `ISIG` flag is _kept on_ so `Ctrl+C` still produces a signal and
+  the context can cancel cleanly.
 
-On exit (`Run` returns or the context is cancelled), all terminal settings
-are restored to their original values.
+On exit (`Run` returns or the context is cancelled), all terminal settings are
+restored to their original values.
 
 ## Customisation and borders
 
-The diagram's own `Draw` method decides whether to paint a border around
-itself. `Live` calls `Draw` as usual, passing the same rendering context.
-Use `Live.Frame(width)` to render one frame as a string without entering the
-live loop or touching the screen — useful for embedding in other renderers
-(see [Embedding in other UIs](embedding.md)).
+The diagram's own `Draw` method decides whether to paint a border around itself.
+`Live` calls `Draw` as usual, passing the same rendering context. Use
+`Live.Frame(width)` to render one frame as a string without entering the live
+loop or touching the screen — useful for embedding in other renderers (see
+[Embedding in other UIs](embedding.md)).
