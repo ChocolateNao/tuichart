@@ -5,10 +5,7 @@ import (
 	"strings"
 )
 
-var (
-	sparkBlocks = []rune{'▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'}
-	sparkASCII  = []rune{'_', '.', '-', '=', '+', '*', '#', '%', '@'}
-)
+var sparkASCII = []rune{'_', '.', '-', '=', '+', '*', '#', '%', '@'}
 
 // Sparkline renders a compact one-row line of block characters representing
 // a sequence of values — useful for inline or embedded mini-charts.
@@ -49,6 +46,7 @@ func (s *Sparkline) HeightHint(int) int {
 	if s.title != "" {
 		return 2
 	}
+
 	return 1
 }
 
@@ -63,11 +61,13 @@ func (s *Sparkline) Draw(rc *Ctx, cv *Canvas) {
 			NewStyle(Gray),
 		)
 	}
+
 	line := renderSpark(s.vals, rc.Info.Unicode, s.color, rc)
 	for x, r := range line {
 		if x >= cv.Width() {
 			break
 		}
+
 		cv.Set(x, row, r.r, NewStyle(r.c))
 	}
 }
@@ -80,65 +80,50 @@ type sparkRune struct {
 func renderSpark(vals []float64, uni bool, c Color, rc *Ctx) []sparkRune {
 	n := len(vals)
 	out := make([]sparkRune, 0, n)
-	blocks := sparkBlocks
+
+	blocks := barEighths
 	if !uni {
 		blocks = sparkASCII
 	}
+
 	lo, hi := math.Inf(1), math.Inf(-1)
+
 	for _, v := range vals {
 		if math.IsNaN(v) {
 			continue
 		}
+
 		lo = math.Min(lo, v)
 		hi = math.Max(hi, v)
 	}
+
 	col := c
 	if col.IsZero() && rc != nil {
 		col = SkyBlue
 	}
+
 	for i := 0; i < n; i++ {
 		v := vals[i]
 		if math.IsNaN(v) || hi == lo {
 			out = append(out, sparkRune{r: ' ', c: col})
 			continue
 		}
-		idx := int((v-lo)/(hi-lo)*float64(len(blocks)-1) + 0.5)
-		if idx < 0 {
-			idx = 0
-		}
-		if idx >= len(blocks) {
-			idx = len(blocks) - 1
-		}
-		out = append(out, sparkRune{r: blocks[idx], c: col})
+
+		out = append(out, sparkRune{r: blocks[rampIdx((v-lo)/(hi-lo), len(blocks))], c: col})
 	}
+
 	return out
 }
 
 // Spark renders values as a one-line sparkline using the current terminal profile.
 func Spark(vals []float64) string {
-	rc := newCtx(Detect())
-	runes := renderSpark(vals, rc.Info.Unicode, SkyBlue, rc)
-	var b strings.Builder
-	cur := Style{}
-	active := false
-	for _, sr := range runes {
-		st := NewStyle(sr.c)
-		if !st.eq(cur) {
-			if active {
-				b.WriteString(ansiReset)
-				active = false
-			}
-			seq := rc.Info.Level.seq(st)
-			if seq != "" {
-				b.WriteString(seq)
-				active = true
-				cur = st
-			}
-		}
-		b.WriteRune(sr.r)
+	info := Detect()
+	line := renderSpark(vals, info.Unicode, SkyBlue, newCtx(info))
+
+	cv := NewCanvas(len(line), 1)
+	for x, sr := range line {
+		cv.Set(x, 0, sr.r, NewStyle(sr.c))
 	}
-	if active {
-		b.WriteString(ansiReset)
-	}
-	return b.String()
+
+	return strings.TrimSuffix(cv.Render(info.Level), "\n")
 }
