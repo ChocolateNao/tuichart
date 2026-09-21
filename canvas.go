@@ -11,11 +11,6 @@ func (r Rect) X2() int { return r.X + r.W - 1 }
 // Y2 returns the bottommost Y coordinate (Y + H - 1).
 func (r Rect) Y2() int { return r.Y + r.H - 1 }
 
-// Contains reports whether the point (x, y) lies inside the rectangle.
-func (r Rect) Contains(x, y int) bool {
-	return x >= r.X && x < r.X+r.W && y >= r.Y && y < r.Y+r.H
-}
-
 type cell struct {
 	ch   rune
 	fg   Color
@@ -163,15 +158,6 @@ func (c *Canvas) TextRight(x2, y int, s string, st Style) int {
 	}
 
 	return c.Text(x, y, s, st)
-}
-
-// FillRect fills the rectangle r with the given rune and style.
-func (c *Canvas) FillRect(r Rect, ch rune, st Style) {
-	for y := r.Y; y < r.Y+r.H; y++ {
-		for x := r.X; x < r.X+r.W; x++ {
-			c.Set(x, y, ch, st)
-		}
-	}
 }
 
 // HLine draws a horizontal line from (x1, y) to (x2, y).

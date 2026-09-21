@@ -83,35 +83,6 @@ func TestTruncStr(t *testing.T) {
 
 // ── canvas.go ───────────────────────────────────────────────────────────────
 
-func TestRectContains(t *testing.T) {
-	r := Rect{X: 2, Y: 3, W: 5, H: 4}
-
-	tests := []struct {
-		x, y int
-		want bool
-	}{
-		{2, 3, true},  // top-left corner (inside)
-		{6, 6, true},  // bottom-right inner
-		{7, 3, false}, // just outside right edge (X+W-1=6, so x=7 is outside)
-		{2, 7, false}, // just outside bottom edge (Y+H-1=6, so y=7 is outside)
-		{1, 3, false}, // left of rect
-		{2, 2, false}, // above rect
-		{0, 0, false}, // far outside
-	}
-	for _, tc := range tests {
-		if got := r.Contains(tc.x, tc.y); got != tc.want {
-			t.Errorf("Rect{%v}.Contains(%d,%d) = %v, want %v", r, tc.x, tc.y, got, tc.want)
-		}
-	}
-}
-
-func TestRectContainsZeroSize(t *testing.T) {
-	r := Rect{X: 5, Y: 5, W: 0, H: 0}
-	if r.Contains(5, 5) {
-		t.Error("zero-size rect should not contain any point")
-	}
-}
-
 func TestRectX2Y2(t *testing.T) {
 	r := Rect{X: 1, Y: 2, W: 3, H: 4}
 	if r.X2() != 3 {
@@ -150,50 +121,6 @@ func TestRectClipOutsideZero(t *testing.T) {
 	r := (Rect{X: 20, Y: 20, W: 5, H: 5}).clip(Rect{X: 0, Y: 0, W: 10, H: 10})
 	if r.W != 0 || r.H != 0 {
 		t.Errorf("fully outside clip = %+v, want zero size", r)
-	}
-}
-
-func TestFillRectInside(t *testing.T) {
-	cv := NewCanvas(6, 4)
-	cv.FillRect(Rect{X: 1, Y: 1, W: 3, H: 2}, '#', NewStyle(Red))
-
-	for y := 0; y < 4; y++ {
-		for x := 0; x < 6; x++ {
-			ch := cv.At(x, y).ch
-
-			inR := x >= 1 && x < 4 && y >= 1 && y < 3
-			if inR && ch != '#' {
-				t.Errorf("(%d,%d) expected '#', got %q", x, y, ch)
-			}
-
-			if !inR && ch != ' ' {
-				t.Errorf("(%d,%d) expected ' ', got %q", x, y, ch)
-			}
-		}
-	}
-}
-
-func TestFillRectClipped(t *testing.T) {
-	cv := NewCanvas(4, 3)
-	// Rect extends beyond canvas bounds — Set clips silently
-	cv.FillRect(Rect{X: 2, Y: 1, W: 10, H: 10}, 'X', Style{})
-
-	if cv.At(3, 2).ch != 'X' {
-		t.Error("clipped fill missing expected cell")
-	}
-	// Should not panic
-}
-
-func TestFillRectEmpty(t *testing.T) {
-	cv := NewCanvas(4, 3)
-	cv.FillRect(Rect{X: 10, Y: 10, W: 2, H: 2}, 'Z', Style{})
-	// Entirely outside — no cells changed
-	for y := 0; y < 3; y++ {
-		for x := 0; x < 4; x++ {
-			if cv.At(x, y).ch != ' ' {
-				t.Errorf("unexpected fill at (%d,%d)", x, y)
-			}
-		}
 	}
 }
 
