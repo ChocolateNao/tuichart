@@ -6,7 +6,8 @@ Serve a tuichart chart over HTTP as plain text.
 
 A live chart rendered through `board.RenderTo(w)` into the `http.ResponseWriter`
 on every request, framed by the same title/footer chrome as the other
-integration examples.
+integration examples. The per-diagram rectangles from `board.RenderLayout` are
+served as JSON on `/layout` so a TUI-style client can place its own chrome.
 
 ## How to run
 

@@ -1,9 +1,9 @@
 // Command 09_bubbletea renders a live tuichart chart inside a bubbletea
 // application, framed by a small fixed UI: a title bar above the chart and
-// a status footer with the latest sample below it. The chart is written
-// through board.RenderTo into an in-memory buffer (bubbletea's View must
-// return a string), so the same io.Writer path serves files, sockets and
-// HTTP handlers.
+// a status footer with the latest sample below it. The chart is rendered
+// through board.RenderLayout into a string (bubbletea's View must return a
+// string, so no screen drawing is involved), and the footer shows how many
+// diagrams the board laid out and where.
 //
 // Run it from this directory (it has its own module so the framework deps
 // stay out of the library module):
@@ -12,7 +12,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"math"
 	"os"
@@ -73,13 +72,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // footer. All bars use the same ─── glyph as the tview and HTTP examples so
 // the three integration demos share one visual language.
 func (m model) View() string {
-	var buf bytes.Buffer
-	if err := m.board.RenderTo(&buf, m.width); err != nil {
-		return "tuichart: " + err.Error()
-	}
-	body := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
+	// RenderLayout hands back the canvas plus each diagram's on-screen rect,
+	// which the footer uses so the UI reflects the board's actual layout.
+	entries, cv, info := m.board.RenderLayout(m.width)
+	body := strings.Split(strings.TrimRight(cv.Render(info.Level), "\n"), "\n")
 	head := "─── requests/s · bubbletea"
-	foot := fmt.Sprintf("─── last %.1f rps · %d samples · q to quit", m.last, len(m.vals))
+	foot := fmt.Sprintf("─── last %.1f rps · %d samples · %d diagrams · q to quit",
+		m.last, len(m.vals), len(entries))
 	out := bar(head, m.width) + "\n"
 	for _, l := range body {
 		out += l + "\n"

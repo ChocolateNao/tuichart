@@ -1,7 +1,9 @@
 // Command 11_server serves a tuichart chart over HTTP as a framed plain-text
 // page, written through board.RenderTo into the http.ResponseWriter. The
 // framing matches the ─── title bar and status footer of the bubbletea and
-// tview integration examples.
+// tview integration examples. The per-diagram rectangles from
+// board.RenderLayout are exposed as JSON on /layout so a TUI-style client
+// can build its own chrome around each diagram.
 //
 // Run it, then open http://localhost:8080 in a terminal that renders it
 // (or curl the URL):
@@ -10,6 +12,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
@@ -45,10 +48,15 @@ func main() {
 	board.Add(plot)
 	board.Add(tuichart.NewSpark(v...).Title("spark"))
 
+	// Layout is static (the board never changes), so resolve it once and
+	// reuse it in every handler.
+	entries, _, _ := board.RenderLayout(72)
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		head := bar("─── requests/s · http", 72)
-		foot := bar(fmt.Sprintf("─── served %d samples · %s", len(v), time.Now().Format("15:04:05")), 72)
+		foot := bar(fmt.Sprintf("─── served %d samples · %s · %d diagrams",
+			len(v), time.Now().Format("15:04:05"), len(entries)), 72)
 		fmt.Fprintln(w, head)
 		if err := board.RenderTo(w, 72); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -64,7 +72,12 @@ func main() {
 		}
 	})
 
-	log.Println("listening on :8080 — open http://localhost:8080 (raw chart at /raw)")
+	http.HandleFunc("/layout", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(entries)
+	})
+
+	log.Println("listening on :8080 — open http://localhost:8080 (raw chart at /raw, layout JSON at /layout)")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}

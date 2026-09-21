@@ -4,9 +4,10 @@ A live tuichart chart embedded in a tview (tcell-based) application.
 
 ## What it shows
 
-Each canvas cell is painted directly onto the tcell screen via `Canvas.At`,
+Each canvas cell is painted directly onto the tcell screen via `Canvas.CellAt`,
 framed by the same title/footer chrome used by the other integration examples.
-The tview `Application` loop handles resize and repaint.
+`board.RenderLayout` returns each diagram's rectangle, which is drawn as a
+small geometry chip in the gap row above it.
 
 ## How to run
 

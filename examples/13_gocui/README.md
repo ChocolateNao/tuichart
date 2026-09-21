@@ -57,6 +57,8 @@ gocui delivers a `Shift+letter` press as the uppercase rune.
 - `bool switch` is the app's single source of truth: gocui frames (`gg.ASCII`),
   the board's glyph choice, and the status text all derive from `ui.uni`.
 - The board is cached per `(dataset, color, unicode)` selection so toggles
-  repaint instantly from `Board.RenderCanvas` on the next layout pass.
+  repaint instantly from `Board.RenderLayout` on the next layout pass. The
+  layout's per-diagram rectangles feed the status strip's live `chart WxH`
+  readout.
 
 See `docs/embedding.md` / `INTEGRATION.md` for the embedding patterns.

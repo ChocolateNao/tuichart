@@ -1,7 +1,9 @@
 // Command 12_file renders a board to a file through board.RenderTo, following
 // the same io.Writer path as the other integration examples but with a
 // plain-text sink. The board is written with WithNoColor so the file carries
-// no ANSI escapes and renders cleanly in any pager or editor.
+// no ANSI escapes and renders cleanly in any pager or editor. A layout
+// manifest from board.RenderLayout is appended so tooling reading the file
+// knows where each diagram sits.
 //
 // Run it from this directory (it has its own module so the writer stays out
 // of the library module):
@@ -40,5 +42,11 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	fmt.Println("wrote report.txt (raw chart, no frame)")
+	entries, _, _ := board.RenderLayout(72)
+	fmt.Fprintln(f)
+	fmt.Fprintln(f, "# diagram layout (row, X, Y, W, H):")
+	for i, e := range entries {
+		fmt.Fprintf(f, "# %d: row %d @ %d,%d  %dx%d\n", i, e.Row, e.X, e.Y, e.W, e.H)
+	}
+	fmt.Println("wrote report.txt (raw chart, no frame, with diagram layout)")
 }

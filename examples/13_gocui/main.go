@@ -18,6 +18,10 @@
 //
 // The letter keys also work when pressed with Shift (their capitals), since
 // gocui delivers those as the uppercase rune.
+//
+// The board is laid out through board.RenderLayout, so the per-diagram
+// rectangle (the chart's on-screen size) is available to the app: the status
+// strip shows the live chart geometry from the reported entry.
 package main
 
 import (
@@ -170,23 +174,25 @@ func gocuiSGR(s string) string {
 	return b.String()
 }
 
-// paintBoard renders the chart into the gocui view. RenderCanvas produces the
-// board at the view's interior width; Render() emits it as ANSI SGR text that
-// gocui's escape interpreter (OutputTrue) parses into per-cell colors, so the
-// board flows through gocui's own content buffer like any other view.
-func (u *ui) paintBoard(v *gocui.View) error {
+// paintBoard renders the chart into the gocui view. RenderLayout produces the
+// board at the view's interior width and reports each diagram's rectangle;
+// Render() emits the canvas as ANSI SGR text that gocui's escape interpreter
+// (OutputTrue) parses into per-cell colors, so the board flows through
+// gocui's own content buffer like any other view. The entry rects are
+// returned so the status strip can show the live chart geometry.
+func (u *ui) paintBoard(v *gocui.View) ([]tuichart.LayoutEntry, error) {
 	w, h := v.Size()
 
 	if w < 10 || h < 3 {
-		return nil
+		return nil, nil
 	}
 
-	cv, info := u.board().RenderCanvas(w)
+	entries, cv, info := u.board().RenderLayout(w)
 
 	v.Clear()
 	v.WriteString(gocuiSGR(cv.Render(info.Level)))
 
-	return nil
+	return entries, nil
 }
 
 func (u *ui) layout(gui *gocui.Gui) error {
@@ -211,7 +217,9 @@ func (u *ui) layout(gui *gocui.Gui) error {
 	chart.FrameColor = chrome
 	chart.TitleColor = chrome
 
-	if paintErr := u.paintBoard(chart); paintErr != nil {
+	entries, paintErr := u.paintBoard(chart)
+
+	if paintErr != nil {
 		return paintErr
 	}
 
@@ -227,11 +235,13 @@ func (u *ui) layout(gui *gocui.Gui) error {
 	status.FgColor = chrome
 	status.Clear()
 	status.WriteString(u.bar(fmt.Sprintf(
-		"%s %s · colour %s · unicode %v ",
+		"%s %s · colour %s · unicode %v · chart %dx%d ",
 		u.dash(3),
 		dsNames[u.ds],
 		palNames[u.col],
 		u.uni,
+		entries[0].W,
+		entries[0].H,
 	), maxX-2))
 
 	// Footer buttons: framed views along the bottom edge. The focused button

@@ -1,7 +1,8 @@
 // Command 10_tview renders a tuichart chart inside a tview application by
 // painting each canvas cell directly onto the tcell screen, framed by the
 // same ─── title bar and status footer used by the other integration
-// examples.
+// examples. The per-diagram rectangles from board.RenderLayout label each
+// diagram's size and position in the gap above it.
 //
 // Run it from this directory (it has its own module so the framework deps
 // stay out of the library module):
@@ -23,9 +24,12 @@ import (
 )
 
 // chartView is a tview Box that repaints a tuichart canvas on every Draw.
+// The last board layout is kept so a small geometry chip can be drawn above
+// each diagram using RenderLayout's per-diagram rectangles.
 type chartView struct {
 	*tv.Box
 	board *tuichart.Board
+	last  []tuichart.LayoutEntry
 }
 
 func (c *chartView) SetBoard(b *tuichart.Board) *chartView {
@@ -39,7 +43,7 @@ func (c *chartView) Draw(screen tcell.Screen) {
 		return
 	}
 	x, y, w, h := c.GetInnerRect()
-	cv, _ := c.board.RenderCanvas(w)
+	entries, cv, _ := c.board.RenderLayout(w)
 
 	pal := tcell.StyleDefault
 	for i := 0; i < cv.Height() && y+i < h; i++ {
@@ -57,6 +61,26 @@ func (c *chartView) Draw(screen tcell.Screen) {
 				st = st.Bold(true)
 			}
 			screen.SetContent(x+j, y+i, cell.Ch, nil, st)
+		}
+	}
+	c.last = entries
+
+	// Overlay a geometry chip in the blank gap row above each diagram, from
+	// the per-diagram rects RenderLayout reports back.
+	for i, e := range entries {
+		if e.Y < 1 {
+			continue
+		}
+		row := y + e.Y - 1
+		if row < y || row >= y+h {
+			continue
+		}
+		chip := []rune(fmt.Sprintf(" ── diagram %d · %dx%d ──", i, e.W, e.H))
+		for k, r := range chip {
+			if x+e.X+k >= x+w {
+				break
+			}
+			screen.SetContent(x+e.X+k, row, r, nil, tcell.StyleDefault)
 		}
 	}
 }

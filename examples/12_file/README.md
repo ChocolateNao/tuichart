@@ -6,7 +6,8 @@ Write a rendered chart to a plain-text file.
 
 A line plot rendered with `WithNoColor()` and written to `report.txt` through
 `board.RenderTo(f)`. The file carries no ANSI escapes and renders cleanly in any
-pager or editor.
+pager or editor, and a diagram-layout manifest from `board.RenderLayout` is
+appended so downstream tooling knows where each diagram sits.
 
 ## How to run
 
