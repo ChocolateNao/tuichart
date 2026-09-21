@@ -18,6 +18,7 @@ func liveBoard() (*Board, *Line) {
 	p := NewPlot().Title("live")
 	p.Add(line)
 	g.Add(p)
+
 	return g, line
 }
 
@@ -25,10 +26,12 @@ func TestLiveFrameDeterministic(t *testing.T) {
 	g, _ := liveBoard()
 	l := NewLive(g, WithLiveOutput(&bytes.Buffer{}))
 	a := l.Frame(50)
+
 	b := l.Frame(50)
 	if a == "" || a != b {
 		t.Error("Frame not deterministic or empty")
 	}
+
 	if !strings.Contains(a, "┌") {
 		t.Error("frame missing border")
 	}
@@ -36,19 +39,25 @@ func TestLiveFrameDeterministic(t *testing.T) {
 
 func TestLiveRunPaintsFramesAndRestores(t *testing.T) {
 	g, _ := liveBoard()
+
 	var buf bytes.Buffer
+
 	l := NewLive(g,
 		WithLiveOutput(&buf),
 		WithInterval(10*time.Millisecond),
 	)
 	ctx, cancel := context.WithCancel(context.Background())
+
 	errc := make(chan error, 1)
 	go func() { errc <- l.Run(ctx) }()
+
 	time.Sleep(40 * time.Millisecond)
 	cancel()
+
 	if err := <-errc; err != context.Canceled {
 		t.Errorf("Run err = %v", err)
 	}
+
 	out := buf.String()
 	for _, want := range []string{seqEnterAlt, seqHideCursor, "live", seqShowCursor, seqExitAlt} {
 		if !strings.Contains(out, want) {
@@ -64,12 +73,17 @@ func TestLiveRunPaintsFramesAndRestores(t *testing.T) {
 
 func TestLiveStopReturnsNil(t *testing.T) {
 	g, _ := liveBoard()
+
 	var buf bytes.Buffer
+
 	l := NewLive(g, WithLiveOutput(&buf), WithInterval(5*time.Millisecond))
+
 	errc := make(chan error, 1)
 	go func() { errc <- l.Run(context.Background()) }()
+
 	time.Sleep(20 * time.Millisecond)
 	l.Stop()
+
 	select {
 	case err := <-errc:
 		if err != nil {
@@ -78,14 +92,19 @@ func TestLiveStopReturnsNil(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("Run did not exit after Stop")
 	}
+
 	<-l.Done()
 }
 
 func TestOnUpdateRunsPerTick(t *testing.T) {
 	g, line := liveBoard()
-	var n int
-	var mu sync.Mutex
-	var buf bytes.Buffer
+
+	var (
+		n   int
+		mu  sync.Mutex
+		buf bytes.Buffer
+	)
+
 	l := NewLive(g,
 		WithLiveOutput(&buf),
 		WithInterval(10*time.Millisecond),
@@ -96,14 +115,17 @@ func TestOnUpdateRunsPerTick(t *testing.T) {
 			mu.Unlock()
 		}),
 	)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	go l.Run(ctx)
+
 	time.Sleep(60 * time.Millisecond)
 	cancel()
 	<-l.Done()
 
 	mu.Lock()
 	defer mu.Unlock()
+
 	if n < 2 {
 		t.Errorf("update ran %d times", n)
 	}
@@ -111,9 +133,12 @@ func TestOnUpdateRunsPerTick(t *testing.T) {
 
 func TestLiveUpdateImmediate(t *testing.T) {
 	g, _ := liveBoard()
+
 	var buf bytes.Buffer
+
 	l := NewLive(g, WithLiveOutput(&buf))
 	l.Update(func() { g.Title("mutated") })
+
 	if !strings.Contains(buf.String(), "mutated") {
 		t.Error("Update did not repaint with mutation")
 	}
@@ -121,18 +146,23 @@ func TestLiveUpdateImmediate(t *testing.T) {
 
 func TestLiveDoubleStopAndRerun(t *testing.T) {
 	g, _ := liveBoard()
+
 	l := NewLive(g, WithLiveOutput(&bytes.Buffer{}), WithInterval(5*time.Millisecond))
 	go l.Run(context.Background())
+
 	time.Sleep(15 * time.Millisecond)
 	l.Stop()
 	l.Stop()
 	<-l.Done()
 
 	ctx, cancel := context.WithCancel(context.Background())
+
 	errc := make(chan error, 1)
 	go func() { errc <- l.Run(ctx) }()
+
 	time.Sleep(15 * time.Millisecond)
 	cancel()
+
 	if err := <-errc; err != context.Canceled {
 		t.Errorf("second Run err = %v", err)
 	}
@@ -141,10 +171,13 @@ func TestLiveDoubleStopAndRerun(t *testing.T) {
 func TestRingWrapAround(t *testing.T) {
 	r := NewRing(3)
 	r.Push(1, 2, 3, 4, 5)
+
 	if r.Len() != 3 || r.Cap() != 3 {
 		t.Fatalf("len=%d cap=%d", r.Len(), r.Cap())
 	}
+
 	got := r.Values()
+
 	want := []float64{3, 4, 5}
 	for i := range want {
 		if got[i] != want[i] {
@@ -156,6 +189,7 @@ func TestRingWrapAround(t *testing.T) {
 func TestRingPartialFill(t *testing.T) {
 	r := NewRing(5)
 	r.Push(7, 8)
+
 	if got := r.Values(); len(got) != 2 || got[0] != 7 || got[1] != 8 {
 		t.Errorf("partial: %v", got)
 	}
@@ -163,12 +197,17 @@ func TestRingPartialFill(t *testing.T) {
 
 func TestRingConcurrent(t *testing.T) {
 	r := NewRing(64)
+
 	var wg sync.WaitGroup
+
 	stop := make(chan struct{})
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
 		rng := rand.New(rand.NewSource(1))
+
 		for {
 			select {
 			case <-stop:
@@ -178,11 +217,13 @@ func TestRingConcurrent(t *testing.T) {
 			}
 		}
 	}()
+
 	line := NewLine("live")
 	for i := 0; i < 100; i++ {
 		line.SetValues(r.Values())
 		time.Sleep(time.Millisecond)
 	}
+
 	close(stop)
 	wg.Wait()
 }
@@ -190,6 +231,7 @@ func TestRingConcurrent(t *testing.T) {
 func TestSetValuesReplacesPoints(t *testing.T) {
 	l := NewLineVals("x", []float64{1, 2, 3})
 	l.SetValues([]float64{9, 8})
+
 	if len(l.pts) != 2 || l.pts[0].Y != 9 || l.pts[1].Y != 8 {
 		t.Errorf("pts = %v", l.pts)
 	}
@@ -200,8 +242,11 @@ func TestLiveGaugeUpdates(t *testing.T) {
 	gauge := NewGauge(0, 100).Title("progress")
 	g.Add(gauge)
 
-	var buf bytes.Buffer
-	var n int
+	var (
+		buf bytes.Buffer
+		n   int
+	)
+
 	l := NewLive(g,
 		WithLiveOutput(&buf),
 		WithInterval(10*time.Millisecond),
@@ -210,8 +255,10 @@ func TestLiveGaugeUpdates(t *testing.T) {
 			gauge.Value(float64(n))
 		}),
 	)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	go l.Run(ctx)
+
 	time.Sleep(80 * time.Millisecond)
 	cancel()
 	<-l.Done()
@@ -222,6 +269,7 @@ func TestLiveGaugeUpdates(t *testing.T) {
 	if strings.Count(out, seqHome) != 1 {
 		t.Fatalf("expected single full paint, got %d", strings.Count(out, seqHome))
 	}
+
 	if n := strings.Count(out, ";1H"); n < 2 {
 		t.Fatalf("expected >=2 incremental repaints, got %d", n)
 	}
@@ -241,16 +289,21 @@ func TestLiveGaugeFrameTracksValue(t *testing.T) {
 	l := NewLive(g, WithLiveOutput(io.Discard))
 
 	f1 := l.Frame(30)
+
 	gauge.Value(10)
+
 	f2 := l.Frame(30)
 	if f1 == f2 {
 		t.Fatal("frame did not change after value update")
 	}
+
 	full := strings.Count(f2, "▰")
+
 	empty := strings.Count(f2, "▱")
 	if full == 0 || empty != 0 {
 		t.Errorf("full gauge render wrong: filled=%d empty=%d", full, empty)
 	}
+
 	if strings.Count(f1, "▰") != 0 {
 		t.Errorf("zero gauge has filled segments: %q", f1)
 	}
@@ -261,6 +314,7 @@ func TestLiveGaugeSegmentStretch(t *testing.T) {
 	gg := NewGauge(5, 10).Style(GaugeSegments).ShowPercent(false)
 	gg.Draw(NewRenderCtx(Info{Level: LevelNone, Unicode: true}), cv)
 	row := splitLines(cv.Plain())[0]
+
 	row = strings.TrimRight(row, " ")
 	if runeLen(row) != 20 {
 		t.Errorf("stretched segments span %d cols, want 20: %q", runeLen(row), row)
@@ -291,11 +345,14 @@ func TestLiveSessionIntegration(t *testing.T) {
 			r.Push(math.Sin(float64(r.Len())) + rand.NormFloat64()*0.1)
 		}),
 	)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	go l.Run(ctx)
+
 	time.Sleep(50 * time.Millisecond)
 	cancel()
 	<-l.Done()
+
 	frame := l.Frame(60)
 	if !strings.Contains(frame, "walk") {
 		t.Error("final frame missing title")

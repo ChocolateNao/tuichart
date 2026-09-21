@@ -9,6 +9,7 @@ import (
 // stripANSI removes CSI escape sequences so glyph content can be inspected.
 func stripANSI(s string) string {
 	var b strings.Builder
+
 	for i := 0; i < len(s); i++ {
 		if s[i] == 0x1b {
 			// skip ESC [ ... final byte
@@ -19,15 +20,19 @@ func stripANSI(s string) string {
 					break
 				}
 			}
+
 			continue
 		}
+
 		b.WriteByte(s[i])
 	}
+
 	return b.String()
 }
 
 func assertASCII(t *testing.T, name, out string) {
 	t.Helper()
+
 	clean := stripANSI(out)
 	for _, r := range clean {
 		if r != '\n' && (r < 0x20 || r > 0x7e) {
@@ -66,10 +71,12 @@ func TestASCIIPurityAllDiagrams(t *testing.T) {
 			Bar("build-out-the-thing", now.Add(12*time.Hour), now.Add(48*time.Hour)),
 		"timeseries": func() Drawable {
 			ts := NewTimeSeries().Title("series")
+
 			ln := ts.Line("degC")
 			for i := 0; i < 10; i++ {
 				ln.Add(now.Add(time.Duration(i)*time.Hour), float64(i%5))
 			}
+
 			return ts
 		}(),
 		"candlestick": NewCandlestick().Format("Jan 02").
@@ -125,12 +132,15 @@ func TestEllipTruncModes(t *testing.T) {
 	if got := ellipTrunc(s, 5, true); got != "abcd…" {
 		t.Errorf("uni = %q", got)
 	}
+
 	if got := ellipTrunc(s, 5, false); got != "ab..." {
 		t.Errorf("ascii = %q", got)
 	}
+
 	if got := ellipTrunc(s, 2, false); got != "ab" {
 		t.Errorf("tiny ascii = %q", got)
 	}
+
 	if got := ellipTrunc("ab", 5, false); got != "ab" {
 		t.Errorf("no-op = %q", got)
 	}
@@ -154,6 +164,7 @@ func TestLocaleUnicodeDetection(t *testing.T) {
 		t.Setenv("LC_ALL", c.lcAll)
 		t.Setenv("LC_CTYPE", c.lcType)
 		t.Setenv("LANG", c.lang)
+
 		if got := localeSupportsUnicode(); got != c.want {
 			t.Errorf("LC_ALL=%q LC_CTYPE=%q LANG=%q -> %v want %v",
 				c.lcAll, c.lcType, c.lang, got, c.want)
@@ -172,6 +183,7 @@ func TestASCIIFallbackStillInformative(t *testing.T) {
 		// some ascii line rendering artifact must exist
 		t.Errorf("ascii plot has no line glyphs at all")
 	}
+
 	hm := renderD(NewHeat([][]float64{{0, 50}, {100, 25}}), WithUnicode(false), WithWidth(20))
 	if !strings.ContainsAny(hm, string(heatRampASCII)) {
 		t.Error("ascii heatmap lost ramp encoding")
@@ -185,5 +197,6 @@ func TestUnicodeUserTextPassesThrough(t *testing.T) {
 	if !strings.Contains(out, "ünïcode") {
 		t.Errorf("user text lost: %q", out)
 	}
+
 	assertASCII(t, "structure", stripANSI(strings.ReplaceAll(out, "ünïcode", "unicode")))
 }

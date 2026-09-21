@@ -20,6 +20,7 @@ func NewRenderCtx(info Info) *Ctx { return newCtx(info) }
 func (rc *Ctx) Next() Color {
 	c := rc.Palette[rc.next%len(rc.Palette)]
 	rc.next++
+
 	return c
 }
 
@@ -42,11 +43,15 @@ func drawLegendInside(cv *Canvas, r Rect, entries []LegendEntry, unicode bool) {
 	if len(entries) == 0 || r.W < 12 || r.H < 2 {
 		return
 	}
+
 	const sep = "  "
+
 	x := r.X2()
 	y := r.Y
+
 	for i := len(entries) - 1; i >= 0; i-- {
 		e := entries[i]
+
 		glyph := e.Glyph
 		if glyph == "" {
 			glyph = "██"
@@ -54,14 +59,17 @@ func drawLegendInside(cv *Canvas, r Rect, entries []LegendEntry, unicode bool) {
 				glyph = "##"
 			}
 		}
+
 		w := runeLen(glyph) + 1 + runeLen(e.Label)
 		if x-w < r.X {
 			x = r.X2()
+
 			y++
 			if y > r.Y2() {
 				return
 			}
 		}
+
 		cv.TextRight(x, y, e.Label, e.Style)
 		x -= runeLen(e.Label) + 1
 		cv.TextRight(x, y, glyph, e.Style)

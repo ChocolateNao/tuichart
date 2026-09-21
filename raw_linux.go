@@ -25,10 +25,13 @@ func fdSetAdd(set *syscall.FdSet, fd int) {
 func selectReady(fd int) bool {
 	var set syscall.FdSet
 	fdSetAdd(&set, fd)
+
 	var tv syscall.Timeval // zero => poll without blocking
+
 	ready, err := syscall.Select(fd+1, &set, nil, nil, &tv)
 	if err == syscall.EINTR {
 		return selectReady(fd)
 	}
+
 	return err == nil && ready > 0
 }

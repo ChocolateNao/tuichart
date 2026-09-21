@@ -64,6 +64,7 @@ func main() {
 			if v := cpuRing.Values(); len(v) > 0 {
 				cpuLast = v[len(v)-1]
 			}
+
 			cpuNow := math.Min(95, math.Max(5, cpuLast+(rand.Float64()-0.5)*10))
 			cpuRing.Push(cpuNow)
 			cpuLine.SetValues(cpuRing.Values())
@@ -73,22 +74,26 @@ func main() {
 			if v := memRing.Values(); len(v) > 0 {
 				memLast = v[len(v)-1]
 			}
+
 			memNow := math.Min(90, math.Max(10, memLast+(rand.Float64()-0.5)*6))
 			memRing.Push(memNow)
 			memLine.SetValues(memRing.Values())
 
 			// Network sparkline
 			netNow := 20 + 15*math.Sin(float64(len(netVals))/4) + rand.Float64()*12
+
 			netVals = append(netVals, netNow)
 			if len(netVals) > 60 {
 				netVals = netVals[1:]
 			}
+
 			netSpark.SetValues(netVals)
 
 			// Gauges
 			cpuAvg = cpuAvg*0.8 + cpuNow*0.2
 			memAvg = memAvg*0.8 + memNow*0.2
 			diskNow := 30 + 10*math.Sin(float64(len(netVals))/20)
+
 			gaugeCPU.Value(cpuAvg)
 			gaugeMem.Value(memAvg)
 			gaugeDisk.Value(diskNow)
@@ -96,12 +101,15 @@ func main() {
 	)
 
 	fmt.Fprintln(os.Stderr, "live multi-diagram demo — Ctrl+C to exit")
+
 	ctx, cancel := context.WithCancel(context.Background())
+
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt)
 		<-c
 		cancel()
 	}()
+
 	lv.Run(ctx)
 }

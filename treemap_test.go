@@ -11,12 +11,14 @@ func TestTreemapSlices(t *testing.T) {
 		Item("b", 30).
 		Item("c", 10).
 		ShowValues(true)
+
 	out := renderD(tr, WithWidth(50))
 	if !strings.Contains(out, "a 60") {
 		t.Errorf("top label missing:\n%s", out)
 	}
 	// the largest slice must be wider on its first row than the smallest
 	rowsA := rowWhere(out, "a 60")
+
 	rowsC := rowWhere(out, "c")
 	if rowsA < 0 || rowsC < 0 {
 		t.Fatalf("slice labels missing, a=%d c=%d", rowsA, rowsC)
@@ -31,6 +33,7 @@ func TestTreemapNested(t *testing.T) {
 		}}).
 		Item("else", 20).
 		ShowValues(true)
+
 	out := renderD(tr, WithWidth(50))
 	for _, want := range []string{"static 70", "api 30", "else 20"} {
 		if !strings.Contains(out, want) {
@@ -69,6 +72,7 @@ func TestTreemapTooNarrow(t *testing.T) {
 	cv := NewCanvas(7, 10)
 	NewTreemap().Item("a", 10).Draw(
 		NewRenderCtx(Info{Level: LevelNone, Unicode: true}), cv)
+
 	if !strings.Contains(cv.Plain(), "(no dat") {
 		t.Errorf("too narrow should be (no data):\n%s", cv.Plain())
 	}
@@ -86,6 +90,7 @@ func TestTreemapZeroLeafOmitted(t *testing.T) {
 	if strings.Contains(out, "zero") {
 		t.Errorf("zero-value leaf should render nothing:\n%s", out)
 	}
+
 	for _, want := range []string{"a", "b"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
@@ -103,10 +108,12 @@ func TestTreemapNegativeChildIgnored(t *testing.T) {
 			{Name: "last", Value: 10},
 		}}).
 		ShowValues(true)
+
 	out := renderD(tr)
 	if strings.Contains(out, "neg") {
 		t.Errorf("negative child leaked label:\n%s", out)
 	}
+
 	for _, want := range []string{"pos", "last"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
@@ -129,6 +136,7 @@ func TestTreemapShowValuesOff(t *testing.T) {
 	if !strings.Contains(out, "a") || !strings.Contains(out, "b") {
 		t.Errorf("labels missing without ShowValues:\n%s", out)
 	}
+
 	if strings.Contains(out, "60") || strings.Contains(out, "40") {
 		t.Errorf("values shown without ShowValues:\n%s", out)
 	}
@@ -143,6 +151,7 @@ func TestTreemapInteriorOwnValueIgnored(t *testing.T) {
 	if strings.Contains(out, "500") {
 		t.Errorf("own interior value leaked into render:\n%s", out)
 	}
+
 	for _, want := range []string{"c1", "c2"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
@@ -161,10 +170,12 @@ func TestTreemapDeepNestingOrdering(t *testing.T) {
 			{Name: "other", Value: 50},
 		}}).ShowValues(true)
 	out := renderD(tr)
+
 	mid, leafA, other := rowWhere(out, "mid"), rowWhere(out, "leaf-a"), rowWhere(out, "other")
 	if mid < 0 || leafA < 0 || other < 0 {
 		t.Fatalf("labels missing (mid=%d leaf-a=%d other=%d):\n%s", mid, leafA, other, out)
 	}
+
 	if mid >= leafA || leafA >= other {
 		t.Errorf("expected mid < leaf-a < other, got %d < %d < %d",
 			mid, leafA, other)
@@ -180,6 +191,7 @@ func TestTreemapPreColoredNodeDoesNotPanic(t *testing.T) {
 	if !strings.Contains(out, "a") || !strings.Contains(out, "b") {
 		t.Errorf("missing labels:\n%s", out)
 	}
+
 	if strings.Contains(out, "PANIC") {
 		t.Errorf("panic leaked:\n%s", out)
 	}
@@ -192,10 +204,13 @@ func TestTreemapNodeGetsPaletteColor(t *testing.T) {
 	out1 := renderD(NewTreemap().Title("p").Add(n))
 	c1 := n.Color
 	_ = out1
+
 	if c1.IsZero() {
 		t.Errorf("node color not assigned after render")
 	}
+
 	renderD(NewTreemap().Title("p").Add(n))
+
 	if n.Color != c1 {
 		t.Errorf("re-render changed node color %v -> %v", c1, n.Color)
 	}
@@ -218,5 +233,6 @@ func rowWhere(out, substr string) int {
 			return i
 		}
 	}
+
 	return -1
 }

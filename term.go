@@ -68,7 +68,9 @@ func Detect() Info {
 func DetectWriter(w io.Writer) Info {
 	detectMu.Lock()
 	defer detectMu.Unlock()
+
 	info := Info{W: DefaultWidth, H: DefaultHeight, Unicode: localeSupportsUnicode()}
+
 	if f, ok := w.(*os.File); ok {
 		if platformIsTTY(f) {
 			width, height, ok2 := termSize(f)
@@ -80,10 +82,12 @@ func DetectWriter(w io.Writer) Info {
 			info.Level = LevelNone
 		}
 	}
+
 	info = applyOverrides(info)
 	if info.Level == LevelNone {
 		info.Unicode = false
 	}
+
 	return info
 }
 
@@ -91,9 +95,11 @@ func applyOverrides(info Info) Info {
 	if profileOverride >= 0 {
 		info.Level = profileOverride
 	}
+
 	if unicodeOverride >= 0 {
 		info.Unicode = unicodeOverride == 1
 	}
+
 	return info
 }
 
@@ -101,8 +107,10 @@ func envLevel() Level {
 	if cachedEnvLvl >= 0 {
 		return cachedEnvLvl
 	}
+
 	lvl := detectEnvLevel()
 	cachedEnvLvl = lvl
+
 	return lvl
 }
 
@@ -110,22 +118,27 @@ func detectEnvLevel() Level {
 	if v := os.Getenv("NO_COLOR"); v != "" {
 		return LevelNone
 	}
+
 	term := os.Getenv("TERM")
 	switch term {
 	case "dumb", "":
 		return LevelNone
 	}
+
 	switch os.Getenv("COLORTERM") {
 	case "truecolor", "24bit":
 		return LevelTrue
 	}
+
 	if os.Getenv("WT_SESSION") != "" {
 		return LevelTrue
 	}
+
 	if strings.Contains(term, "256color") || strings.Contains(term, "xterm-kitty") ||
 		strings.Contains(term, "alacritty") {
 		return Level256
 	}
+
 	return Level16
 }
 
@@ -135,8 +148,11 @@ func localeSupportsUnicode() bool {
 		if v == "" {
 			continue
 		}
+
 		v = strings.ToLower(v)
+
 		return strings.Contains(v, "utf-8") || strings.Contains(v, "utf8")
 	}
+
 	return true
 }

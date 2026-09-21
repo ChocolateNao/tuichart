@@ -26,10 +26,12 @@ const (
 // so the test can verify that Live quiets them.
 func openPTY(t *testing.T) (master, slave *os.File) {
 	t.Helper()
+
 	ptmx, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
 	if err != nil {
 		t.Skipf("no /dev/ptmx: %v", err)
 	}
+
 	var n uint32
 	if _, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
@@ -40,6 +42,7 @@ func openPTY(t *testing.T) (master, slave *os.File) {
 		ptmx.Close()
 		t.Skipf("TIOCGPTN failed: %v", errno)
 	}
+
 	var unlock int
 	if _, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
@@ -50,11 +53,13 @@ func openPTY(t *testing.T) (master, slave *os.File) {
 		ptmx.Close()
 		t.Skipf("TIOCSPTLCK failed: %v", errno)
 	}
+
 	sl, err := os.OpenFile(fmt.Sprintf("/dev/pts/%d", n), os.O_RDWR|syscall.O_NOCTTY, 0)
 	if err != nil {
 		ptmx.Close()
 		t.Skipf("open /dev/pts/%d: %v", n, err)
 	}
+
 	return ptmx, sl
 }
 
@@ -68,6 +73,7 @@ func ptyGetAttr(fd uintptr, t *syscall.Termios) error {
 	if errno != 0 {
 		return errno
 	}
+
 	return nil
 }
 
@@ -81,15 +87,20 @@ func ptySetAttr(fd uintptr, t *syscall.Termios) error {
 	if errno != 0 {
 		return errno
 	}
+
 	return nil
 }
 
 func ptyReadAll(m *os.File) string {
 	fd := int(m.Fd())
+
 	_ = syscall.SetNonblock(fd, true)
 	defer func() { _ = syscall.SetNonblock(fd, false) }()
+
 	deadline := time.Now().Add(300 * time.Millisecond)
+
 	var b []byte
+
 	tmp := make([]byte, 1024)
 	for time.Now().Before(deadline) {
 		n, err := syscall.Read(fd, tmp)
@@ -97,12 +108,15 @@ func ptyReadAll(m *os.File) string {
 			b = append(b, tmp[:n]...)
 			continue
 		}
+
 		if err == syscall.EAGAIN || err == nil {
 			time.Sleep(10 * time.Millisecond)
 			continue
 		}
+
 		return string(b) // EOF / EIO / error
 	}
+
 	return string(b)
 }
 
@@ -110,6 +124,7 @@ func ptyReadAll(m *os.File) string {
 // propagates from master to slave.
 func ptySetSize(master *os.File, rows, cols uint16) error {
 	ws := winsize{Row: rows, Col: cols}
+
 	_, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
 		master.Fd(),
@@ -119,6 +134,7 @@ func ptySetSize(master *os.File, rows, cols uint16) error {
 	if errno != 0 {
 		return errno
 	}
+
 	return nil
 }
 
@@ -130,6 +146,7 @@ func TestLiveResizeForcesFullRepaintAndClips(t *testing.T) {
 	master, slave := openPTY(t)
 	defer master.Close()
 	defer slave.Close()
+
 	if err := ptySetSize(master, 10, 60); err != nil {
 		t.Skipf("set size 60x10: %v", err)
 	}
@@ -138,20 +155,25 @@ func TestLiveResizeForcesFullRepaintAndClips(t *testing.T) {
 	for _, title := range []string{"a", "b", "c"} {
 		g.Add(NewPlot().Title(title))
 	}
+
 	lv := NewLive(g, WithLiveOutput(slave))
 
 	lv.Repaint()
+
 	first := ptyReadAll(master)
 	if strings.Count(first, seqHome) != 1 {
 		t.Fatalf("first frame must be exactly one full paint, got %d: %q",
 			strings.Count(first, seqHome), first)
 	}
+
 	if !strings.HasPrefix(first, seqHome+seqClearAll) {
 		t.Fatalf("terminal paint must home then clear the screen, got %q", first)
 	}
+
 	if strings.Contains(first, seqClearBelow) {
 		t.Fatalf("terminal paint must not use legacy clear-below, got %q", first)
 	}
+
 	if n := strings.Count(first, "\n"); n != 10 {
 		t.Fatalf("taller-than-window frame must be clipped to %d rows, painted %d: %q",
 			10, n, first)
@@ -159,6 +181,7 @@ func TestLiveResizeForcesFullRepaintAndClips(t *testing.T) {
 
 	// An unchanged frame on the same window still takes the diff path.
 	lv.Repaint()
+
 	if second := ptyReadAll(master); strings.Contains(second, seqHome) ||
 		strings.Contains(second, seqClearAll) {
 		t.Fatalf("unchanged frame must diff, not repaint: %q", second)
@@ -168,11 +191,14 @@ func TestLiveResizeForcesFullRepaintAndClips(t *testing.T) {
 	if err := ptySetSize(master, 12, 60); err != nil {
 		t.Skipf("set size 60x12: %v", err)
 	}
+
 	lv.Repaint()
+
 	third := ptyReadAll(master)
 	if strings.Count(third, seqHome) != 1 || !strings.Contains(third, seqClearAll) {
 		t.Fatalf("resize must force a full repaint: %q", third)
 	}
+
 	if n := strings.Count(third, "\n"); n != 12 {
 		t.Fatalf("post-resize frame must be clipped to %d rows, painted %d: %q", 12, n, third)
 	}
@@ -190,12 +216,14 @@ func TestLiveSwallowsTerminalInput(t *testing.T) {
 	if err := ptyGetAttr(slave.Fd(), &tm); err != nil {
 		t.Fatalf("get termios: %v", err)
 	}
+
 	tm.Lflag |= syscall.ICANON | syscall.ECHO
 	if err := ptySetAttr(slave.Fd(), &tm); err != nil {
 		t.Fatalf("set termios: %v", err)
 	}
 
 	oldStdin := os.Stdin
+
 	os.Stdin = slave
 	defer func() { os.Stdin = oldStdin }()
 
@@ -204,15 +232,19 @@ func TestLiveSwallowsTerminalInput(t *testing.T) {
 	lv := NewLive(g, WithInterval(10*time.Millisecond), WithLiveOutput(io.Discard))
 
 	ctx, cancel := context.WithCancel(context.Background())
+
 	errCh := make(chan error, 1)
 	go func() { errCh <- lv.Run(ctx) }()
 
 	time.Sleep(50 * time.Millisecond) // let it enter and paint once
+
 	if _, err := master.WriteString("\x1b[B\x1b[Aq"); err != nil {
 		t.Fatalf("write input: %v", err)
 	}
+
 	time.Sleep(70 * time.Millisecond) // reaper window
 	cancel()
+
 	select {
 	case err := <-errCh:
 		if err != nil && err != context.Canceled {
@@ -229,6 +261,7 @@ func TestLiveSwallowsTerminalInput(t *testing.T) {
 	if _, err := master.WriteString("z"); err != nil {
 		t.Fatalf("write post-check: %v", err)
 	}
+
 	if out := ptyReadAll(master); !strings.Contains(out, "z") {
 		t.Fatalf("termios was not restored: no echo after Run: %q", out)
 	}

@@ -70,9 +70,11 @@ func (g *Gauge) HeightHint(width int) int {
 	if h := g.chartBase.HeightHint(width); h > 0 {
 		return h
 	}
+
 	if g.title != "" {
 		return 3
 	}
+
 	return 1
 }
 
@@ -83,6 +85,7 @@ func (g *Gauge) Draw(rc *Ctx, cv *Canvas) {
 		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
+
 	row := inner.Y + inner.H/2
 
 	st := NewStyle(g.color)
@@ -91,25 +94,31 @@ func (g *Gauge) Draw(rc *Ctx, cv *Canvas) {
 	}
 
 	suffix := ""
+
 	pct := 0.0
 	if g.max > 0 && !math.IsNaN(g.value) {
 		pct = math.Max(0, math.Min(1, g.value/g.max)) * 100
 	}
+
 	if g.showPct {
 		suffix = fmt.Sprintf(" %.0f%%", pct)
 	} else if g.label != "" {
 		suffix = " " + g.label
 	}
+
 	if g.label != "" && g.showPct {
 		suffix += " " + g.label
 	}
+
 	suffix = ellipTrunc(suffix, max(inner.W/2-1, 0), rc.Info.Unicode)
 
 	barW := inner.W - runeLen(suffix)
 	if barW < 1 {
 		return
 	}
+
 	g.drawBar(cv, row, inner.X, barW, pct/100, st, rc.Info.Unicode)
+
 	if suffix != "" {
 		cv.Text(inner.X+barW, row, suffix, NewStyle(Default))
 	}
@@ -126,11 +135,14 @@ func (g *Gauge) drawBar(cv *Canvas, row, x, w int, frac float64, st Style, uni b
 			} else {
 				gaugeFillRunes(cv, row, x, w, frac, st, '#', '-')
 			}
+
 			return
 		}
+
 		br := NewStyle(Default)
 		cv.Set(x, row, '[', br)
 		cv.Set(x+w-1, row, ']', br)
+
 		if uni {
 			gaugeFillEighths(cv, row, x+1, w-2, frac, st, '█', '░')
 		} else {
@@ -139,10 +151,12 @@ func (g *Gauge) drawBar(cv *Canvas, row, x, w int, frac float64, st Style, uni b
 	case GaugeArrow:
 		if uni {
 			const fill, tip, track = '━', '╸', '─'
+
 			full := int(math.Ceil(frac * float64(w)))
 			if frac > 0 && full == 0 {
 				full = 1
 			}
+
 			for i := 0; i < w; i++ {
 				switch {
 				case i < full-1:
@@ -163,23 +177,28 @@ func (g *Gauge) drawBar(cv *Canvas, row, x, w int, frac float64, st Style, uni b
 		if w < n {
 			n = w
 		}
+
 		base := w / n
 		rem := w - base*n
 		filled := int(math.Round(frac * float64(n)))
 		cur := x
+
 		for i := 0; i < n; i++ {
 			chunk := base
 			if i < rem {
 				chunk++
 			}
+
 			fullCh, emptyCh := '▰', '▱'
 			if !uni {
 				fullCh, emptyCh = '#', '-'
 			}
+
 			ch := emptyCh
 			if i < filled {
 				ch = fullCh
 			}
+
 			for j := 0; j < chunk; j++ {
 				cv.Set(cur, row, ch, st)
 				cur++
@@ -201,6 +220,7 @@ func gaugeFillRunes(cv *Canvas, row, x, w int, frac float64, st Style, fill, emp
 		if i < full {
 			ch = fill
 		}
+
 		cv.Set(x+i, row, ch, st)
 	}
 }
@@ -208,6 +228,7 @@ func gaugeFillRunes(cv *Canvas, row, x, w int, frac float64, st Style, fill, emp
 func gaugeFillEighths(cv *Canvas, row, x, w int, frac float64, st Style, fullRune, empty rune) {
 	exact := frac * float64(w)
 	nFull := int(exact)
+
 	for i := 0; i < w; i++ {
 		ch := empty
 		if i < nFull {
@@ -218,6 +239,7 @@ func gaugeFillEighths(cv *Canvas, row, x, w int, frac float64, st Style, fullRun
 				ch = barEighthsH[idx-1]
 			}
 		}
+
 		cv.Set(x+i, row, ch, st)
 	}
 }

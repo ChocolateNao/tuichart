@@ -10,6 +10,7 @@ func TestRadarBasic(t *testing.T) {
 		Axes("a", "b", "c").
 		Series("s1", 10, 5, 8).
 		Series("s2", 3, 9, 4)
+
 	out := renderD(r)
 	for _, want := range []string{"s1", "s2", "b"} {
 		if !strings.Contains(out, want) {
@@ -55,6 +56,7 @@ func TestRadarNegativeValuesClamp(t *testing.T) {
 	if strings.Contains(out, "(no data)") {
 		t.Fatalf("mixed negatives must not blank the chart:\n%s", out)
 	}
+
 	if strings.Contains(out, "PANIC") {
 		t.Errorf("panic leaked:\n%s", out)
 	}
@@ -78,6 +80,7 @@ func TestRadarSeriesShorterAndLongerThanAxes(t *testing.T) {
 	if !strings.Contains(out, "s") {
 		t.Errorf("series missing from render:\n%s", out)
 	}
+
 	out = renderD(NewRadar().Title("r").Axes("a", "b", "c").
 		Series("s", 1, 2, 3, 4, 5))
 	if strings.Contains(out, "PANIC") {
@@ -102,11 +105,13 @@ func TestRadarTooNarrowNoData(t *testing.T) {
 func TestRadarFillAddsBraille(t *testing.T) {
 	base := renderD(NewRadar().Title("r").Axes("a", "b", "c").
 		Series("s", 3, 5, 4))
+
 	filled := renderD(NewRadar().Title("r").Axes("a", "b", "c").
 		Series("s", 3, 5, 4).Fill(true))
 	if filled == base {
 		t.Errorf("Fill(true) should change the rendered polygon")
 	}
+
 	if brailleCount(filled) <= brailleCount(base) {
 		t.Errorf("fill should add interior braille dots (base=%d filled=%d)",
 			brailleCount(base), brailleCount(filled))
@@ -125,9 +130,11 @@ func TestRadarLegendGlyphs(t *testing.T) {
 	uni := renderD(NewRadar().Title("r").Axes("a", "b", "c").Series("s", 1, 2, 3))
 	ascii := renderD(NewRadar().Title("r").Axes("a", "b", "c").Series("s", 1, 2, 3),
 		WithUnicode(false))
+
 	if !strings.Contains(uni, "──") {
 		t.Errorf("unicode legend should use the long-dash glyph:\n%s", uni)
 	}
+
 	if !strings.Contains(ascii, "==") {
 		t.Errorf("ascii legend should use the == glyph:\n%s", ascii)
 	}
@@ -136,14 +143,17 @@ func TestRadarLegendGlyphs(t *testing.T) {
 func TestRadarManyAxesNoPanic(t *testing.T) {
 	names := make([]string, 12)
 	vals := make([]float64, 12)
+
 	for i := range names {
 		names[i] = "ax"
 		vals[i] = float64((i % 5) + 1)
 	}
+
 	out := renderD(NewRadar().Title("r").Axes(names...).Series("s", vals...))
 	if strings.Contains(out, "(no data)") {
 		t.Errorf("12 axes should render:\n%s", out)
 	}
+
 	if strings.Contains(out, "PANIC") {
 		t.Errorf("panic leaked:\n%s", out)
 	}
@@ -155,6 +165,7 @@ func TestRadarLongAxisLabelTruncated(t *testing.T) {
 	if strings.Contains(out, "PANIC") {
 		t.Fatalf("panic leaked:\n%s", out)
 	}
+
 	for _, ln := range splitLines(out) {
 		if runeLen(ln) > 24 {
 			t.Errorf("row wider than chart: %q", ln)
@@ -175,10 +186,12 @@ func TestRadarHeightHintBounds(t *testing.T) {
 // brailleCount counts U+2800..28FF braille cells in a rendered string.
 func brailleCount(s string) int {
 	n := 0
+
 	for _, r := range s {
 		if r >= 0x2800 && r <= 0x28ff {
 			n++
 		}
 	}
+
 	return n
 }

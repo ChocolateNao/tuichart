@@ -20,6 +20,7 @@ linters:
     - revive           # More opinionated than golint
     - godot            # Make sure every comment ands with a dot
     - whitespace       # Detect trailing whitespace
+    - wsl_v5           # Control lines between block statements
 
     # Performance
     - prealloc         # Suggest preallocating slices
@@ -28,7 +29,6 @@ linters:
     - gosec            # Security checks
 
   disable:
-    - wsl              # Disable opinionated whitespace rules
     - funlen           # Disable function length checks
     - errcheck
 

@@ -16,6 +16,7 @@ func TestSeq16(t *testing.T) {
 	if got != "\x1b[91m" {
 		t.Errorf("bright red got %q", got)
 	}
+
 	if got := Level16.seq(NewStyle(Green)); got != "\x1b[32m" {
 		t.Errorf("green got %q", got)
 	}
@@ -26,9 +27,11 @@ func TestRGBDowngrade(t *testing.T) {
 	if got := LevelTrue.seq(NewStyle(c)); got != "\x1b[38;2;255;0;0m" {
 		t.Errorf("truecolor got %q", got)
 	}
+
 	if !strings.Contains(Level256.seq(NewStyle(c)), "38;5;") {
 		t.Errorf("256 downgrade got %q", Level256.seq(NewStyle(c)))
 	}
+
 	if !strings.Contains(Level16.seq(NewStyle(c)), "[") {
 		t.Errorf("16 downgrade got %q", Level16.seq(NewStyle(c)))
 	}
@@ -36,6 +39,7 @@ func TestRGBDowngrade(t *testing.T) {
 
 func TestIndexedDowngrade(t *testing.T) {
 	c := HotPink
+
 	s := Level16.seq(NewStyle(c))
 	if s == "" || s == "\x1b[m" {
 		t.Errorf("indexed 200 at level 16 got %q", s)
@@ -53,9 +57,11 @@ func TestNearest16Sanity(t *testing.T) {
 	if n := nearest16([3]int{255, 0, 0}); n != 9 && n != 1 {
 		t.Errorf("pure red -> %d", n)
 	}
+
 	if n := nearest16([3]int{0, 0, 0}); n != 0 {
 		t.Errorf("black -> %d", n)
 	}
+
 	if n := nearest16([3]int{255, 255, 255}); n != 15 {
 		t.Errorf("white -> %d", n)
 	}
@@ -64,10 +70,12 @@ func TestNearest16Sanity(t *testing.T) {
 func TestMixColors(t *testing.T) {
 	a := RGB(0, 0, 0)
 	b := RGB(255, 255, 255)
+
 	m := mix(a, b, 0.5)
 	if m.r != 128 && m.r != 127 {
 		t.Errorf("mid gray r=%d", m.r)
 	}
+
 	if mix(a, b, -1).r != 0 || mix(a, b, 2).r != 255 {
 		t.Error("mix clamp failed")
 	}
@@ -75,12 +83,16 @@ func TestMixColors(t *testing.T) {
 
 func TestSetProfileDetect(t *testing.T) {
 	defer ResetDetection()
+
 	SetProfile(Level16)
+
 	info := DetectWriter(nil)
 	if info.Level != Level16 {
 		t.Errorf("Detect level = %v, want Level16", info.Level)
 	}
+
 	SetProfile(LevelTrue)
+
 	info = DetectWriter(nil)
 	if info.Level != LevelTrue {
 		t.Errorf("level after SetProfile(True) = %v", info.Level)
@@ -89,13 +101,17 @@ func TestSetProfileDetect(t *testing.T) {
 
 func TestSetUnicodeDetect(t *testing.T) {
 	defer ResetDetection()
+
 	SetProfile(Level16)
 	SetUnicode(false)
+
 	info := DetectWriter(nil)
 	if info.Unicode {
 		t.Error("SetUnicode(false) ignored")
 	}
+
 	SetUnicode(true)
+
 	info = DetectWriter(nil)
 	if !info.Unicode {
 		t.Error("SetUnicode(true) ignored")
@@ -104,8 +120,10 @@ func TestSetUnicodeDetect(t *testing.T) {
 
 func TestLevelNoneForcesUnicodeOff(t *testing.T) {
 	defer ResetDetection()
+
 	SetProfile(LevelNone)
 	SetUnicode(true)
+
 	info := DetectWriter(nil)
 	if info.Unicode {
 		t.Error("LevelNone should force unicode off even when enabled")
@@ -114,11 +132,13 @@ func TestLevelNoneForcesUnicodeOff(t *testing.T) {
 
 func TestApplyOverrides(t *testing.T) {
 	defer ResetDetection()
+
 	SetProfile(Level16)
 	SetUnicode(false)
 	detectMu.Lock()
 	got := applyOverrides(Info{Level: Level256, Unicode: true, W: 4, H: 4})
 	detectMu.Unlock()
+
 	if got.Level != Level16 || got.Unicode || got.W != 4 || got.H != 4 {
 		t.Errorf("applyOverrides = %+v", got)
 	}
@@ -131,6 +151,7 @@ func TestResetDetectionClears(t *testing.T) {
 	detectMu.Lock()
 	got := applyOverrides(Info{Level: LevelNone, Unicode: false})
 	detectMu.Unlock()
+
 	if got.Level != LevelNone || got.Unicode {
 		t.Errorf("applyOverrides after reset = %+v", got)
 	}
@@ -138,17 +159,23 @@ func TestResetDetectionClears(t *testing.T) {
 
 func TestEnvLevelDetection(t *testing.T) {
 	defer ResetDetection()
+
 	t.Setenv("NO_COLOR", "1")
 	t.Setenv("TERM", "xterm-256color")
 	t.Setenv("COLORTERM", "")
+
 	if lvl := detectEnvLevel(); lvl != LevelNone {
 		t.Errorf("NO_COLOR should win, got %v", lvl)
 	}
+
 	t.Setenv("NO_COLOR", "")
+
 	if lvl := detectEnvLevel(); lvl != Level256 {
 		t.Errorf("256color term got %v", lvl)
 	}
+
 	t.Setenv("TERM", "dumb")
+
 	if lvl := detectEnvLevel(); lvl != LevelNone {
 		t.Errorf("dumb got %v", lvl)
 	}
@@ -159,6 +186,7 @@ func TestEnvLevelDetection(t *testing.T) {
 func TestStyleWithFg(t *testing.T) {
 	st := NewStyle(Red)
 	orig := st
+
 	newSt := st.WithFg(Blue)
 	if newSt.Fg != Blue {
 		t.Errorf("WithFg Fg = %v, want Blue", newSt.Fg)
@@ -178,10 +206,12 @@ func TestStyleWithFgZero(t *testing.T) {
 
 func TestStyleOnReturnsCopy(t *testing.T) {
 	st := NewStyle(Red)
+
 	newSt := st.On(Blue)
 	if newSt.Bg != Blue {
 		t.Error("On did not set bg")
 	}
+
 	if st.Bg != Default {
 		t.Error("On mutated original")
 	}
@@ -189,10 +219,12 @@ func TestStyleOnReturnsCopy(t *testing.T) {
 
 func TestStyleBolderReturnsCopy(t *testing.T) {
 	st := NewStyle(Red)
+
 	newSt := st.Bolder()
 	if !newSt.Bold {
 		t.Error("Bolder did not set bold")
 	}
+
 	if st.Bold {
 		t.Error("Bolder mutated original")
 	}
@@ -200,6 +232,7 @@ func TestStyleBolderReturnsCopy(t *testing.T) {
 
 func TestColorRGB(t *testing.T) {
 	c := RGB(10, 20, 30)
+
 	r, g, b, ok := c.RGB()
 	if !ok || r != 10 || g != 20 || b != 30 {
 		t.Errorf("RGB() = %d,%d,%d,%v", r, g, b, ok)
@@ -211,6 +244,7 @@ func TestIndexedClamp(t *testing.T) {
 	if lo.idx != 0 {
 		t.Errorf("negative index clamped to %d", lo.idx)
 	}
+
 	hi := Indexed(300)
 	if hi.idx != 255 {
 		t.Errorf("overflow index clamped to %d", hi.idx)
@@ -219,10 +253,12 @@ func TestIndexedClamp(t *testing.T) {
 
 func TestStyleEq(t *testing.T) {
 	a := Style{Fg: Red, Bold: true}
+
 	b := Style{Fg: Red, Bold: true}
 	if !a.eq(b) {
 		t.Error("equal styles reported unequal")
 	}
+
 	b.Bold = false
 	if a.eq(b) {
 		t.Error("unequal styles reported equal")
@@ -234,9 +270,11 @@ func TestStyleIsZero(t *testing.T) {
 	if !zero.isZero() {
 		t.Error("zero Style should be isZero")
 	}
+
 	if NewStyle(Red).isZero() {
 		t.Error("non-zero Style should not be isZero")
 	}
+
 	if (Style{Bold: true}).isZero() {
 		t.Error("bold Style should not be isZero")
 	}
@@ -258,6 +296,7 @@ func TestSeqZeroStyle(t *testing.T) {
 func TestMixWithIndexed(t *testing.T) {
 	a := Indexed(9)  // Red
 	b := Indexed(12) // Blue
+
 	m := mix(a, b, 0.5)
 	if m.kind != colorRGB {
 		t.Error("mix of indexed should produce RGB")
@@ -281,9 +320,11 @@ func TestTruncStrEdgeCases(t *testing.T) {
 	if s := truncStr("ab", 0); s != "" {
 		t.Errorf("truncStr(s, 0) = %q", s)
 	}
+
 	if s := truncStr("ab", 1); s != "…" {
 		t.Errorf("truncStr(s, 1) = %q, want …", s)
 	}
+
 	if s := truncStr("abcdef", 3); runeLen(s) != 3 {
 		t.Errorf("truncStr(s, 3) len = %d", runeLen(s))
 	}
@@ -294,9 +335,11 @@ func TestEllipTruncASCII(t *testing.T) {
 	if s := ellipTrunc("hello", 3, false); s != "hel" {
 		t.Errorf("ellipTrunc ASCII = %q, want %q", s, "hel")
 	}
+
 	if s := ellipTrunc("hello", 8, false); s != "hello" {
 		t.Errorf("ellipTrunc ASCII no-op = %q", s)
 	}
+
 	if s := ellipTrunc("hello world", 10, false); s != "hello w..." {
 		t.Errorf("ellipTrunc ASCII ellipsis = %q, want %q", s, "hello w...")
 	}
@@ -306,9 +349,11 @@ func TestTruncASCII(t *testing.T) {
 	if truncASCII("abcdef", 10) != "abcdef" {
 		t.Error("truncASCII no-op failed")
 	}
+
 	if s := truncASCII("abcdef", 3); len(s) > 3 {
 		t.Errorf("truncASCII(3) = %q len %d", s, len(s))
 	}
+
 	if truncASCII("abcdef", 0) != "" {
 		t.Error("truncASCII(0) not empty")
 	}

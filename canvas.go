@@ -44,11 +44,14 @@ func NewCanvas(w, h int) *Canvas {
 	if w < 1 {
 		w = 1
 	}
+
 	if h < 1 {
 		h = 1
 	}
+
 	c := &Canvas{w: w, h: h, stride: w, buf: make([]cell, w*h)}
 	c.Clear()
+
 	return c
 }
 
@@ -73,10 +76,12 @@ func (c *Canvas) Set(x, y int, ch rune, st Style) {
 	if x < 0 || y < 0 || x >= c.w || y >= c.h {
 		return
 	}
+
 	px, py := c.ox+x, c.oy+y
 	if px < 0 || py < 0 || px >= c.stride || py*c.stride+px >= len(c.buf) {
 		return
 	}
+
 	i := py*c.stride + px
 	cell := &c.buf[i]
 	cell.ch = ch
@@ -91,6 +96,7 @@ func (c *Canvas) At(x, y int) cell {
 	if x < 0 || y < 0 || x >= c.w || y >= c.h {
 		return blankCell
 	}
+
 	return c.buf[(c.oy+y)*c.stride+c.ox+x]
 }
 
@@ -128,19 +134,23 @@ func (c *Canvas) Text(x, y int, s string, st Style) int {
 		if cx >= c.w {
 			break
 		}
+
 		c.Set(cx, y, r, st)
 		cx++
 	}
+
 	return cx - x
 }
 
 // TextCenter draws the string s horizontally centered on column cx at row y.
 func (c *Canvas) TextCenter(cx, y int, s string, st Style) int {
 	n := runeLen(s)
+
 	x := cx - n/2
 	if x < 0 {
 		x = 0
 	}
+
 	return c.Text(x, y, s, st)
 }
 
@@ -151,6 +161,7 @@ func (c *Canvas) TextRight(x2, y int, s string, st Style) int {
 		s = truncStr(s, x2+1)
 		x = 0
 	}
+
 	return c.Text(x, y, s, st)
 }
 
@@ -168,6 +179,7 @@ func (c *Canvas) HLine(y, x1, x2 int, ch rune, st Style) {
 	if x1 > x2 {
 		x1, x2 = x2, x1
 	}
+
 	for x := x1; x <= x2; x++ {
 		c.Set(x, y, ch, st)
 	}
@@ -178,6 +190,7 @@ func (c *Canvas) VLine(x, y1, y2 int, ch rune, st Style) {
 	if y1 > y2 {
 		y1, y2 = y2, y1
 	}
+
 	for y := y1; y <= y2; y++ {
 		c.Set(x, y, ch, st)
 	}
@@ -187,6 +200,7 @@ func boxRunes(unicode bool) (lt, rt, lb, rb, hz, vt rune) {
 	if unicode {
 		return '┌', '┐', '└', '┘', '─', '│'
 	}
+
 	return '+', '+', '+', '+', '-', '|'
 }
 
@@ -210,9 +224,11 @@ func (c *Canvas) Sub(r Rect) *Canvas {
 	if r.W < 0 {
 		r.W = 0
 	}
+
 	if r.H < 0 {
 		r.H = 0
 	}
+
 	return &Canvas{
 		w: r.W, h: r.H,
 		stride: c.stride,
@@ -230,6 +246,7 @@ func (c *Canvas) Blit(src *Canvas, ox, oy int) {
 			if sc.blank() {
 				continue
 			}
+
 			c.Set(ox+x, oy+y, sc.ch, Style{Fg: sc.fg, Bg: sc.bg, Bold: sc.bold})
 		}
 	}
@@ -249,44 +266,57 @@ func (c *Canvas) Plain() string {
 // appropriate for the given color level.
 func (c *Canvas) Render(lvl Level) string {
 	var b strings.Builder
+
 	for y := 0; y < c.h; y++ {
 		last := -1
+
 		for x := c.w - 1; x >= 0; x-- {
 			if !c.At(x, y).blank() {
 				last = x
 				break
 			}
 		}
+
 		if last < 0 {
 			b.WriteString("\n")
 			continue
 		}
+
 		cur := Style{}
 		active := false
+
 		for x := 0; x <= last; x++ {
 			cl := c.At(x, y)
+
 			st := Style{Fg: cl.fg, Bg: cl.bg, Bold: cl.bold}
 			if !st.eq(cur) {
 				if active {
 					b.WriteString(ansiReset)
+
 					active = false
 				}
+
 				seq := lvl.seq(st)
 				if seq != "" {
 					b.WriteString(seq)
+
 					active = true
 					cur = st
 				} else {
 					cur = st
 				}
 			}
+
 			b.WriteRune(cl.ch)
 		}
+
 		if active {
 			b.WriteString(ansiReset)
 		}
+
 		b.WriteString("\n")
 	}
+
 	return b.String()
 }
 
@@ -297,12 +327,15 @@ func truncStr(s string, n int) string {
 	if len(r) <= n {
 		return s
 	}
+
 	if n <= 1 {
 		if n <= 0 {
 			return ""
 		}
+
 		return "…"
 	}
+
 	return string(r[:n-1]) + "…"
 }
 
@@ -313,6 +346,7 @@ func ellipTrunc(s string, n int, uni bool) string {
 	if uni {
 		return truncStr(s, n)
 	}
+
 	return truncASCII(s, n)
 }
 
@@ -320,8 +354,10 @@ func truncASCII(s string, n int) string {
 	if len(s) <= n {
 		return s
 	}
+
 	if n <= 3 {
 		return s[:max(n, 0)]
 	}
+
 	return s[:n-3] + "..."
 }

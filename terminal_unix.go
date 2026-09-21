@@ -33,6 +33,7 @@ func ioctl(fd, req uintptr) error {
 	if errno != 0 {
 		return errno
 	}
+
 	return nil
 }
 
@@ -42,6 +43,7 @@ func platformIsTTY(f *os.File) bool {
 
 func termSize(f *os.File) (int, int, bool) {
 	var ws winsize
+
 	_, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
 		f.Fd(),
@@ -51,12 +53,15 @@ func termSize(f *os.File) (int, int, bool) {
 	if errno != 0 || ws.Col == 0 {
 		return DefaultWidth, DefaultHeight, false
 	}
+
 	w, h := int(ws.Col), int(ws.Row)
 	if w < 1 {
 		w = DefaultWidth
 	}
+
 	if h < 1 {
 		h = DefaultHeight
 	}
+
 	return w, h, true
 }

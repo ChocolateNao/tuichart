@@ -16,13 +16,16 @@ func watchResize(f *os.File, onResize func()) (stop func()) {
 	if !platformIsTTY(f) {
 		return func() {}
 	}
+
 	ch := make(chan os.Signal, 1)
+
 	signal.Notify(ch, syscall.SIGWINCH)
 	go func() {
 		for range ch {
 			onResize()
 		}
 	}()
+
 	return func() {
 		signal.Stop(ch)
 		close(ch)

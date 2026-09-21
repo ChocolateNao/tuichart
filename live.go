@@ -117,9 +117,11 @@ func NewLive(b *Board, opts ...LiveOption) *Live {
 	for _, o := range opts {
 		o(l)
 	}
+
 	if l.interval < 10*time.Millisecond {
 		l.interval = 10 * time.Millisecond
 	}
+
 	return l
 }
 
@@ -128,6 +130,7 @@ func NewLive(b *Board, opts ...LiveOption) *Live {
 func (l *Live) Frame(width int) string {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+
 	return l.board.Render(width)
 }
 
@@ -135,6 +138,7 @@ func (l *Live) Frame(width int) string {
 func (l *Live) Update(fn func()) {
 	l.mu.Lock()
 	fn()
+
 	s := l.paintLocked(0)
 	l.mu.Unlock()
 	l.write(s)
@@ -175,6 +179,7 @@ func (l *Live) Run(ctx context.Context) error {
 		l.mu.Unlock()
 		return errors.New("tuichart: live already running")
 	}
+
 	l.stop = make(chan struct{})
 	l.stopOnce = sync.Once{}
 	l.done = make(chan struct{})
@@ -189,6 +194,7 @@ func (l *Live) Run(ctx context.Context) error {
 	// stray input swallowed, all restored on exit. Registered before the
 	// alt-screen restore so the terminal state comes back last.
 	restoreInput := func() {}
+
 	if si := os.Stdin; si != nil {
 		if rest, engaged := acquireInput(si); engaged {
 			inputStop := make(chan struct{})
@@ -201,6 +207,7 @@ func (l *Live) Run(ctx context.Context) error {
 			}
 		}
 	}
+
 	defer restoreInput()
 
 	defer close(done)
@@ -210,6 +217,7 @@ func (l *Live) Run(ctx context.Context) error {
 		l.mu.Unlock()
 	}()
 	defer fmt.Fprint(l.out, seqShowCursor+seqExitAlt)
+
 	fmt.Fprint(l.out, seqEnterAlt+seqHideCursor)
 
 	ticker := time.NewTicker(l.interval)
@@ -237,6 +245,7 @@ func (l *Live) Run(ctx context.Context) error {
 	if f, ok := l.out.(*os.File); ok {
 		stopWatch = watchResize(f, l.enqueueResize)
 	}
+
 	if stopWatch != nil {
 		defer stopWatch()
 	}
@@ -266,6 +275,7 @@ func (l *Live) repaintUpdate() {
 	if l.update != nil {
 		l.update()
 	}
+
 	s := l.paintLocked(0)
 	l.mu.Unlock()
 	l.write(s)
@@ -288,6 +298,7 @@ func (l *Live) Stop() {
 	l.mu.Lock()
 	stop := l.stop
 	l.mu.Unlock()
+
 	if stop != nil {
 		l.stopOnce.Do(func() { close(stop) })
 	}
@@ -297,6 +308,7 @@ func (l *Live) Stop() {
 func (l *Live) Done() <-chan struct{} {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+
 	return l.done
 }
 
@@ -312,17 +324,21 @@ func (l *Live) Done() <-chan struct{} {
 // window never scrolls content off the display.
 func (l *Live) paintLocked(width int) string {
 	w := width
+
 	var termW, termH int
+
 	if f, ok := l.out.(*os.File); ok && platformIsTTY(f) {
 		det := DetectWriter(f)
 		if det.W > 0 && det.H > 0 {
 			termW, termH = det.W, det.H
 		}
 	}
+
 	if termW != l.termW || termH != l.termH {
 		l.termW, l.termH = termW, termH
 		l.prev = nil
 	}
+
 	if w <= 0 {
 		w = l.board.opts.width
 		if w <= 0 {
@@ -333,12 +349,15 @@ func (l *Live) paintLocked(width int) string {
 			}
 		}
 	}
+
 	cv, info := l.board.RenderCanvas(w)
 	if termH > 0 && cv.h > termH {
 		cv = cv.Sub(Rect{W: cv.w, H: termH})
 	}
+
 	out := paintFrame(l.prev, cv, info.Level, termH)
 	l.prev = cv
+
 	return out
 }
 

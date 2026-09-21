@@ -11,6 +11,7 @@ func TestCanvasBounds(t *testing.T) {
 	cv.Set(5, 0, 'x', Style{})
 	cv.Set(0, -1, 'x', Style{})
 	cv.Set(0, 3, 'x', Style{})
+
 	if got := cv.Plain(); strings.ContainsAny(got, "x") {
 		t.Errorf("out-of-bounds writes leaked: %q", got)
 	}
@@ -19,6 +20,7 @@ func TestCanvasBounds(t *testing.T) {
 func TestCanvasTextAndRender(t *testing.T) {
 	cv := NewCanvas(6, 2)
 	cv.Text(1, 0, "hello", Style{})
+
 	want := " hello\n\n"
 	if got := cv.Plain(); got != want {
 		t.Errorf("got %q want %q", got, want)
@@ -30,10 +32,13 @@ func TestCanvasSub(t *testing.T) {
 	sub := root.Sub(Rect{X: 2, Y: 1, W: 4, H: 2})
 	sub.Set(0, 0, 'A', Style{})
 	sub.Set(3, 1, 'B', Style{})
+
 	if root.At(2, 1).ch != 'A' || root.At(5, 2).ch != 'B' {
 		t.Fatal("sub view offset wrong")
 	}
+
 	sub.Set(10, 0, 'X', Style{})
+
 	if strings.Contains(root.Plain(), "X") {
 		t.Error("sub write escaped root bounds")
 	}
@@ -42,12 +47,15 @@ func TestCanvasSub(t *testing.T) {
 func TestCanvasBlitSkipsBlank(t *testing.T) {
 	dst := NewCanvas(4, 2)
 	dst.Text(0, 0, "abcd", Style{})
+
 	src := NewCanvas(2, 1)
 	src.Set(1, 0, 'Z', Style{})
 	dst.Blit(src, 1, 0)
+
 	if dst.At(1, 0).ch != 'b' {
 		t.Errorf("blank src cell overwrote dst: %q", dst.Plain())
 	}
+
 	if dst.At(2, 0).ch != 'Z' {
 		t.Error("non-blank cell not blitted")
 	}
@@ -56,6 +64,7 @@ func TestCanvasBlitSkipsBlank(t *testing.T) {
 func TestCanvasBorderUnicode(t *testing.T) {
 	cv := NewCanvas(4, 3)
 	cv.Border(Style{}, true)
+
 	lines := splitLines(cv.Plain())
 	if !strings.HasPrefix(lines[0], "┌") || !strings.HasSuffix(lines[0], "┐") {
 		t.Errorf("unicode border wrong: %q", lines[0])
@@ -66,6 +75,7 @@ func TestTruncStr(t *testing.T) {
 	if s := truncStr("abcdef", 4); runeLen(s) != 4 {
 		t.Errorf("truncStr len %d", runeLen(s))
 	}
+
 	if truncStr("ab", 5) != "ab" {
 		t.Error("no-op trunc failed")
 	}
@@ -75,6 +85,7 @@ func TestTruncStr(t *testing.T) {
 
 func TestRectContains(t *testing.T) {
 	r := Rect{X: 2, Y: 3, W: 5, H: 4}
+
 	tests := []struct {
 		x, y int
 		want bool
@@ -106,6 +117,7 @@ func TestRectX2Y2(t *testing.T) {
 	if r.X2() != 3 {
 		t.Errorf("X2 = %d, want 3", r.X2())
 	}
+
 	if r.Y2() != 5 {
 		t.Errorf("Y2 = %d, want 5", r.Y2())
 	}
@@ -120,6 +132,7 @@ func TestRectClipContained(t *testing.T) {
 
 func TestRectClipOffLeftTop(t *testing.T) {
 	r := (Rect{X: -2, Y: -2, W: 5, H: 5}).clip(Rect{X: 0, Y: 0, W: 10, H: 10})
+
 	want := Rect{X: 0, Y: 0, W: 3, H: 3}
 	if r != want {
 		t.Errorf("left/top clip = %+v, want %+v", r, want)
@@ -143,13 +156,16 @@ func TestRectClipOutsideZero(t *testing.T) {
 func TestFillRectInside(t *testing.T) {
 	cv := NewCanvas(6, 4)
 	cv.FillRect(Rect{X: 1, Y: 1, W: 3, H: 2}, '#', NewStyle(Red))
+
 	for y := 0; y < 4; y++ {
 		for x := 0; x < 6; x++ {
 			ch := cv.At(x, y).ch
+
 			inR := x >= 1 && x < 4 && y >= 1 && y < 3
 			if inR && ch != '#' {
 				t.Errorf("(%d,%d) expected '#', got %q", x, y, ch)
 			}
+
 			if !inR && ch != ' ' {
 				t.Errorf("(%d,%d) expected ' ', got %q", x, y, ch)
 			}
@@ -161,6 +177,7 @@ func TestFillRectClipped(t *testing.T) {
 	cv := NewCanvas(4, 3)
 	// Rect extends beyond canvas bounds — Set clips silently
 	cv.FillRect(Rect{X: 2, Y: 1, W: 10, H: 10}, 'X', Style{})
+
 	if cv.At(3, 2).ch != 'X' {
 		t.Error("clipped fill missing expected cell")
 	}
@@ -183,6 +200,7 @@ func TestFillRectEmpty(t *testing.T) {
 func TestCanvasString(t *testing.T) {
 	cv := NewCanvas(3, 1)
 	cv.Set(0, 0, 'A', Style{})
+
 	s := cv.String()
 	if s == "" {
 		t.Fatal("String() returned empty")
@@ -207,10 +225,12 @@ func TestCanvasNewClamp(t *testing.T) {
 
 func TestCanvasCellAtBounds(t *testing.T) {
 	cv := NewCanvas(2, 2)
+
 	cl := cv.CellAt(-1, -1)
 	if cl.Ch != ' ' {
 		t.Error("out-of-bounds CellAt should return blank")
 	}
+
 	cl = cv.CellAt(0, 0)
 	if cl.Ch != ' ' {
 		t.Error("fresh canvas cell should be blank")
@@ -220,9 +240,11 @@ func TestCanvasCellAtBounds(t *testing.T) {
 func TestCanvasEachCell(t *testing.T) {
 	cv := NewCanvas(3, 2)
 	count := 0
+
 	cv.EachCell(func(x, y int, cl Cell) {
 		count++
 	})
+
 	if count != 6 {
 		t.Errorf("EachCell visited %d cells, want 6", count)
 	}
@@ -230,10 +252,12 @@ func TestCanvasEachCell(t *testing.T) {
 
 func TestCanvasTextRight(t *testing.T) {
 	cv := NewCanvas(10, 1)
+
 	n := cv.TextRight(9, 0, "hi", Style{})
 	if n != 2 {
 		t.Errorf("TextRight wrote %d chars", n)
 	}
+
 	if cv.At(8, 0).ch != 'h' {
 		t.Errorf("expected 'h' at col 8, got %q", cv.At(8, 0).ch)
 	}
@@ -241,6 +265,7 @@ func TestCanvasTextRight(t *testing.T) {
 
 func TestCanvasTextRightTruncate(t *testing.T) {
 	cv := NewCanvas(3, 1)
+
 	n := cv.TextRight(2, 0, "hello", Style{})
 	if n != 3 {
 		t.Errorf("truncated TextRight wrote %d chars", n)
@@ -250,12 +275,15 @@ func TestCanvasTextRightTruncate(t *testing.T) {
 func TestCanvasHLineVLine(t *testing.T) {
 	cv := NewCanvas(5, 5)
 	cv.HLine(2, 1, 3, '-', Style{})
+
 	for x := 1; x <= 3; x++ {
 		if cv.At(x, 2).ch != '-' {
 			t.Errorf("HLine missing at (%d,2)", x)
 		}
 	}
+
 	cv.VLine(2, 1, 3, '|', Style{})
+
 	for y := 1; y <= 3; y++ {
 		if cv.At(2, y).ch != '|' {
 			t.Errorf("VLine missing at (2,%d)", y)
@@ -266,6 +294,7 @@ func TestCanvasHLineVLine(t *testing.T) {
 func TestCanvasHLineReversed(t *testing.T) {
 	cv := NewCanvas(5, 1)
 	cv.HLine(0, 4, 1, 'R', Style{})
+
 	for x := 1; x <= 4; x++ {
 		if cv.At(x, 0).ch != 'R' {
 			t.Errorf("reversed HLine missing at %d", x)
@@ -276,6 +305,7 @@ func TestCanvasHLineReversed(t *testing.T) {
 func TestCanvasBorderASCII(t *testing.T) {
 	cv := NewCanvas(4, 3)
 	cv.Border(Style{}, false)
+
 	lines := splitLines(cv.Plain())
 	if !strings.HasPrefix(lines[0], "+") || !strings.HasSuffix(lines[0], "+") {
 		t.Errorf("ascii border wrong: %q", lines[0])
@@ -284,6 +314,7 @@ func TestCanvasBorderASCII(t *testing.T) {
 
 func TestCanvasSubNegativeDims(t *testing.T) {
 	cv := NewCanvas(4, 4)
+
 	sub := cv.Sub(Rect{X: 1, Y: 1, W: -1, H: -1})
 	if sub.Width() != 0 || sub.Height() != 0 {
 		t.Errorf("negative dims clamped to %dx%d", sub.Width(), sub.Height())
@@ -294,6 +325,7 @@ func TestCanvasClear(t *testing.T) {
 	cv := NewCanvas(3, 1)
 	cv.Set(1, 0, 'X', NewStyle(Red))
 	cv.Clear()
+
 	if cv.At(1, 0).ch != ' ' {
 		t.Error("Clear did not reset cells")
 	}

@@ -17,6 +17,7 @@ func NewRing(capacity int) *Ring {
 	if capacity < 1 {
 		capacity = 1
 	}
+
 	return &Ring{buf: make([]float64, capacity)}
 }
 
@@ -24,8 +25,10 @@ func NewRing(capacity int) *Ring {
 func (r *Ring) Push(vs ...float64) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	for _, v := range vs {
 		r.buf[r.i] = v
+
 		r.i = (r.i + 1) % len(r.buf)
 		if r.n < len(r.buf) {
 			r.n++
@@ -37,6 +40,7 @@ func (r *Ring) Push(vs ...float64) {
 func (r *Ring) Len() int {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	return r.n
 }
 
@@ -47,17 +51,22 @@ func (r *Ring) Cap() int { return len(r.buf) }
 func (r *Ring) Values() []float64 {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
 	out := make([]float64, r.n)
 	if r.n == 0 {
 		return out
 	}
+
 	start := 0
 	if r.n == len(r.buf) {
 		start = r.i
 	}
+
 	copy(out, r.buf[start:])
+
 	if start+r.n > len(r.buf) {
 		copy(out[len(r.buf)-start:], r.buf[:r.i])
 	}
+
 	return out
 }

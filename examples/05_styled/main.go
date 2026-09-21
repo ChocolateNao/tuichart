@@ -48,6 +48,7 @@ func main() {
 	cs := tuichart.NewCandlestick().Title("OHLC").Format("Jan 02")
 	price := 100.0
 	day := time.Now().Add(-10 * 24 * time.Hour)
+
 	for i := 0; i < 8; i++ {
 		o := price
 		c := o + (math.Sin(float64(i))*3 + 1)
@@ -56,6 +57,7 @@ func main() {
 		cs.Candle(day.Add(time.Duration(i)*24*time.Hour), o, h, l, c)
 		price = c
 	}
+
 	g.Add(cs)
 
 	fmt.Print(g.Render())

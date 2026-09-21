@@ -9,36 +9,43 @@ import (
 func monoPlot() *Plot {
 	p := NewPlot()
 	p.Add(NewLineVals("a", []float64{1, 3, 2, 5, 4}))
+
 	return p
 }
 
 func renderMono(d Drawable, w int) string {
 	g := New(WithWidth(w), WithNoColor(), WithUnicode(true))
 	g.Add(d)
+
 	return g.Render()
 }
 
 func renderASCII(d Drawable, w int) string {
 	g := New(WithWidth(w), WithNoColor(), WithUnicode(false))
 	g.Add(d)
+
 	return g.Render()
 }
 
 func seriesPlot(ss ...any) *Plot {
 	p := NewPlot()
 	p.Add(ss...)
+
 	return p
 }
 
 func TestPlotRenderDeterministic(t *testing.T) {
 	a := renderMono(monoPlot(), 50)
+
 	b := renderMono(monoPlot(), 50)
 	if a != b {
 		t.Error("render not deterministic")
 	}
+
 	if !strings.Contains(a, "┌") || !strings.Contains(a, "└") {
 		t.Error("missing frame border")
 	}
+
 	if !strings.Contains(a, "a") {
 		t.Error("legend missing series name")
 	}
@@ -50,10 +57,12 @@ func TestPlotMaybeSwapHorizontal(t *testing.T) {
 		NewScatterVals("scat", []float64{2, 4, 1}))
 	norm := renderMono(p, 40)
 	p.Orientation(OrientHorizontal)
+
 	horiz := renderMono(p, 40)
 	if norm == horiz {
 		t.Error("horizontal plot swap had no effect")
 	}
+
 	if !strings.Contains(horiz, "line") || !strings.Contains(horiz, "scat") {
 		t.Error("horizontal plot legend missing series")
 	}
@@ -63,6 +72,7 @@ func TestPlotMaybeSwapNoData(t *testing.T) {
 	p := NewPlot()
 	p.Add(NewLine("line"), NewScatter("scat"))
 	p.Orientation(OrientHorizontal)
+
 	out := renderMono(p, 40)
 	if strings.Contains(out, "NaN") || strings.Contains(out, "+Inf") {
 		t.Errorf("empty-series swap produced bad output:\n%s", out)
@@ -86,6 +96,7 @@ func TestPlotMaybeSwapPassthrough(t *testing.T) {
 	if got := maybeSwap(s, true); got != s {
 		t.Error("non-Line/Scatter series should pass through untouched")
 	}
+
 	line := NewLine("l", Point{X: 1, Y: 2})
 	if got := maybeSwap(line, false); got != line {
 		t.Error("swap=false should return series as-is")
@@ -95,6 +106,7 @@ func TestPlotMaybeSwapPassthrough(t *testing.T) {
 func TestPlotYRangeClip(t *testing.T) {
 	p := monoPlot()
 	p.SetYRange(0, 100)
+
 	out := renderMono(p, 40)
 	if strings.Contains(out, "NaN") || strings.Contains(out, "+Inf") {
 		t.Error("clipping produced non-finite output markers")
@@ -105,11 +117,14 @@ func TestPlotResetScale(t *testing.T) {
 	p := monoPlot()
 	auto := renderMono(p, 40)
 	p.SetYRange(-1000, 1000)
+
 	fixed := renderMono(p, 40)
 	if auto == fixed {
 		t.Fatal("SetYRange had no effect")
 	}
+
 	p.ResetScale()
+
 	back := renderMono(p, 40)
 	if back != auto {
 		t.Error("ResetScale did not restore autoscale")
@@ -120,6 +135,7 @@ func TestPlotLogYWithNonPositive(t *testing.T) {
 	p := NewPlot()
 	p.LogY(true)
 	p.Add(NewLineVals("log", []float64{-1, 0, 1, 10, 100}))
+
 	out := renderMono(p, 40)
 	if out == "" {
 		t.Fatal("empty render")
@@ -135,10 +151,12 @@ func TestPlotEmpty(t *testing.T) {
 
 func TestPlotFunction(t *testing.T) {
 	fn := NewFunction(math.Sin).Domain(-math.Pi, math.Pi).Name("sin(x)")
+
 	out := renderMono(fn, 60)
 	if !strings.Contains(out, "sin(x)") {
 		t.Error("function legend missing")
 	}
+
 	if !strings.Contains(out, "-1") || !strings.Contains(out, "1") {
 		t.Error("expected -1/1 ticks for sin domain")
 	}
@@ -148,6 +166,7 @@ func TestScatterMarkers(t *testing.T) {
 	p := NewPlot()
 	sc := NewScatterVals("pts", []float64{1, 2, 3}).Marker('x')
 	p.Add(sc)
+
 	out := renderMono(p, 30)
 	if !strings.Contains(out, "x") {
 		t.Error("explicit marker not rendered")
@@ -159,6 +178,7 @@ func TestZipEqualLength(t *testing.T) {
 	if len(pts) != 3 {
 		t.Fatalf("expected 3 points, got %d", len(pts))
 	}
+
 	for i, want := range []struct{ x, y float64 }{{1, 10}, {2, 20}, {3, 30}} {
 		if pts[i].X != want.x || pts[i].Y != want.y {
 			t.Errorf("pts[%d] = %v, want %v", i, pts[i], want)
@@ -171,9 +191,11 @@ func TestZipUnequalLength(t *testing.T) {
 	if len(pts) != 2 {
 		t.Fatalf("expected 2 points (truncated), got %d", len(pts))
 	}
+
 	if pts[0].X != 1 || pts[0].Y != 10 {
 		t.Errorf("pts[0] = %v", pts[0])
 	}
+
 	if pts[1].X != 2 || pts[1].Y != 20 {
 		t.Errorf("pts[1] = %v", pts[1])
 	}
@@ -184,14 +206,17 @@ func TestZipEmptyInputs(t *testing.T) {
 	if len(pts) != 0 {
 		t.Fatalf("expected 0 points, got %d", len(pts))
 	}
+
 	pts = Zip([]float64{1, 2}, nil)
 	if len(pts) != 0 {
 		t.Fatalf("expected 0 points from nil ys, got %d", len(pts))
 	}
+
 	pts = Zip(nil, []float64{1, 2})
 	if len(pts) != 0 {
 		t.Fatalf("expected 0 points from nil xs, got %d", len(pts))
 	}
+
 	pts = Zip([]float64{}, []float64{1})
 	if len(pts) != 0 {
 		t.Fatalf("expected 0 points from empty xs, got %d", len(pts))
@@ -203,13 +228,17 @@ func TestLineColor(t *testing.T) {
 	if !l.hasColor() {
 		t.Error("Color setter did not apply")
 	}
+
 	if l.colorOf() != Red {
 		t.Error("colorOf mismatch")
 	}
+
 	l.setColor(Blue)
+
 	if l.colorOf() != Red {
 		t.Error("setColor overwrote existing color")
 	}
+
 	out := renderASCII(seriesPlot(l), 40)
 	if out == "" {
 		t.Fatal("empty render")
@@ -218,6 +247,7 @@ func TestLineColor(t *testing.T) {
 
 func TestLineMarker(t *testing.T) {
 	l := NewLineVals("m", []float64{1, 3, 2}).Marker('*')
+
 	out := renderASCII(seriesPlot(l), 40)
 	if !strings.Contains(out, "*") {
 		t.Error("marker glyph not found in render")
@@ -229,10 +259,13 @@ func TestLineDashed(t *testing.T) {
 	if !l.dashed {
 		t.Error("Dashed(true) did not set flag")
 	}
+
 	l.Dashed(false)
+
 	if l.dashed {
 		t.Error("Dashed(false) did not clear flag")
 	}
+
 	out := renderASCII(seriesPlot(l), 40)
 	if out == "" {
 		t.Fatal("empty render")
@@ -244,10 +277,12 @@ func TestLineSetName(t *testing.T) {
 	if l.name != "new" {
 		t.Errorf("name = %q, want %q", l.name, "new")
 	}
+
 	out := renderASCII(seriesPlot(l), 40)
 	if !strings.Contains(out, "new") {
 		t.Error("renamed series not in legend")
 	}
+
 	if strings.Contains(out, "old") {
 		t.Error("old name still present")
 	}
@@ -256,9 +291,11 @@ func TestLineSetName(t *testing.T) {
 func TestLinePoints(t *testing.T) {
 	l := NewLine("p")
 	l.Points(Point{X: 0, Y: 1}, Point{X: 1, Y: 2})
+
 	if len(l.pts) != 2 {
 		t.Fatalf("expected 2 points, got %d", len(l.pts))
 	}
+
 	if l.pts[1].X != 1 || l.pts[1].Y != 2 {
 		t.Errorf("unexpected point: %v", l.pts[1])
 	}
@@ -267,13 +304,16 @@ func TestLinePoints(t *testing.T) {
 func TestLineValues(t *testing.T) {
 	l := NewLine("v")
 	l.Values(10, 20, 30)
+
 	if len(l.pts) != 3 {
 		t.Fatalf("expected 3 points, got %d", len(l.pts))
 	}
+
 	for i, want := range []float64{10, 20, 30} {
 		if l.pts[i].Y != want {
 			t.Errorf("pts[%d].Y = %v, want %v", i, l.pts[i].Y, want)
 		}
+
 		if l.pts[i].X != float64(i) {
 			t.Errorf("pts[%d].X = %v, want %v", i, l.pts[i].X, float64(i))
 		}
@@ -285,9 +325,11 @@ func TestNewScatter(t *testing.T) {
 	if sc.name != "s" {
 		t.Errorf("name = %q", sc.name)
 	}
+
 	if len(sc.pts) != 2 {
 		t.Fatalf("expected 2 points, got %d", len(sc.pts))
 	}
+
 	if sc.pts[0].X != 5 || sc.pts[0].Y != 10 {
 		t.Errorf("point 0 = %v", sc.pts[0])
 	}
@@ -298,9 +340,11 @@ func TestNewScatterVals(t *testing.T) {
 	if sc.name != "sv" {
 		t.Errorf("name = %q", sc.name)
 	}
+
 	if len(sc.pts) != 3 {
 		t.Fatalf("expected 3 points, got %d", len(sc.pts))
 	}
+
 	for i, want := range []float64{4, 8, 12} {
 		if sc.pts[i].Y != want || sc.pts[i].X != float64(i) {
 			t.Errorf("pts[%d] = %v, want X=%d Y=%v", i, sc.pts[i], i, want)
@@ -313,14 +357,17 @@ func TestScatterColor(t *testing.T) {
 	if !sc.hasColor() {
 		t.Error("Color setter did not apply")
 	}
+
 	if sc.colorOf() != Cyan {
 		t.Error("colorOf mismatch")
 	}
 	// setColor should not overwrite
 	sc.setColor(Purple)
+
 	if sc.colorOf() != Cyan {
 		t.Error("setColor overwrote existing color")
 	}
+
 	out := renderASCII(seriesPlot(sc), 40)
 	if out == "" {
 		t.Fatal("empty render")
@@ -329,6 +376,7 @@ func TestScatterColor(t *testing.T) {
 
 func TestScatterMarker(t *testing.T) {
 	sc := NewScatterVals("sm", []float64{1, 2, 3}).Marker('+')
+
 	out := renderASCII(seriesPlot(sc), 40)
 	if !strings.Contains(out, "+") {
 		t.Error("marker glyph not found in render")
@@ -340,6 +388,7 @@ func TestScatterSetName(t *testing.T) {
 	if sc.name != "fresh" {
 		t.Errorf("name = %q", sc.name)
 	}
+
 	out := renderASCII(seriesPlot(sc), 40)
 	if !strings.Contains(out, "fresh") {
 		t.Error("renamed scatter not in legend")
@@ -349,9 +398,11 @@ func TestScatterSetName(t *testing.T) {
 func TestScatterPoints(t *testing.T) {
 	sc := NewScatter("sp")
 	sc.Points(Point{X: 10, Y: 20}, Point{X: 30, Y: 40})
+
 	if len(sc.pts) != 2 {
 		t.Fatalf("expected 2 points, got %d", len(sc.pts))
 	}
+
 	if sc.pts[1].X != 30 || sc.pts[1].Y != 40 {
 		t.Errorf("unexpected point: %v", sc.pts[1])
 	}
@@ -361,11 +412,14 @@ func TestPlotLogX(t *testing.T) {
 	p := NewPlot()
 	p.LogX(true)
 	p.Add(NewLineVals("lx", []float64{1, 10, 100}))
+
 	out := renderASCII(p, 40)
 	if out == "" {
 		t.Fatal("empty render with LogX")
 	}
+
 	p.LogX(false)
+
 	out2 := renderASCII(p, 40)
 	if out2 == "" {
 		t.Fatal("empty render after LogX(false)")
@@ -378,6 +432,7 @@ func TestPlotLogYToggle(t *testing.T) {
 	p.Add(NewLineVals("ly", []float64{1, 10, 100}))
 	on := renderASCII(p, 40)
 	p.LogY(false)
+
 	off := renderASCII(p, 40)
 	if on == off {
 		t.Error("LogY toggle had no visible effect")
@@ -389,11 +444,14 @@ func TestPlotOrientationHorizontal(t *testing.T) {
 	p.Add(NewLineVals("h", []float64{1, 3, 2, 5, 4}))
 	v := renderASCII(p, 40)
 	p.Orientation(OrientHorizontal)
+
 	h := renderASCII(p, 40)
 	if v == h {
 		t.Error("OrientHorizontal had no visible effect")
 	}
+
 	p.Orientation(OrientVertical)
+
 	back := renderASCII(p, 40)
 	if back != v {
 		t.Error("reverting orientation did not restore original render")
@@ -405,6 +463,7 @@ func TestPlotGrid(t *testing.T) {
 	p.Add(NewLineVals("g", []float64{1, 2, 3}))
 	on := renderASCII(p, 40)
 	p.Grid(false)
+
 	off := renderASCII(p, 40)
 	if on == off {
 		t.Error("Grid toggle had no visible effect")
@@ -455,6 +514,7 @@ func TestPlotHeightHint(t *testing.T) {
 	}
 	// Height explicitly set => base returns it
 	p.Height(15)
+
 	h = p.HeightHint(40)
 	if h != 15 {
 		t.Errorf("HeightHint with Height(15) = %d, want 15", h)
@@ -464,9 +524,11 @@ func TestPlotHeightHint(t *testing.T) {
 func TestPlotAddInvalidType(t *testing.T) {
 	p := NewPlot()
 	p.Add("not a series", 42)
+
 	if len(p.order) != 0 {
 		t.Errorf("expected 0 series after invalid Add, got %d", len(p.order))
 	}
+
 	out := renderASCII(p, 30)
 	if out == "" {
 		t.Fatal("empty render")
@@ -475,6 +537,7 @@ func TestPlotAddInvalidType(t *testing.T) {
 
 func TestScatterDefaultMarker(t *testing.T) {
 	sc := NewScatterVals("dm", []float64{1, 2, 3})
+
 	out := renderASCII(seriesPlot(sc), 40)
 	if !strings.Contains(out, "o") {
 		t.Error("default ASCII scatter marker 'o' not found")
@@ -483,6 +546,7 @@ func TestScatterDefaultMarker(t *testing.T) {
 
 func TestLineEmptyPoints(t *testing.T) {
 	l := NewLine("empty")
+
 	out := renderASCII(seriesPlot(l), 40)
 	if out == "" {
 		t.Fatal("empty line plot failed to render")
@@ -491,6 +555,7 @@ func TestLineEmptyPoints(t *testing.T) {
 
 func TestScatterEmptyPoints(t *testing.T) {
 	sc := NewScatter("empty")
+
 	out := renderASCII(seriesPlot(sc), 40)
 	if out == "" {
 		t.Fatal("empty scatter plot failed to render")
@@ -502,6 +567,7 @@ func TestSeqBasic(t *testing.T) {
 	if len(pts) != 3 {
 		t.Fatalf("expected 3, got %d", len(pts))
 	}
+
 	for i, want := range []float64{10, 20, 30} {
 		if pts[i].X != float64(i) || pts[i].Y != want {
 			t.Errorf("pts[%d] = %v, want {X:%d Y:%v}", i, pts[i], i, want)

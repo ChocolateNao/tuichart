@@ -23,8 +23,10 @@ func paintFrame(prev, cur *Canvas, lvl Level, termH int) string {
 		if termH > 0 {
 			return seqHome + seqClearAll + cur.Render(lvl)
 		}
+
 		return seqHome + cur.Render(lvl) + "\n" + seqClearBelow
 	}
+
 	return diffPaint(prev, cur, lvl)
 }
 
@@ -34,54 +36,71 @@ func paintFrame(prev, cur *Canvas, lvl Level, termH int) string {
 // runs of identical cells instead of rewriting them.
 func diffPaint(prev, cur *Canvas, lvl Level) string {
 	var b strings.Builder
+
 	for y := 0; y < cur.h; y++ {
 		if rowEqual(prev, cur, y) {
 			continue
 		}
+
 		fmt.Fprintf(&b, "\x1b[%d;1H", y+1)
+
 		cx := 0
 		curStyle := Style{}
 		active := false
+
 		for x := 0; x < cur.w; {
 			if prev.At(x, y) == cur.At(x, y) {
 				x++
 				continue
 			}
+
 			if cx != x {
 				if active {
 					b.WriteString(ansiReset)
+
 					active = false
 					curStyle = Style{}
 				}
+
 				fmt.Fprintf(&b, "\x1b[%dC", x-cx)
 				cx = x
 			}
+
 			for x < cur.w {
 				cl := cur.At(x, y)
 				if prev.At(x, y) == cl {
 					break
 				}
+
 				st := Style{Fg: cl.fg, Bg: cl.bg, Bold: cl.bold}
 				if !st.eq(curStyle) {
 					if active {
 						b.WriteString(ansiReset)
+
 						active = false
 					}
+
 					if seq := lvl.seq(st); seq != "" {
 						b.WriteString(seq)
+
 						active = true
 					}
+
 					curStyle = st
 				}
+
 				b.WriteRune(cl.ch)
+
 				x++
 				cx++
 			}
 		}
+
 		if active {
 			b.WriteString(ansiReset)
 		}
 	}
+
 	return b.String()
 }
 

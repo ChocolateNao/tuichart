@@ -16,6 +16,7 @@ func main() {
 		x := float64(i)
 		pts[i] = tuichart.Point{X: x, Y: 30 + 20*math.Sin(x/6)}
 	}
+
 	plot := tuichart.NewPlot().
 		Title("cpu usage").
 		Add(tuichart.NewLine("cpu", pts...).Color(tuichart.Cyan))

@@ -20,6 +20,7 @@ func tcgetattr(fd uintptr, t *syscall.Termios) error {
 	if errno != 0 {
 		return errno
 	}
+
 	return nil
 }
 
@@ -34,6 +35,7 @@ func tcsetattr(fd uintptr, t *syscall.Termios) error {
 	if errno != 0 {
 		return errno
 	}
+
 	return nil
 }
 
@@ -47,16 +49,21 @@ func acquireInput(f *os.File) (restore func(), engaged bool) {
 	if !platformIsTTY(f) {
 		return noop, false
 	}
+
 	var old syscall.Termios
 	if err := tcgetattr(f.Fd(), &old); err != nil {
 		return noop, false
 	}
+
 	quiet := old
+
 	quiet.Lflag &^= syscall.ICANON | syscall.ECHO
 	if err := tcsetattr(f.Fd(), &quiet); err != nil {
 		return noop, false
 	}
+
 	restore = func() { tcsetattr(f.Fd(), &old) }
+
 	return restore, true
 }
 
@@ -67,21 +74,27 @@ func acquireInput(f *os.File) (restore func(), engaged bool) {
 // echoed onto the screen or replayed after the terminal is restored.
 func swallowInput(f *os.File, stop <-chan struct{}) <-chan struct{} {
 	fd := int(f.Fd())
+
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
+
 		buf := make([]byte, 1024)
+
 		for {
 			if selectReady(fd) {
 				n, err := syscall.Read(fd, buf)
 				if n > 0 {
 					continue
 				}
+
 				if err != syscall.EINTR {
 					return // EOF / EIO / terminal gone
 				}
+
 				continue
 			}
+
 			select {
 			case <-stop:
 				return
@@ -89,6 +102,7 @@ func swallowInput(f *os.File, stop <-chan struct{}) <-chan struct{} {
 			}
 		}
 	}()
+
 	return done
 }
 
@@ -98,15 +112,18 @@ func swallowInput(f *os.File, stop <-chan struct{}) <-chan struct{} {
 func drainStdin(f *os.File) {
 	fd := int(f.Fd())
 	buf := make([]byte, 4096)
+
 	for {
 		if !selectReady(fd) {
 			return
 		}
+
 		n, err := syscall.Read(fd, buf)
 		if n <= 0 {
 			if err == syscall.EINTR {
 				continue
 			}
+
 			return
 		}
 	}

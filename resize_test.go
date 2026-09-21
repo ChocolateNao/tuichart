@@ -17,8 +17,11 @@ func TestWatchResizeSIGWINCH(t *testing.T) {
 	if !platformIsTTY(os.Stdout) {
 		t.Skip("requires a TTY")
 	}
+
 	var mu sync.Mutex
+
 	got := 0
+
 	stop := watchResize(os.Stdout, func() {
 		mu.Lock()
 		got++
@@ -31,16 +34,20 @@ func TestWatchResizeSIGWINCH(t *testing.T) {
 	}
 
 	deadline := time.Now().Add(2 * time.Second)
+
 	for {
 		mu.Lock()
 		n := got
 		mu.Unlock()
+
 		if n > 0 {
 			return
 		}
+
 		if time.Now().After(deadline) {
 			t.Fatal("resize watcher never fired after SIGWINCH")
 		}
+
 		time.Sleep(5 * time.Millisecond)
 	}
 }
@@ -54,17 +61,21 @@ func TestResizeEventReachesLoop(t *testing.T) {
 	g.Add(NewPlot().Title("resize-me"))
 
 	l := NewLive(g, WithLiveOutput(&countingWriter{}), WithInterval(time.Hour))
+
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() { _ = l.Run(ctx) }()
+
 	defer func() { cancel(); <-l.Done() }()
 
 	// The initial repaint is one write; the resize event must add another.
 	initial := l.out.(*countingWriter).len()
+
 	deadline := time.Now().Add(2 * time.Second)
 	for l.out.(*countingWriter).len() <= initial && time.Now().Before(deadline) {
 		l.enqueueResize()
 		time.Sleep(10 * time.Millisecond)
 	}
+
 	if l.out.(*countingWriter).len() <= initial {
 		t.Fatal("resize event never reached the render loop")
 	}
@@ -81,11 +92,13 @@ func (c *countingWriter) Write(p []byte) (int, error) {
 	c.mu.Lock()
 	c.n++
 	c.mu.Unlock()
+
 	return len(p), nil
 }
 
 func (c *countingWriter) len() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
 	return c.n
 }

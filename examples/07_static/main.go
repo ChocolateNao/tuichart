@@ -15,6 +15,7 @@ func main() {
 	g := tuichart.New()
 
 	var cpu, mem []tuichart.Point
+
 	for i := 0; i < 60; i++ {
 		x := float64(i)
 		cpu = append(cpu, tuichart.Point{
@@ -26,7 +27,9 @@ func main() {
 			Y: 55 + 10*math.Cos(x/14) + rng.Float64()*4,
 		})
 	}
+
 	scatter := make([]tuichart.Point, 0, 30)
+
 	for i := 0; i < 30; i++ {
 		x := rng.Float64() * 60
 		scatter = append(scatter, tuichart.Point{X: x, Y: 20 + x*0.5 + rng.Float64()*15})
@@ -64,6 +67,7 @@ func main() {
 	for i := range histData {
 		histData[i] = rng.NormFloat64()*15 + 50
 	}
+
 	hist := tuichart.NewHistogram(histData).
 		Bins(14).
 		Color(tuichart.Cyan).
@@ -99,6 +103,7 @@ func main() {
 	for i := 0; i < 78; i++ {
 		sparks.Values(20 + 15*math.Sin(float64(i)/4) + rng.Float64()*10)
 	}
+
 	sparks.Title("network throughput")
 	g.Add(sparks)
 
@@ -140,10 +145,12 @@ func main() {
 
 	ts := tuichart.NewTimeSeries().Title("server load — 48h")
 	load := ts.Line("load %")
+
 	for i := 0; i <= 96; i++ {
 		wob := math.Sin(float64(i)/6)*25 + float64(rng.Intn(9))
 		load.Add(base.Add(time.Duration(i)*30*time.Minute), 45+wob)
 	}
+
 	ts.Line("capacity").Add(base, 80).Add(base.Add(48*time.Hour), 80).Color(tuichart.Red)
 	g.Add(ts)
 
@@ -172,6 +179,7 @@ func main() {
 	candles := tuichart.NewCandlestick().Title("ACME — daily OHLC")
 	price := 142.0
 	day := time.Now().Add(-30 * 24 * time.Hour)
+
 	for i := 0; i < 26; i++ {
 		o := price
 		cl := o + rng.Float64()*7 - 3.4
@@ -181,6 +189,7 @@ func main() {
 		candles.Candle(day.Add(time.Duration(i)*24*time.Hour), r(o), r(hi), r(lo), r(cl))
 		price = cl
 	}
+
 	candles.Format("Jan 02")
 	g.Add(candles)
 
@@ -228,6 +237,7 @@ func randomGrid(rows, cols int, rng *rand.Rand) [][]float64 {
 			grid[r][c] = math.Abs(math.Sin(float64(c)/3+float64(r)/2)) * 100 * rng.Float64()
 		}
 	}
+
 	return grid
 }
 
@@ -236,5 +246,6 @@ func sparkVals() []float64 {
 	for i := range out {
 		out[i] = 10 + 8*math.Sin(float64(i)/3)
 	}
+
 	return out
 }

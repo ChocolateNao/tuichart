@@ -85,11 +85,13 @@ func (u *ui) board() *tuichart.Board {
 	if b, ok := u.boards[key]; ok {
 		return b
 	}
+
 	b := tuichart.New(tuichart.WithUnicode(u.uni), tuichart.WithTrueColor())
 	plot := tuichart.NewPlot().Title(dsNames[u.ds])
 	plot.Add(tuichart.NewLineVals("line", dss[u.ds]).Color(palette[u.col]))
 	b.Add(plot)
 	u.boards[key] = b
+
 	return b
 }
 
@@ -100,10 +102,12 @@ func (u *ui) bar(s string, w int) string {
 	if n := len(r); n > w {
 		return string(r[:w])
 	}
+
 	fill := "─"
 	if !u.uni {
 		fill = "-"
 	}
+
 	return string(r) + strings.Repeat(fill, w-len(r))
 }
 
@@ -111,6 +115,7 @@ func (u *ui) dash(n int) string {
 	if u.uni {
 		return strings.Repeat("─", n)
 	}
+
 	return strings.Repeat("-", n)
 }
 
@@ -121,25 +126,30 @@ func (u *ui) dash(n int) string {
 // Rewriting them to the 38;5;/48;5; form gocui does parse keeps every palette
 // color visible.
 //
-// # note: the implementation presented in this example only remaps bright fg/bg, the only form
+// note: the implementation presented in this example only remaps bright fg/bg, the only form
 // tuichart emits here; a
 // combined 1;38;5;N sequence would need splitting, add when a bold line style
 // actually merges.
 func gocuiSGR(s string) string {
 	var b strings.Builder
+
 	for i := 0; i < len(s); {
 		if s[i] != '\x1b' || i+1 >= len(s) || s[i+1] != '[' {
 			b.WriteByte(s[i])
 			i++
+
 			continue
 		}
+
 		j := strings.IndexByte(s[i+2:], 'm')
 
 		if j < 0 {
 			b.WriteByte(s[i])
 			i++
+
 			continue
 		}
+
 		parts := strings.Split(s[i+2:i+2+j], ";")
 
 		for k, p := range parts {
@@ -149,11 +159,14 @@ func gocuiSGR(s string) string {
 				parts[k] = "48;5;" + strconv.Itoa(int(p[2]-'0')+8)
 			}
 		}
+
 		b.WriteString("\x1b[")
 		b.WriteString(strings.Join(parts, ";"))
 		b.WriteString("m")
+
 		i += 2 + j + 1
 	}
+
 	return b.String()
 }
 
@@ -167,9 +180,12 @@ func (u *ui) paintBoard(v *gocui.View) error {
 	if w < 10 || h < 3 {
 		return nil
 	}
+
 	cv, info := u.board().RenderCanvas(w)
+
 	v.Clear()
 	v.WriteString(gocuiSGR(cv.Render(info.Level)))
+
 	return nil
 }
 
@@ -190,6 +206,7 @@ func (u *ui) layout(gui *gocui.Gui) error {
 	if err != nil && !errors.Is(err, gocui.ErrUnknownView) {
 		return err
 	}
+
 	chart.Title = fmt.Sprintf(" tuichart x gocui · %s ", dsNames[u.ds])
 	chart.FrameColor = chrome
 	chart.TitleColor = chrome
@@ -205,6 +222,7 @@ func (u *ui) layout(gui *gocui.Gui) error {
 	if err != nil && !errors.Is(err, gocui.ErrUnknownView) {
 		return err
 	}
+
 	status.Frame = false
 	status.FgColor = chrome
 	status.Clear()
@@ -225,17 +243,21 @@ func (u *ui) layout(gui *gocui.Gui) error {
 		if x+w+2 > maxX {
 			break
 		}
+
 		v, err := gui.SetView(b.name, x, maxY-3, x+w+1, maxY-1, 0)
 		if err != nil && !errors.Is(err, gocui.ErrUnknownView) {
 			return err
 		}
+
 		if v == gui.CurrentView() {
 			v.FgColor, v.BgColor = gocui.ColorBlack, accent
 		} else {
 			v.FgColor, v.BgColor = gocui.ColorDefault, gocui.ColorDefault
 		}
+
 		v.Clear()
 		v.WriteString(" " + b.label + " ")
+
 		x += w + 3
 	}
 
@@ -244,6 +266,7 @@ func (u *ui) layout(gui *gocui.Gui) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -251,7 +274,12 @@ func (u *ui) layout(gui *gocui.Gui) error {
 // both ends.
 func (u *ui) focus(dir int) error {
 	names := make([]string, 0, 1+len(buttons))
+
 	names = append(names, "chart")
+	for _, b := range buttons {
+		names = append(names, b.name)
+	}
+
 	idx, cur := 0, u.gui.CurrentView()
 
 	if cur != nil {
@@ -262,8 +290,10 @@ func (u *ui) focus(dir int) error {
 			}
 		}
 	}
+
 	idx = (idx + dir + len(names)) % len(names)
 	_, err := u.gui.SetCurrentView(names[idx])
+
 	return err
 }
 
@@ -279,6 +309,7 @@ func (u *ui) activate(btn string) error {
 	case "quit":
 		return gocui.ErrQuit
 	}
+
 	return nil
 }
 
@@ -335,6 +366,7 @@ func (u *ui) bind(gui *gocui.Gui) {
 			if _, err := gui.SetCurrentView(name); err != nil {
 				return err
 			}
+
 			return u.activate(name)
 		}
 		_ = gui.SetKeybinding(name, gocui.MouseLeft, gocui.ModNone, click)
@@ -352,6 +384,7 @@ func main() {
 		os.Exit(1)
 	}
 	defer gui.Close()
+
 	u.gui = gui
 
 	gui.Mouse = true

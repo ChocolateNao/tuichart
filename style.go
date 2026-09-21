@@ -84,9 +84,11 @@ func Indexed(i int) Color {
 	if i < 0 {
 		i = 0
 	}
+
 	if i > 255 {
 		i = 255
 	}
+
 	return Color{kind: colorIndexed, idx: uint8(i)}
 }
 
@@ -152,19 +154,24 @@ func (l Level) seq(st Style) string {
 	if l <= LevelNone || st.isZero() {
 		return ""
 	}
+
 	var parts []string
 	if st.Bold {
 		parts = append(parts, "1")
 	}
+
 	if !st.Fg.IsZero() {
 		parts = append(parts, colorCodes(st.Fg, false, l)...)
 	}
+
 	if !st.Bg.IsZero() {
 		parts = append(parts, colorCodes(st.Bg, true, l)...)
 	}
+
 	if len(parts) == 0 {
 		return ""
 	}
+
 	return "\x1b[" + strings.Join(parts, ";") + "m"
 }
 
@@ -175,6 +182,7 @@ func colorCodes(c Color, bg bool, l Level) []string {
 	if bg {
 		base, bright, ext = 40, 100, "48"
 	}
+
 	switch c.kind {
 	case colorIndexed:
 		i := int(c.idx)
@@ -182,16 +190,21 @@ func colorCodes(c Color, bg bool, l Level) []string {
 			if i < 8 {
 				return []string{strconv.Itoa(base + i)}
 			}
+
 			return []string{strconv.Itoa(bright + i - 8)}
 		}
+
 		if l >= Level256 {
 			if l >= LevelTrue {
 				r, g, b := idxToRGB(i)
 				return []string{ext, "2", strconv.Itoa(r), strconv.Itoa(g), strconv.Itoa(b)}
 			}
+
 			return []string{ext, "5", strconv.Itoa(i)}
 		}
+
 		r, g, b := idxToRGB(i)
+
 		return basic16(nearest16([3]int{r, g, b}), base, bright)
 	case colorRGB:
 		switch {
@@ -209,6 +222,7 @@ func colorCodes(c Color, bg bool, l Level) []string {
 			return basic16(nearest16([3]int{int(c.r), int(c.g), int(c.b)}), base, bright)
 		}
 	}
+
 	return nil
 }
 
@@ -216,6 +230,7 @@ func basic16(n int, base, bright int) []string {
 	if n < 8 {
 		return []string{strconv.Itoa(base + n)}
 	}
+
 	return []string{strconv.Itoa(bright + n - 8)}
 }
 
@@ -240,13 +255,16 @@ var ansi16rgb = [16][3]int{
 
 func nearest16(rgb [3]int) int {
 	best, bestD := 0, 1<<30
+
 	for i, c := range ansi16rgb {
 		dr, dg, db := rgb[0]-c[0], rgb[1]-c[1], rgb[2]-c[2]
+
 		d := 2*dr*dr + 4*dg*dg + 3*db*db
 		if d < bestD {
 			best, bestD = i, d
 		}
 	}
+
 	return best
 }
 
@@ -257,11 +275,14 @@ func idxToRGB(i int) (int, int, int) {
 		c := ansi16rgb[i]
 		return c[0], c[1], c[2]
 	}
+
 	if i < 232 {
 		n := i - 16
 		return cubeLevels[n/36], cubeLevels[(n/6)%6], cubeLevels[n%6]
 	}
+
 	v := 8 + (i-232)*10
+
 	return v, v, v
 }
 
@@ -271,11 +292,14 @@ func rgbTo256(r, g, b uint8) int {
 		if R < 8 {
 			return 16
 		}
+
 		if R > 238 {
 			return 231
 		}
+
 		return 232 + (R-8)/10
 	}
+
 	q := func(v int) int {
 		best, bd := 0, 1<<30
 		for i, lv := range cubeLevels {
@@ -283,8 +307,10 @@ func rgbTo256(r, g, b uint8) int {
 				best, bd = i, d
 			}
 		}
+
 		return best
 	}
+
 	return 16 + 36*q(R) + 6*q(G) + q(B)
 }
 
@@ -292,6 +318,7 @@ func abs(v int) int {
 	if v < 0 {
 		return -v
 	}
+
 	return v
 }
 
@@ -299,9 +326,11 @@ func toUint8(v int) uint8 {
 	if v < 0 {
 		return 0
 	}
+
 	if v > 255 {
 		return 255
 	}
+
 	return uint8(v)
 }
 
@@ -310,18 +339,23 @@ func mix(a, b Color, t float64) Color {
 		r1, g1, b1 := idxToRGB(int(a.idx))
 		a = RGB(toUint8(r1), toUint8(g1), toUint8(b1))
 	}
+
 	if b.kind != colorRGB {
 		r2, g2, b2 := idxToRGB(int(b.idx))
 		b = RGB(toUint8(r2), toUint8(g2), toUint8(b2))
 	}
+
 	if t < 0 {
 		t = 0
 	}
+
 	if t > 1 {
 		t = 1
 	}
+
 	lerp := func(x, y uint8) uint8 {
 		return uint8(math.Round(float64(x) + (float64(y)-float64(x))*t))
 	}
+
 	return RGB(lerp(a.r, b.r), lerp(a.g, b.g), lerp(a.b, b.b))
 }
