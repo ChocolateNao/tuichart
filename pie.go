@@ -31,6 +31,7 @@ func (p *PieChart) SliceColor(c Color) *PieChart {
 	if len(p.slices) > 0 {
 		p.slices[len(p.slices)-1].color = c
 	}
+
 	return p
 }
 
@@ -49,14 +50,8 @@ func (p *PieChart) HeightHint(width int) int {
 	if h := p.chartBase.HeightHint(width); h > 0 {
 		return h
 	}
-	h := width * 3 / 5
-	if h > 22 {
-		h = 22
-	}
-	if h < 8 {
-		h = 8
-	}
-	return h
+
+	return clampInt(width*3/5, 8, 22)
 }
 
 var pieASCIIChars = []rune{'#', '@', '*', 'o', '=', '+', '~', '%'}
@@ -64,14 +59,15 @@ var pieASCIIChars = []rune{'#', '@', '*', 'o', '=', '+', '~', '%'}
 // Draw renders the pie sectors and legend into the canvas.
 func (p *PieChart) Draw(rc *Ctx, cv *Canvas) {
 	total := 0.0
-	ci := 0
+
 	for i := range p.slices {
 		if p.slices[i].color.IsZero() {
-			p.slices[i].color = rc.Palette[ci%len(rc.Palette)]
-			ci++
+			p.slices[i].color = rc.Next()
 		}
+
 		total += math.Max(p.slices[i].val, 0)
 	}
+
 	inner := p.frameTitle(cv, rc.Info.Unicode)
 
 	if total <= 0 || inner.W < 6 || inner.H < 4 {
@@ -83,9 +79,11 @@ func (p *PieChart) Draw(rc *Ctx, cv *Canvas) {
 	if reserve > len(p.slices)*14+6 {
 		reserve = len(p.slices)*14 + 6
 	}
+
 	cx := inner.X + (inner.W-reserve)/2
 	cy := inner.Y + inner.H/2
 	rx := (inner.W - reserve - 1) / 2
+
 	ry := (inner.H - 1) / 2
 	if rx < 1 || ry < 1 {
 		rx = max(rx, 1)
@@ -93,7 +91,9 @@ func (p *PieChart) Draw(rc *Ctx, cv *Canvas) {
 	}
 
 	var entries []LegendEntry
+
 	acc := 0.0
+
 	for i := range p.slices {
 		s := &p.slices[i]
 		v := math.Max(s.val, 0)
@@ -102,50 +102,45 @@ func (p *PieChart) Draw(rc *Ctx, cv *Canvas) {
 		to := acc / total
 		st := NewStyle(s.color)
 		mono := rc.Info.Level == LevelNone
+
 		fillCh := '█'
 		if mono || !rc.Info.Unicode {
 			fillCh = pieASCIIChars[i%len(pieASCIIChars)]
 		}
+
 		drawPieSector(cv, cx, cy, rx, ry, from, to, fillCh, st, p.donut)
+
 		pct := v / total * 100
-		label := s.name + " " + trimPct(pct) + "%"
+		pctStr := FormatValue(math.Round(pct*10) / 10)
+
+		label := s.name + " " + pctStr + "%"
 		if p.showVals {
-			label = s.name + " " + FormatValue(v) + " (" + trimPct(pct) + "%)"
+			label = s.name + " " + FormatValue(v) + " (" + pctStr + "%)"
 		}
+
 		glyph := "██"
 		if mono || !rc.Info.Unicode {
 			glyph = string(fillCh) + string(fillCh)
 		}
+
 		entries = append(entries, LegendEntry{
 			Label: label,
 			Style: st,
 			Glyph: glyph,
 		})
 	}
-	lx := min(cx+rx+2, inner.X2()-12)
-	drawLegendColumn(
-		cv,
-		Rect{X: lx, Y: cy - len(entries)/2, W: inner.X2() - lx + 1, H: len(entries)},
-		entries,
-		rc.Info.Unicode,
-	)
-}
 
-func drawLegendColumn(cv *Canvas, r Rect, entries []LegendEntry, uni bool) {
+	lx := min(cx+rx+2, inner.X2()-12)
+
 	for i, e := range entries {
-		y := r.Y + i
-		if y > r.Y2() || y < 0 {
+		y := cy - len(entries)/2 + i
+		if y > inner.Y2() || y < 0 {
 			continue
 		}
-		x := r.X
-		n := cv.Text(x, y, e.Glyph, e.Style)
-		cv.Text(x+n+1, y, ellipTrunc(e.Label, r.W-n-2, uni), e.Style)
-	}
-}
 
-func trimPct(v float64) string {
-	s := FormatValue(math.Round(v*10) / 10)
-	return s
+		n := cv.Text(lx, y, e.Glyph, e.Style)
+		cv.Text(lx+n+1, y, ellipTrunc(e.Label, inner.X2()-lx+1-n-2, rc.Info.Unicode), e.Style)
+	}
 }
 
 func drawPieSector(
@@ -160,17 +155,21 @@ func drawPieSector(
 		for dx := -rx; dx <= rx; dx++ {
 			nx := float64(dx) / float64(rx)
 			ny := float64(dy) / float64(ry)
+
 			d := nx*nx + ny*ny
 			if d > 1 {
 				continue
 			}
+
 			if donut && d < 0.30 {
 				continue
 			}
+
 			ang := math.Atan2(nx, -ny)
 			if ang < 0 {
 				ang += 2 * math.Pi
 			}
+
 			t := ang / (2 * math.Pi)
 			if t >= from-1e-9 && t < to+1e-9 {
 				cv.Set(cx+dx, cy+dy, ch, st)
