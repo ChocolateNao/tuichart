@@ -322,7 +322,7 @@ func TestLiveGaugeSegmentStretch(t *testing.T) {
 }
 
 func TestFPSOption(t *testing.T) {
-	l := NewLive(New(), WithFPS(10))
+	l := NewLive(New(), WithInterval(100*time.Millisecond))
 	if l.interval != 100*time.Millisecond {
 		t.Errorf("interval = %v", l.interval)
 	}

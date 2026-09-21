@@ -83,15 +83,6 @@ func WithInterval(d time.Duration) LiveOption {
 	return func(l *Live) { l.interval = d }
 }
 
-// WithFPS sets the frame rate; interval becomes 1/fps.
-func WithFPS(fps float64) LiveOption {
-	return func(l *Live) {
-		if fps > 0 {
-			l.interval = time.Duration(float64(time.Second) / fps)
-		}
-	}
-}
-
 // WithLiveOutput redirects frames; defaults to os.Stdout. Any io.Writer
 // works, which makes tests deterministic (escape sequences land in the
 // buffer).
