@@ -15,16 +15,20 @@ type TreemapNode struct {
 func (n *TreemapNode) value() float64 {
 	if len(n.Children) > 0 {
 		s := 0.0
+
 		for _, c := range n.Children {
 			if v := c.value(); v > 0 {
 				s += v
 			}
 		}
+
 		return s
 	}
+
 	if n.Value > 0 {
 		return n.Value
 	}
+
 	return 0
 }
 
@@ -62,14 +66,8 @@ func (t *TreemapChart) HeightHint(width int) int {
 	if h := t.chartBase.HeightHint(width); h > 0 {
 		return h
 	}
-	h := width * 3 / 5
-	if h > 24 {
-		h = 24
-	}
-	if h < 8 {
-		h = 8
-	}
-	return h
+
+	return clampInt(width*3/5, 8, 24)
 }
 
 type treemapRect struct {
@@ -90,6 +88,7 @@ func (t *TreemapChart) Draw(rc *Ctx, cv *Canvas) {
 	for _, n := range t.roots {
 		total += n.value()
 	}
+
 	if total <= 0 || len(t.roots) == 0 || inner.W < 6 || inner.H < 4 {
 		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
@@ -107,18 +106,20 @@ func (t *TreemapChart) Draw(rc *Ctx, cv *Canvas) {
 	if mono || !uni {
 		fill = pieASCIIChars[0]
 	}
-	ci := 0
+
 	for i := range rects {
 		rt := &rects[i]
+
 		c := rt.node.Color
 		if c.IsZero() {
-			c = rc.Palette[ci%len(rc.Palette)]
-			ci++
+			c = rc.Next()
 			rt.node.Color = c
 		}
+
 		if len(rt.node.Children) > 0 {
 			continue
 		}
+
 		for y := rt.y0; y <= rt.y1; y++ {
 			for x := rt.x0; x <= rt.x1; x++ {
 				cv.Set(x, y, fill, NewStyle(c))
@@ -129,24 +130,30 @@ func (t *TreemapChart) Draw(rc *Ctx, cv *Canvas) {
 	// Interior labels first so leaves paint over them, then leaf labels.
 	for i := range rects {
 		rt := &rects[i]
+
 		n := rt.node
 		if len(n.Children) == 0 {
 			continue
 		}
+
 		if rt.width() >= 3 {
 			cv.Text(rt.x0, rt.y0, ellipTrunc(n.Name, rt.width()-1, uni), NewStyle(DimGray))
 		}
 	}
+
 	for i := range rects {
 		rt := &rects[i]
+
 		n := rt.node
 		if len(n.Children) > 0 {
 			continue
 		}
+
 		lbl := n.Name
 		if t.showVals && n.value() > 0 {
 			lbl = n.Name + " " + FormatValue(n.value())
 		}
+
 		w := rt.width()
 		if w >= 3 {
 			cv.Text(rt.x0, rt.y0, ellipTrunc(lbl, w-1, uni), NewStyle(n.Color))
@@ -167,19 +174,25 @@ func layoutTreemap(
 	if len(nodes) == 0 || w < 2 || h < 2 {
 		return
 	}
+
 	curX, curY := x0, y0
+
 	for i, n := range nodes {
 		v := n.value()
 		if v <= 0 {
 			continue
 		}
+
 		if i == len(nodes)-1 {
 			rc := treemapRect{node: n, x0: curX, y0: curY, x1: x0 + w - 1, y1: y0 + h - 1}
 			*out = append(*out, rc)
 			recurseTreemap(n, rc, total, vertical, out)
+
 			break
 		}
+
 		var rc treemapRect
+
 		if vertical {
 			w2 := int(float64(w) * v / total)
 			rc = treemapRect{node: n, x0: curX, y0: curY, x1: curX + w2 - 1, y1: y0 + h - 1}
@@ -189,6 +202,7 @@ func layoutTreemap(
 			rc = treemapRect{node: n, x0: curX, y0: curY, x1: x0 + w - 1, y1: curY + h2 - 1}
 			curY += h2
 		}
+
 		*out = append(*out, rc)
 		recurseTreemap(n, rc, total, vertical, out)
 	}
@@ -204,6 +218,7 @@ func recurseTreemap(
 	if len(n.Children) == 0 || rc.width() < 2 || rc.height() < 2 {
 		return
 	}
+
 	kids := append([]*TreemapNode(nil), n.Children...)
 	sort.SliceStable(kids, func(i, j int) bool {
 		return kids[i].value() > kids[j].value()
@@ -214,6 +229,7 @@ func recurseTreemap(
 		y0++
 		h--
 	}
+
 	layoutTreemap(kids, rc.x0, y0, rc.width(), h, n.value(), !vertical, out)
 }
 
