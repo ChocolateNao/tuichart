@@ -11,17 +11,20 @@ func Seq(vals ...float64) []Point {
 	for i, v := range vals {
 		out[i] = Point{X: float64(i), Y: v}
 	}
+
 	return out
 }
 
 // Zip combines separate x and y slices into Points, truncating to the shorter length.
 func Zip(xs, ys []float64) []Point {
 	n := min(len(xs), len(ys))
+
 	out := make([]Point, 0, n)
 	for i := 0; i < n; i++ {
 		//nolint:gosec // bounded by n = min(len(xs), len(ys))
 		out = append(out, Point{X: xs[i], Y: ys[i]})
 	}
+
 	return out
 }
 
@@ -98,9 +101,11 @@ func clampF(v, lo, hi float64) float64 {
 	if v < lo {
 		return lo
 	}
+
 	if v > hi {
 		return hi
 	}
+
 	return v
 }
 
@@ -108,16 +113,20 @@ func (l *Line) draw(cv *Canvas, fr frame, st Style) {
 	if len(l.pts) == 0 {
 		return
 	}
+
 	proj := make([]projPt, len(l.pts))
 	for i, p := range l.pts {
 		proj[i] = project(fr, p)
 	}
+
 	area := fr.area
+
 	for i := 0; i < len(proj)-1; i++ {
 		a, b := proj[i], proj[i+1]
 		if math.IsNaN(a.x) || math.IsNaN(a.y) || math.IsNaN(b.x) || math.IsNaN(b.y) {
 			continue
 		}
+
 		if fr.uni && fr.ysc.Kind == Linear && fr.xsc.Kind == Linear {
 			gx0 := int(math.Round(clampF(a.x, float64(area.X-1), float64(area.X2()+1)) * 2))
 			gy0 := int(math.Round(clampF(a.y, float64(area.Y-1), float64(area.Y2()+1)) * 4))
@@ -132,6 +141,7 @@ func (l *Line) draw(cv *Canvas, fr frame, st Style) {
 			asciiLine(cv, x0, y0, x1, y1, st)
 		}
 	}
+
 	l.drawMarkers(cv, fr, st)
 }
 
@@ -139,13 +149,16 @@ func (l *Line) drawMarkers(cv *Canvas, fr frame, st Style) {
 	if l.marker == 0 {
 		return
 	}
+
 	m := l.marker
+
 	area := fr.area
 	for _, p := range l.pts {
 		q := project(fr, p)
 		if math.IsNaN(q.x) || math.IsNaN(q.y) {
 			continue
 		}
+
 		x := int(math.Round(clampF(q.x, float64(area.X), float64(area.X2()))))
 		y := int(math.Round(clampF(q.y, float64(area.Y), float64(area.Y2()))))
 		cv.Set(x, y, m, st)
@@ -157,6 +170,7 @@ func (l *Line) legendEntry(st Style, uni bool) LegendEntry {
 	if !uni {
 		glyph = "---"
 	}
+
 	return LegendEntry{Label: l.name, Style: st, Glyph: glyph}
 }
 
@@ -205,6 +219,7 @@ func (s *Scatter) colorOf() Color { return s.color }
 
 func (s *Scatter) draw(cv *Canvas, fr frame, st Style) {
 	area := fr.area
+
 	m := s.marker
 	if m == 0 {
 		if fr.uni {
@@ -213,11 +228,13 @@ func (s *Scatter) draw(cv *Canvas, fr frame, st Style) {
 			m = 'o'
 		}
 	}
+
 	for _, p := range s.pts {
 		q := project(fr, p)
 		if math.IsNaN(q.x) || math.IsNaN(q.y) {
 			continue
 		}
+
 		x := int(math.Round(clampF(q.x, float64(area.X), float64(area.X2()))))
 		y := int(math.Round(clampF(q.y, float64(area.Y), float64(area.Y2()))))
 		cv.Set(x, y, m, st)
@@ -229,6 +246,7 @@ func (s *Scatter) legendEntry(st Style, uni bool) LegendEntry {
 	if !uni {
 		glyph = "oo"
 	}
+
 	return LegendEntry{Label: s.name, Style: st, Glyph: glyph}
 }
 
@@ -277,6 +295,7 @@ func (p *Plot) Add(ss ...any) *Plot {
 			p.order = append(p.order, v)
 		}
 	}
+
 	return p
 }
 
@@ -287,6 +306,7 @@ func (p *Plot) LogX(on bool) *Plot {
 	} else {
 		p.xKind = Linear
 	}
+
 	return p
 }
 
@@ -297,28 +317,20 @@ func (p *Plot) LogY(on bool) *Plot {
 	} else {
 		p.yKind = Linear
 	}
+
 	return p
 }
 
 // HeightHint returns the suggested height for the given width.
 func (p *Plot) HeightHint(width int) int {
-	if h := p.chartBase.HeightHint(width); h > 0 {
-		return h
-	}
-	h := width * 2 / 5
-	if h > 24 {
-		h = 24
-	}
-	if h < 9 {
-		h = 9
-	}
-	return h
+	return p.plotHeightHint(width)
 }
 
 // Draw renders the plot onto the canvas.
 func (p *Plot) Draw(rc *Ctx, cv *Canvas) {
 	base := &p.chartBase
 	xk, yk := p.xKind, p.yKind
+
 	swap := base.orient == OrientHorizontal
 	if swap {
 		// Present the transposed view: series points are swapped and all
@@ -335,28 +347,30 @@ func (p *Plot) Draw(rc *Ctx, cv *Canvas) {
 	}
 
 	var db dataBounds
+
 	db.empty = true
 	for _, s := range p.order {
 		maybeSwap(s, swap).bounds(&db)
 	}
-	ci := 0
+
 	for _, s := range p.order {
 		if !s.hasColor() {
-			s.setColor(rc.Palette[ci%len(rc.Palette)])
-		}
-		if s.hasColor() {
-			ci++
+			s.setColor(rc.Next())
 		}
 	}
+
 	fr := prepareFrame(cv, rc, base, db, xk, yk, true)
+
 	for _, s := range p.order {
 		st := NewStyle(s.colorOf())
 		maybeSwap(s, swap).draw(cv, fr, st)
 	}
+
 	entries := make([]LegendEntry, 0, len(p.order))
 	for _, s := range p.order {
 		entries = append(entries, s.legendEntry(NewStyle(s.colorOf()), rc.Info.Unicode))
 	}
+
 	drawLegendInside(cv, fr.area, entries, rc.Info.Unicode)
 
 	if db.empty && p.title == "" && len(p.order) == 0 {
@@ -371,16 +385,20 @@ func maybeSwap(s seriesI, swap bool) seriesI {
 	if !swap {
 		return s
 	}
+
 	switch v := s.(type) {
 	case *Line:
 		c := *v
 		c.pts = transposePts(v.pts)
+
 		return &c
 	case *Scatter:
 		c := *v
 		c.pts = transposePts(v.pts)
+
 		return &c
 	}
+
 	return s
 }
 
@@ -389,5 +407,6 @@ func transposePts(pts []Point) []Point {
 	for i, p := range pts {
 		out[i] = Point{X: p.Y, Y: p.X}
 	}
+
 	return out
 }

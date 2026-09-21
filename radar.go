@@ -45,6 +45,7 @@ func (r *RadarChart) SeriesColor(c Color) *RadarChart {
 	if len(r.series) > 0 {
 		r.series[len(r.series)-1].color = c
 	}
+
 	return r
 }
 
@@ -65,14 +66,8 @@ func (r *RadarChart) HeightHint(width int) int {
 	if h := r.chartBase.HeightHint(width); h > 0 {
 		return h
 	}
-	h := width/2 + 4
-	if h > 24 {
-		h = 24
-	}
-	if h < 8 {
-		h = 8
-	}
-	return h
+
+	return clampInt(width/2+4, 8, 24)
 }
 
 type radarPt struct {
@@ -101,6 +96,7 @@ func (r *RadarChart) Draw(rc *Ctx, cv *Canvas) {
 			}
 		}
 	}
+
 	if scale <= 0 {
 		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
@@ -109,9 +105,11 @@ func (r *RadarChart) Draw(rc *Ctx, cv *Canvas) {
 	cx, cy := inner.X+inner.W/2, inner.Y+inner.H/2
 	rx := inner.W/2 - 2
 	ry := inner.H/2 - 2
+
 	if rx < 2 {
 		rx = 2
 	}
+
 	if ry < 2 {
 		ry = 2
 	}
@@ -121,13 +119,16 @@ func (r *RadarChart) Draw(rc *Ctx, cv *Canvas) {
 	// Ring polygons and spokes: braille dots when Unicode is on, slope
 	// glyphs otherwise so ASCII stays pure.
 	ring := make([]radarPt, n)
+
 	ringHalf := make([]radarPt, n)
 	for i := 0; i < n; i++ {
 		a := ringAngle(i, n)
 		ring[i] = polarToPt(cx, cy, rx, ry, 1.0, a)
 		ringHalf[i] = polarToPt(cx, cy, rx, ry, 0.5, a)
 	}
+
 	dim := DimGray
+
 	for i := 0; i < n; i++ {
 		j := (i + 1) % n
 		if uni {
@@ -143,32 +144,36 @@ func (r *RadarChart) Draw(rc *Ctx, cv *Canvas) {
 		}
 	}
 
-	ci := 0
 	for si := range r.series {
 		s := &r.series[si]
 		if s.color.IsZero() {
-			s.color = rc.Palette[ci%len(rc.Palette)]
-			ci++
+			s.color = rc.Next()
 		}
 	}
 
 	for si := range r.series {
 		s := &r.series[si]
+
 		var pts []radarPt
+
 		for i := 0; i < n; i++ {
 			f := 0.0
 			if i < len(s.vals) && s.vals[i] > 0 {
 				f = s.vals[i] / scale
 			}
+
 			if f > 1 {
 				f = 1
 			}
+
 			pts = append(pts, polarToPt(cx, cy, rx, ry, f, ringAngle(i, n)))
 		}
+
 		if uni {
 			if r.fill {
 				fillDotPolygon(cv, pts, s.color)
 			}
+
 			for i := 0; i < n; i++ {
 				j := (i + 1) % n
 				dotLine(cv, pts[i].xi, pts[i].yi, pts[j].xi, pts[j].yi, s.color, false)
@@ -189,12 +194,14 @@ func (r *RadarChart) Draw(rc *Ctx, cv *Canvas) {
 		ly := cy + int(float64(ry+2)*math.Sin(a))
 		lbl := ellipTrunc(r.axes[i], max(inner.W/3, 1), uni)
 		w := runeLen(lbl)
+
 		x := lx
 		if math.Abs(math.Cos(a)) < 0.3 {
 			x = lx - w/2
 		} else if math.Cos(a) < 0 {
 			x = lx - w
 		}
+
 		x = max(inner.X, min(inner.X2()-w, x))
 		ly = max(inner.Y, min(inner.Y2(), ly))
 		cv.Text(x, ly, lbl, NewStyle(Silver))
@@ -205,6 +212,7 @@ func (r *RadarChart) Draw(rc *Ctx, cv *Canvas) {
 	if !uni {
 		glyph = "=="
 	}
+
 	var entries []LegendEntry
 	for si := range r.series {
 		entries = append(entries, LegendEntry{
@@ -213,6 +221,7 @@ func (r *RadarChart) Draw(rc *Ctx, cv *Canvas) {
 			Glyph: glyph,
 		})
 	}
+
 	drawLegendInside(cv, inner, entries, uni)
 }
 
@@ -223,6 +232,7 @@ func ringAngle(i, n int) float64 {
 func polarToPt(cx, cy, rx, ry int, frac float64, a float64) radarPt {
 	x := float64(cx) + float64(rx)*frac*math.Cos(a)
 	y := float64(cy) + float64(ry)*frac*math.Sin(a)
+
 	return radarPt{
 		x:  x,
 		y:  y,
@@ -242,27 +252,35 @@ func fillDotPolygon(cv *Canvas, pts []radarPt, c Color) {
 		minY = min(minY, p.yi)
 		maxY = max(maxY, p.yi)
 	}
+
 	for gy := minY; gy <= maxY; gy++ {
 		if gy < 0 || gy >= cv.h*4 {
 			continue
 		}
+
 		var xs []float64
+
 		for i := 0; i < len(pts); i++ {
 			p1, p2 := pts[i], pts[(i+1)%len(pts)]
 			if p1.yi == p2.yi {
 				continue
 			}
+
 			if (p1.yi <= gy && p2.yi > gy) || (p2.yi <= gy && p1.yi > gy) {
 				t := float64(gy-p1.yi) / float64(p2.yi-p1.yi)
 				xs = append(xs, p1.x+(p2.x-p1.x)*t)
 			}
 		}
+
 		if len(xs) < 2 {
 			continue
 		}
+
 		slices.Sort(xs)
+
 		for i := 0; i+1 < len(xs); i += 2 {
 			x1 := int(math.Round(xs[i] * 2))
+
 			x2 := int(math.Round(xs[i+1] * 2))
 			for gxd := x1; gxd <= x2; gxd++ {
 				setDot(cv, gxd, gy, c)
