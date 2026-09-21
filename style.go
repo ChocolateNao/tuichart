@@ -136,9 +136,6 @@ func NewStyle(fg Color) Style { return Style{Fg: fg} }
 // On returns a copy of s with the background set to bg.
 func (s Style) On(bg Color) Style { s.Bg = bg; return s }
 
-// WithFg returns a copy of s with the foreground set to fg.
-func (s Style) WithFg(fg Color) Style { s.Fg = fg; return s }
-
 // Bolder returns a copy of s with bold enabled.
 func (s Style) Bolder() Style { s.Bold = true; return s }
 

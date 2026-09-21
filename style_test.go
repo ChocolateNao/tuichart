@@ -183,27 +183,6 @@ func TestEnvLevelDetection(t *testing.T) {
 
 // ── style.go ────────────────────────────────────────────────────────────────
 
-func TestStyleWithFg(t *testing.T) {
-	st := NewStyle(Red)
-	orig := st
-
-	newSt := st.WithFg(Blue)
-	if newSt.Fg != Blue {
-		t.Errorf("WithFg Fg = %v, want Blue", newSt.Fg)
-	}
-	// Original must not be mutated
-	if st.Fg != orig.Fg {
-		t.Error("WithFg mutated original")
-	}
-}
-
-func TestStyleWithFgZero(t *testing.T) {
-	st := NewStyle(Red).WithFg(Default)
-	if !st.Fg.IsZero() {
-		t.Error("WithFg(Default) should produce zero fg")
-	}
-}
-
 func TestStyleOnReturnsCopy(t *testing.T) {
 	st := NewStyle(Red)
 
