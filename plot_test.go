@@ -173,56 +173,6 @@ func TestScatterMarkers(t *testing.T) {
 	}
 }
 
-func TestZipEqualLength(t *testing.T) {
-	pts := Zip([]float64{1, 2, 3}, []float64{10, 20, 30})
-	if len(pts) != 3 {
-		t.Fatalf("expected 3 points, got %d", len(pts))
-	}
-
-	for i, want := range []struct{ x, y float64 }{{1, 10}, {2, 20}, {3, 30}} {
-		if pts[i].X != want.x || pts[i].Y != want.y {
-			t.Errorf("pts[%d] = %v, want %v", i, pts[i], want)
-		}
-	}
-}
-
-func TestZipUnequalLength(t *testing.T) {
-	pts := Zip([]float64{1, 2, 3, 4}, []float64{10, 20})
-	if len(pts) != 2 {
-		t.Fatalf("expected 2 points (truncated), got %d", len(pts))
-	}
-
-	if pts[0].X != 1 || pts[0].Y != 10 {
-		t.Errorf("pts[0] = %v", pts[0])
-	}
-
-	if pts[1].X != 2 || pts[1].Y != 20 {
-		t.Errorf("pts[1] = %v", pts[1])
-	}
-}
-
-func TestZipEmptyInputs(t *testing.T) {
-	pts := Zip(nil, nil)
-	if len(pts) != 0 {
-		t.Fatalf("expected 0 points, got %d", len(pts))
-	}
-
-	pts = Zip([]float64{1, 2}, nil)
-	if len(pts) != 0 {
-		t.Fatalf("expected 0 points from nil ys, got %d", len(pts))
-	}
-
-	pts = Zip(nil, []float64{1, 2})
-	if len(pts) != 0 {
-		t.Fatalf("expected 0 points from nil xs, got %d", len(pts))
-	}
-
-	pts = Zip([]float64{}, []float64{1})
-	if len(pts) != 0 {
-		t.Fatalf("expected 0 points from empty xs, got %d", len(pts))
-	}
-}
-
 func TestLineColor(t *testing.T) {
 	l := NewLineVals("c", []float64{1, 2}).Color(Red)
 	if !l.hasColor() {

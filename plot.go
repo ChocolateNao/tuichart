@@ -15,19 +15,6 @@ func Seq(vals ...float64) []Point {
 	return out
 }
 
-// Zip combines separate x and y slices into Points, truncating to the shorter length.
-func Zip(xs, ys []float64) []Point {
-	n := min(len(xs), len(ys))
-
-	out := make([]Point, 0, n)
-	for i := 0; i < n; i++ {
-		//nolint:gosec // bounded by n = min(len(xs), len(ys))
-		out = append(out, Point{X: xs[i], Y: ys[i]})
-	}
-
-	return out
-}
-
 type seriesI interface {
 	bounds(db *dataBounds)
 	hasColor() bool
