@@ -33,6 +33,7 @@ func (f *FunnelChart) StepColor(c Color) *FunnelChart {
 	if len(f.steps) > 0 {
 		f.steps[len(f.steps)-1].color = c
 	}
+
 	return f
 }
 
@@ -48,13 +49,16 @@ func (f *FunnelChart) HeightHint(width int) int {
 	if h := f.chartBase.HeightHint(width); h > 0 {
 		return h
 	}
+
 	h := len(f.steps)*2 + 4
 	if h < 6 {
 		h = 6
 	}
+
 	if h > 18 {
 		h = 18
 	}
+
 	return h
 }
 
@@ -69,25 +73,30 @@ func (f *FunnelChart) Draw(rc *Ctx, cv *Canvas) {
 		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
+
 	maxVal := 0.0
-	ci := 0
+
 	for i := range f.steps {
 		if f.steps[i].color.IsZero() {
-			f.steps[i].color = rc.Palette[ci%len(rc.Palette)]
-			ci++
+			f.steps[i].color = rc.Next()
 		}
+
 		if f.steps[i].val > maxVal {
 			maxVal = f.steps[i].val
 		}
 	}
+
 	if maxVal <= 0 || inner.W < 8 || inner.H < n {
 		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
 
+	labels := make([]string, n)
 	gutter := 0
+
 	for i := range f.steps {
 		pct := pctOfTop(f.steps[i].val, f.steps[0].val)
+
 		lbl := f.steps[i].name + " " + FormatValue(pct) + "%"
 		if f.showVals {
 			lbl = f.steps[i].name + " " + FormatValue(
@@ -96,11 +105,15 @@ func (f *FunnelChart) Draw(rc *Ctx, cv *Canvas) {
 				pct,
 			) + "%)"
 		}
+
+		labels[i] = lbl
 		if nl := runeLen(lbl); nl > gutter {
 			gutter = nl
 		}
 	}
+
 	gutter = min(gutter+2, inner.W/2)
+
 	plotW := inner.W - gutter
 	if plotW < 4 {
 		plotW = 4
@@ -117,31 +130,38 @@ func (f *FunnelChart) Draw(rc *Ctx, cv *Canvas) {
 			bw[i] = 0
 		}
 	}
+
 	bw[n] = 0
+
 	bi := make([]int, n+1)
 	for i := 0; i <= n; i++ {
 		bi[i] = inner.Y + int(math.Round(float64(inner.H)*float64(i)/float64(n)))
 	}
+
 	if bi[n] > inner.Y2() {
 		bi[n] = inner.Y2()
 	}
 
 	for i := 0; i < n; i++ {
 		st := NewStyle(f.steps[i].color)
+
 		fill := '█'
 		if mono || !uni {
 			fill = pieASCIIChars[i%len(pieASCIIChars)]
 		}
+
 		y0, y1 := bi[i], bi[i+1]
 		if y1 <= y0 {
 			y1 = y0 + 1
 		}
+
 		span := y1 - y0
 		// The taper row belongs to the stage it tapers into.
 		for y := y0; y < y1; y++ {
 			frac := float64(y-y0) / float64(span)
 			w := bw[i] + (bw[i+1]-bw[i])*frac
 			half := int(w / 2)
+
 			x0 := inner.X + plotW/2 - half
 			for x := 0; x < int(w); x++ {
 				cv.Set(x0+x, y, fill, st)
@@ -155,19 +175,12 @@ func (f *FunnelChart) Draw(rc *Ctx, cv *Canvas) {
 		if y < inner.Y {
 			y = inner.Y
 		}
+
 		if y > inner.Y2() {
 			y = inner.Y2()
 		}
-		pct := pctOfTop(f.steps[i].val, f.steps[0].val)
-		lbl := f.steps[i].name + " " + FormatValue(pct) + "%"
-		if f.showVals {
-			lbl = f.steps[i].name + " " + FormatValue(
-				f.steps[i].val,
-			) + " (" + FormatValue(
-				pct,
-			) + "%)"
-		}
-		cv.TextRight(inner.X2(), y, ellipTrunc(lbl, gutter, uni), NewStyle(f.steps[i].color))
+
+		cv.TextRight(inner.X2(), y, ellipTrunc(labels[i], gutter, uni), NewStyle(f.steps[i].color))
 	}
 }
 
@@ -176,5 +189,6 @@ func pctOfTop(v, top float64) float64 {
 	if top <= 0 {
 		return 0
 	}
+
 	return v / top * 100
 }

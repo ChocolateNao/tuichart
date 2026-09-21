@@ -45,6 +45,7 @@ func (p *FunctionPlot) Samples(n int) *FunctionPlot {
 	if n > 8 {
 		p.samples = n
 	}
+
 	return p
 }
 
@@ -61,6 +62,7 @@ func (p *FunctionPlot) LogY(on bool) *FunctionPlot {
 	} else {
 		p.yKind = Linear
 	}
+
 	return p
 }
 
@@ -69,23 +71,30 @@ func (p *FunctionPlot) sample(width int) [][]Point {
 	if n == 0 {
 		n = max(width*4, 100)
 	}
+
 	var segs [][]Point
+
 	cur := make([]Point, 0, n)
 	for i := 0; i <= n; i++ {
 		x := p.lo + (p.hi-p.lo)*float64(i)/float64(n)
+
 		y := p.fn(x)
 		if math.IsNaN(y) || math.IsInf(y, 0) {
 			if len(cur) > 0 {
 				segs = append(segs, cur)
 				cur = make([]Point, 0, n)
 			}
+
 			continue
 		}
+
 		cur = append(cur, Point{X: x, Y: y})
 	}
+
 	if len(cur) > 0 {
 		segs = append(segs, cur)
 	}
+
 	return segs
 }
 
@@ -94,49 +103,53 @@ func (p *FunctionPlot) HeightHint(width int) int {
 	if h := p.chartBase.HeightHint(width); h > 0 {
 		return h
 	}
-	h := width * 2 / 5
-	if h > 24 {
-		h = 24
-	}
-	if h < 9 {
-		h = 9
-	}
-	return h
+
+	return clampInt(width*2/5, 9, 24)
 }
 
 // Draw renders the function plot onto the canvas.
 func (p *FunctionPlot) Draw(rc *Ctx, cv *Canvas) {
 	segs := p.sample(cv.Width())
+
 	color := p.color
 	if color.IsZero() {
 		color = rc.Palette[0]
 	}
+
 	line := &Line{name: p.name}
 	line.color = color
+
 	var db dataBounds
+
 	db.empty = true
 	db.add(p.lo, 0)
 	db.add(p.hi, 0)
+
 	for _, seg := range segs {
 		for _, pt := range seg {
 			db.add(pt.X, pt.Y)
 			line.pts = append(line.pts, pt)
 		}
+
 		for i := 0; i < len(seg)-1; i++ {
 			midY := (seg[i].Y + seg[i+1].Y) / 2
 			midX := (seg[i].X + seg[i+1].X) / 2
+
 			fy := p.fn(midX)
 			if !math.IsNaN(fy) && math.Abs(fy-midY) > 5*math.Abs(seg[i].Y)+5 {
 				line.pts = append(line.pts, Point{X: midX, Y: math.NaN()})
 			}
 		}
 	}
+
 	fr := prepareFrame(cv, rc, &p.chartBase, db, Linear, p.yKind, true)
 	line.draw(cv, fr, NewStyle(color))
+
 	glyph := "───"
 	if !fr.uni {
 		glyph = "---"
 	}
+
 	drawLegendInside(cv, fr.area, []LegendEntry{{
 		Label: p.name,
 		Style: NewStyle(color),
