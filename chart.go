@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// sepW is the blank-cell gap left between diagrams sharing a row.
+const sepW = 2
+
 // Options configures a Board at construction time.
 type Options struct {
 	palette         []Color
@@ -200,8 +203,6 @@ func segmentWidth(w, k int) int {
 		return 0
 	}
 
-	const sepW = 2
-
 	seg := (w - (k-1)*sepW) / k
 	if seg < 8 {
 		seg = 8
@@ -288,8 +289,6 @@ func (b *Board) renderCanvas(width int) (*Canvas, Info, []LayoutEntry) {
 	if len(b.opts.palette) > 0 {
 		rc.Palette = b.opts.palette
 	}
-
-	const sepW = 2
 
 	totalH := 0
 	if b.title != "" {

@@ -79,12 +79,6 @@ func (b *BarChart) HeightHint(width int) int {
 	return clampInt(width/3, 6, 20)
 }
 
-// horizontalBarHeight sizes a left-to-right bar chart: one row per
-// category plus border/margin allowance, bounded like the other diagrams.
-func horizontalBarHeight(cats int) int {
-	return clampInt(cats+3, 6, 30)
-}
-
 // Draw renders the bar chart onto the canvas.
 func (b *BarChart) Draw(rc *Ctx, cv *Canvas) {
 	if b.isHorizontal() {

@@ -302,8 +302,14 @@ func rgbTo256(r, g, b uint8) int {
 
 	q := func(v int) int {
 		best, bd := 0, 1<<30
+
 		for i, lv := range cubeLevels {
-			if d := abs(v - lv); d < bd {
+			d := v - lv
+			if d < 0 {
+				d = -d
+			}
+
+			if d < bd {
 				best, bd = i, d
 			}
 		}
@@ -312,14 +318,6 @@ func rgbTo256(r, g, b uint8) int {
 	}
 
 	return 16 + 36*q(R) + 6*q(G) + q(B)
-}
-
-func abs(v int) int {
-	if v < 0 {
-		return -v
-	}
-
-	return v
 }
 
 func toUint8(v int) uint8 {
