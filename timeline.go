@@ -88,18 +88,22 @@ func (t *Timeline) HeightHint(width int) int {
 	if h := t.chartBase.HeightHint(width); h > 0 {
 		return h
 	}
+
 	h := 7
 	lineW := max(width-6, 8)
+
 	for _, e := range t.events {
 		if e.Detail == "" {
 			continue
 		}
+
 		h = 9 // label + single detail line on each side
 		if len(wrapText(e.Detail, lineW)) > 1 {
 			h = 11 // room for a wrapped second line
 			break
 		}
 	}
+
 	return h
 }
 
@@ -116,31 +120,28 @@ func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
 
 	minU := float64(evs[0].At.Unix())
 	maxU := minU
+
 	for _, e := range evs[1:] {
 		u := float64(e.At.Unix())
 		minU = math.Min(minU, u)
 		maxU = math.Max(maxU, u)
 	}
+
 	pad := (maxU - minU) * 0.04
 	if pad <= 0 {
 		pad = 30
 	}
+
 	minU -= pad
 	maxU += pad
 
-	fmtFn := t.xFmt
-	if fmtFn == nil {
-		layout := t.layout
-		if layout == "" {
-			layout = autoTimeLayout(maxU - minU)
-		}
-		fmtFn = func(v float64) string { return time.Unix(int64(v), 0).Format(layout) }
-	}
+	fmtFn := timeTickFmt(t.xFmt, t.layout, maxU-minU)
 
 	markCh, lineCh := '◆', '─'
 	if !rc.Info.Unicode {
 		markCh, lineCh = '*', '-'
 	}
+
 	axisRow := inner.Y + inner.H/2
 
 	dim := NewStyle(DimGray)
@@ -163,12 +164,16 @@ func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
 		if col < inner.X || col > inner.X2() {
 			continue
 		}
+
 		ch := '┬'
 		if !rc.Info.Unicode {
 			ch = '+'
 		}
+
 		cv.Set(col, axisRow, ch, dim)
+
 		lbl := ellipTrunc(fmtFn(tk.Value), max(inner.W/3, 4), rc.Info.Unicode)
+
 		start := col - runeLen(lbl)/2
 		if start < inner.X {
 			start = inner.X
@@ -179,25 +184,31 @@ func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
 		if inner.H >= 5 {
 			row = inner.Y2()
 		}
+
 		if row > inner.Y2() || start+runeLen(lbl)-1 > inner.X2() {
 			continue
 		}
+
 		clearAndWrite(cv, row, start, lbl, NewStyle(Default))
 		occ.mark(row, start, start+runeLen(lbl)-1)
 	}
 
 	for i, e := range evs {
 		col := mapCol(float64(e.At.Unix()))
+
 		st := NewStyle(t.color)
 		if t.color.IsZero() {
 			st = NewStyle(rc.Palette[i%len(rc.Palette)])
 		}
+
 		cv.Set(col, axisRow, markCh, st.Bolder())
 
 		if e.Label == "" && e.Detail == "" || inner.H < 4 {
 			continue
 		}
+
 		var up bool
+
 		switch e.Side {
 		case SideAbove:
 			up = true
@@ -206,17 +217,20 @@ func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
 		default:
 			up = i%2 == 0
 		}
+
 		labelRow := axisRow - 1
 		if !up {
 			labelRow = axisRow + 1
 		}
 
 		lineW := max(min(inner.W-4, detailWrapWidth), 8)
+
 		dlines := wrapText(e.Detail, lineW)
 		if len(dlines) > maxDetailLines {
 			rest := strings.Join(dlines[maxDetailLines-1:], " ")
 			dlines = append(dlines[:maxDetailLines-1], ellipTrunc(rest, lineW, rc.Info.Unicode))
 		}
+
 		t.placeEventBlock(cv, occ, inner, rc.Info.Unicode, col, labelRow, up,
 			e.Label, dlines, st, detailSt)
 	}
@@ -239,11 +253,13 @@ func (o *cellOcc) free(row, x0, x1 int) bool {
 	if !ok {
 		return true
 	}
+
 	for x := x0; x <= x1; x++ {
 		if cells[x] {
 			return false
 		}
 	}
+
 	return true
 }
 
@@ -253,6 +269,7 @@ func (o *cellOcc) mark(row, x0, x1 int) {
 		cells = make(map[int]bool)
 		o.m[row] = cells
 	}
+
 	for x := x0; x <= x1; x++ {
 		cells[x] = true
 	}
@@ -263,21 +280,26 @@ func (o *cellOcc) mark(row, x0, x1 int) {
 func (o *cellOcc) freeRun(row, lo, hi, x0, x1 int) (rs, re, score int) {
 	best := -(1 << 30)
 	runStart := -1
+
 	for x := x0; x <= x1+1; x++ {
 		blocked := x > x1 || !o.free(row, x, x)
 		if !blocked && runStart < 0 {
 			runStart = x
 		}
+
 		if blocked && runStart >= 0 {
 			s := min(hi, x-1) - max(lo, runStart) + 1
 			if s > best {
 				best = s
 				rs, re = runStart, x-1
 			}
+
 			runStart = -1
 		}
 	}
+
 	score = best
+
 	return
 }
 
@@ -297,23 +319,28 @@ func anchorSpan(col, w, x0, x1 int) (int, int) {
 	if w <= 0 {
 		return col, 0
 	}
+
 	ideal := col - w/2
 	if ideal >= x0 && ideal+w-1 <= x1 {
 		return ideal, w // centered, no drift
 	}
+
 	if ideal < x0 { // hugging the left edge: start at the marker
 		st := max(x0, col-1)
 		if st+w-1 > x1 {
 			return st, x1 - st + 1
 		}
+
 		return st, w
 	}
 	// hugging the right edge: end at the marker
 	en := min(col, x1)
+
 	st := en - w + 1
 	if st < x0 {
 		return x0, en - x0 + 1 // keep the head, run up to the marker
 	}
+
 	return st, w
 }
 
@@ -343,6 +370,7 @@ func (t *Timeline) placeEventBlock(cv *Canvas, occ *cellOcc, inner Rect, uni boo
 	}
 
 	var block []blockLine
+
 	if up {
 		// Bottom-aligned stack hugging the label, first line on top so the
 		// text reads naturally downward.
@@ -354,9 +382,11 @@ func (t *Timeline) placeEventBlock(cv *Canvas, occ *cellOcc, inner Rect, uni boo
 			block = append(block, blockLine{row: labelRow + 1 + j, text: dlines[j], detail: true})
 		}
 	}
+
 	if label != "" {
 		block = append(block, blockLine{row: labelRow, text: label})
 	}
+
 	if len(block) == 0 {
 		return
 	}
@@ -365,8 +395,10 @@ func (t *Timeline) placeEventBlock(cv *Canvas, occ *cellOcc, inner Rect, uni boo
 		if b.detail {
 			return detSt
 		}
+
 		return labSt
 	}
+
 	widths := make([]int, len(block))
 	for k, b := range block {
 		widths[k] = runeLen(b.text)
@@ -382,29 +414,37 @@ func (t *Timeline) placeEventBlock(cv *Canvas, occ *cellOcc, inner Rect, uni boo
 			if w == 0 {
 				continue
 			}
+
 			st, n := anchorSpan(col+shift, w, inner.X, inner.X2())
 			if n <= 0 || (!allowTrunc && n < w) {
 				return false
 			}
+
 			en := st + n - 1
 			if !occ.free(b.row, st, en) {
 				return false
 			}
+
 			spans[k] = [2]int{st, en}
 		}
+
 		for k, b := range block {
 			w := widths[k]
 			if w == 0 {
 				continue
 			}
+
 			st := spans[k][0]
+
 			txt := b.text
 			if span := spans[k][1] - st + 1; span < w {
 				txt = ellipTrunc(txt, span, uni)
 			}
+
 			clearAndWrite(cv, b.row, st, txt, styleOf(b))
 			occ.mark(b.row, st-1, spans[k][1]+1) // pad: keep a gap
 		}
+
 		return true
 	}
 
@@ -430,15 +470,19 @@ func (t *Timeline) placeEventBlock(cv *Canvas, occ *cellOcc, inner Rect, uni boo
 		if w == 0 {
 			continue
 		}
+
 		rs, re, _ := occ.freeRun(b.row, col-w/2, col+w/2, inner.X, inner.X2())
+
 		avail := re - rs + 1
 		if avail <= 0 || (b.detail && avail < 6) {
 			continue // no usable room on this row; drop rather than garble
 		}
+
 		txt := b.text
 		if avail < w {
 			txt = ellipTrunc(txt, avail, uni)
 		}
+
 		st := col - runeLen(txt)/2
 		st = max(st, rs)
 		st = min(st, re-runeLen(txt)+1)
@@ -454,7 +498,9 @@ const maxDetailLines = 2
 // words longer than w are hard-split.
 func wrapText(s string, w int) []string {
 	w = max(w, 4)
+
 	var lines []string
+
 	for _, para := range strings.Split(s, "\n") {
 		cur := ""
 		flush := func() {
@@ -463,16 +509,20 @@ func wrapText(s string, w int) []string {
 				cur = ""
 			}
 		}
+
 		for _, word := range strings.Split(para, " ") {
 			for runeLen(word) > w {
 				flush()
+
 				lines = append(lines, truncStr(word, w))
 				word = string([]rune(word)[w:])
 			}
+
 			if cur == "" {
 				cur = word
 				continue
 			}
+
 			if runeLen(cur)+1+runeLen(word) <= w {
 				cur += " " + word
 			} else {
@@ -480,8 +530,10 @@ func wrapText(s string, w int) []string {
 				cur = word
 			}
 		}
+
 		flush()
 	}
+
 	return lines
 }
 
@@ -492,11 +544,14 @@ func writeLabel(cv *Canvas, row, col int, text string, st Style, inner Rect, uni
 	if row < inner.Y || row > inner.Y2() {
 		return
 	}
+
 	lbl := ellipTrunc(text, inner.W-2, uni)
+
 	start := col - runeLen(lbl)/2
 	if start < inner.X {
 		start = inner.X
 	}
+
 	if end := start + runeLen(lbl) - 1; end > inner.X2() {
 		// Prefer shifting left over truncating.
 		start = inner.X2() - runeLen(lbl) + 1
@@ -505,9 +560,11 @@ func writeLabel(cv *Canvas, row, col int, text string, st Style, inner Rect, uni
 			lbl = ellipTrunc(text, inner.X2()-inner.X+1, uni)
 		}
 	}
+
 	if runeLen(lbl) == 0 {
 		return
 	}
+
 	clearAndWrite(cv, row, start, lbl, st)
 }
 
@@ -517,6 +574,7 @@ func clearAndWrite(cv *Canvas, y, x int, s string, st Style) {
 	for i := 0; i < runeLen(s); i++ {
 		cv.Set(x+i, y, ' ', Style{})
 	}
+
 	cv.Text(x, y, s, st)
 }
 
@@ -531,4 +589,19 @@ func autoTimeLayout(spanSec float64) string {
 	default:
 		return "2006-01-02"
 	}
+}
+
+// timeTickFmt resolves the X-tick formatter for time-based diagrams: the
+// caller's own formatter wins; otherwise the configured Go layout; finally
+// autoTimeLayout for the data span.
+func timeTickFmt(xFmt func(float64) string, layout string, span float64) func(float64) string {
+	if xFmt != nil {
+		return xFmt
+	}
+
+	if layout == "" {
+		layout = autoTimeLayout(span)
+	}
+
+	return func(v float64) string { return time.Unix(int64(v), 0).Format(layout) }
 }

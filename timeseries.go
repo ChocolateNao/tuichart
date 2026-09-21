@@ -60,6 +60,7 @@ func (ts *TimeSeries) Title(s string) *TimeSeries { ts.SetTitle(s); return ts }
 func (ts *TimeSeries) Line(name string) *TimeSeriesLine {
 	l := &TimeSeriesLine{name: name}
 	ts.lines = append(ts.lines, l)
+
 	return l
 }
 
@@ -76,12 +77,7 @@ func (ts *TimeSeries) ResetFormatters() { ts.xFmt, ts.layout = nil, "" }
 
 // HeightHint returns the suggested height in rows for the given width.
 func (ts *TimeSeries) HeightHint(width int) int {
-	if h := ts.chartBase.HeightHint(width); h > 0 {
-		return h
-	}
-	p := NewPlot()
-	p.chartBase = ts.chartBase
-	return p.HeightHint(width)
+	return ts.plotHeightHint(width)
 }
 
 // Draw renders the time-series lines onto an X/Y plot in the canvas.
@@ -91,13 +87,16 @@ func (ts *TimeSeries) Draw(rc *Ctx, cv *Canvas) {
 
 	minU, maxU := float64(0), float64(0)
 	first := true
+
 	for _, l := range ts.lines {
 		if len(l.pts) == 0 {
 			continue
 		}
+
 		line := &Line{name: l.name, color: l.color, marker: l.marker}
 		for _, pt := range l.pts {
 			u := float64(pt.At.Unix())
+
 			line.pts = append(line.pts, Point{X: u, Y: pt.Value})
 			if first {
 				minU, maxU = u, u
@@ -107,19 +106,14 @@ func (ts *TimeSeries) Draw(rc *Ctx, cv *Canvas) {
 				maxU = math.Max(maxU, u)
 			}
 		}
+
 		p.Add(line)
 	}
 
 	if !first {
-		fmtFn := ts.xFmt
-		if fmtFn == nil {
-			layout := ts.layout
-			if layout == "" {
-				layout = autoTimeLayout(maxU - minU)
-			}
-			fmtFn = func(v float64) string { return time.Unix(int64(v), 0).Format(layout) }
-		}
+		fmtFn := timeTickFmt(ts.xFmt, ts.layout, maxU-minU)
 		p.SetXFormatter(fmtFn)
 	}
+
 	p.Draw(rc, cv)
 }

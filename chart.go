@@ -78,9 +78,11 @@ func (o *Options) apply(info Info) Info {
 	if o.hasLevel {
 		info.Level = o.levelOverride
 	}
+
 	if o.unicodeOverride >= 0 {
 		info.Unicode = o.unicodeOverride == 1
 	}
+
 	return info
 }
 
@@ -102,6 +104,7 @@ func New(opts ...Option) *Board {
 	for _, opt := range opts {
 		opt(&b.opts)
 	}
+
 	return b
 }
 
@@ -123,7 +126,9 @@ func (b *Board) Row(ds ...Drawable) *Board {
 	for i, d := range ds {
 		entry[i] = rowEntry{d: d}
 	}
+
 	b.rows = append(b.rows, entry)
+
 	return b
 }
 
@@ -136,6 +141,7 @@ func (b *Board) Len() int {
 	for _, r := range b.rows {
 		n += len(r)
 	}
+
 	return n
 }
 
@@ -143,14 +149,7 @@ func (b *Board) Len() int {
 func (b *Board) Reset() *Board { b.Clear(); return b }
 
 func defaultDiagramHeight(width int) int {
-	h := width / 3
-	if h > 20 {
-		h = 20
-	}
-	if h < 9 {
-		h = 9
-	}
-	return h
+	return clampInt(width/3, 9, 20)
 }
 
 // resolveWidthInfo resolves the effective rendering width and the terminal
@@ -158,6 +157,7 @@ func defaultDiagramHeight(width int) int {
 // terminal width, then the board's WithWidth option.
 func (b *Board) resolveWidthInfo(width int) (int, Info) {
 	info := b.opts.apply(Detect())
+
 	w := width
 	if w <= 0 {
 		w = info.W
@@ -165,9 +165,11 @@ func (b *Board) resolveWidthInfo(width int) (int, Info) {
 			w = b.opts.width
 		}
 	}
+
 	if w < 10 {
 		w = 10
 	}
+
 	return w, info
 }
 
@@ -179,12 +181,15 @@ func (b *Board) diagramHeight(d Drawable, seg, w int) int {
 	if h <= 0 {
 		h = defaultDiagramHeight(w)
 	}
+
 	if b.opts.diagramHeight > 0 && d.HeightHint(seg) == 0 {
 		h = b.opts.diagramHeight
 	}
+
 	if h < 3 {
 		h = 3
 	}
+
 	return h
 }
 
@@ -194,74 +199,32 @@ func segmentWidth(w, k int) int {
 	if k < 1 {
 		return 0
 	}
+
 	const sepW = 2
+
 	seg := (w - (k-1)*sepW) / k
 	if seg < 8 {
 		seg = 8
 	}
+
 	return seg
 }
 
-// layout resolves the effective width and renders every diagram row into
-// a slice of finished line strings (ANSI-styled per the resolved profile).
+// layout resolves the effective width, renders the board once onto a
+// canvas (see renderCanvas), and slices the result back into the finished
+// line strings Render/RenderLines consume.
 func (b *Board) layout(width int) []string {
-	w, info := b.resolveWidthInfo(width)
-	rc := newCtx(info)
-	if len(b.opts.palette) > 0 {
-		rc.Palette = b.opts.palette
+	if len(b.rows) == 0 && b.title == "" {
+		return nil
 	}
 
-	var lines []string
-	if b.title != "" {
-		lines = append(lines, alignStyled(b.title, w, b.titleAlign, info.Unicode))
+	cv, info, _ := b.renderCanvas(width)
+
+	lines := splitLines(strings.TrimRight(cv.Render(info.Level), "\n"))
+	if len(b.rows) == 0 && b.title != "" {
 		lines = append(lines, "")
 	}
 
-	for ri, row := range b.rows {
-		if ri > 0 || len(lines) > 0 && b.title != "" {
-			for g := 0; g < max(b.opts.gap, 1); g++ {
-				lines = append(lines, "")
-			}
-		}
-		k := len(row)
-		seg := segmentWidth(w, k)
-		if seg < 8 {
-			seg = 8
-		}
-		heights := make([]int, k)
-		canvases := make([]*Canvas, k)
-		maxLines := 0
-		for i, e := range row {
-			h := b.diagramHeight(e.d, seg, w)
-			heights[i] = h
-			cv := NewCanvas(seg, h)
-			e.d.Draw(rc, cv)
-			canvases[i] = cv
-		}
-		rendered := make([][]string, k)
-		for i, cv := range canvases {
-			s := cv.Render(info.Level)
-			s = strings.TrimRight(s, "\n")
-			rendered[i] = splitLines(s)
-			if len(rendered[i]) > maxLines {
-				maxLines = len(rendered[i])
-			}
-		}
-		for ln := 0; ln < maxLines; ln++ {
-			var sb []byte
-			for i := 0; i < k; i++ {
-				if i > 0 {
-					sb = append(sb, ' ', ' ')
-				}
-				if ln < len(rendered[i]) {
-					sb = append(sb, rendered[i][ln]...)
-				} else {
-					sb = append(sb, strings.Repeat(" ", seg+2)...)
-				}
-			}
-			lines = append(lines, strings.TrimRight(string(sb), " "))
-		}
-	}
 	return lines
 }
 
@@ -272,15 +235,21 @@ func (b *Board) Render(width ...int) string {
 	if len(width) > 0 {
 		w = width[0]
 	}
+
 	lines := b.layout(w)
+
 	var out []byte
+
 	for i, l := range lines {
 		if i > 0 {
 			out = append(out, '\n')
 		}
+
 		out = append(out, l...)
 	}
+
 	out = append(out, '\n')
+
 	return string(out)
 }
 
@@ -293,74 +262,111 @@ func (b *Board) RenderLines(width ...int) []string {
 	if len(width) > 0 {
 		w = width[0]
 	}
+
 	return b.layout(w)
 }
 
-// RenderCanvas renders the board into a single Canvas preserving per-cell
-// style information, plus the Info the render resolved. It mirrors layout
-// exactly — same width, title, gaps, and diagram placement — so the result
-// serializes to the same output as Render. It exists for incremental
-// painters (the Live renderer) that diff frames cell-by-cell instead of
-// rewriting the whole screen.
-func (b *Board) RenderCanvas(width int) (*Canvas, Info) {
+// LayoutEntry describes where one diagram landed in the board canvas during
+// a render pass: the row it belongs to and the cell rectangle it occupies.
+// Embedding libraries use it to place their own UI such as cursors, value
+// labels or overlays aligned to the charts they draw.
+type LayoutEntry struct {
+	Row  int // board row index (Row order)
+	X, Y int // upper-left corner in the rendered canvas
+	W, H int // occupied width and height in cells
+}
+
+// renderCanvas is the single layout engine for the whole board: it resolves
+// the effective width, draws every diagram onto its own canvas, and blits
+// them all into one result canvas, reporting where each one landed. layout
+// and the incremental painters both derive from it, keeping the every render
+// path identical.
+func (b *Board) renderCanvas(width int) (*Canvas, Info, []LayoutEntry) {
 	w, info := b.resolveWidthInfo(width)
+
 	rc := newCtx(info)
 	if len(b.opts.palette) > 0 {
 		rc.Palette = b.opts.palette
 	}
+
 	const sepW = 2
 
 	totalH := 0
 	if b.title != "" {
 		totalH = 2
 	}
+
 	rowHeights := make([]int, len(b.rows))
 	for ri, row := range b.rows {
 		if ri > 0 || b.title != "" {
 			totalH += max(b.opts.gap, 1)
 		}
+
 		seg := segmentWidth(w, len(row))
+
 		mh := 0
 		for _, e := range row {
 			if h := b.diagramHeight(e.d, seg, w); h > mh {
 				mh = h
 			}
 		}
+
 		rowHeights[ri] = mh
 		totalH += mh
 	}
 
 	cv := NewCanvas(w, totalH)
+	entries := make([]LayoutEntry, 0, b.Len())
 	y := 0
+
 	if b.title != "" {
-		cx := 0
-		switch b.titleAlign {
-		case AlignRight:
-			cx = w - runeLen(b.title)
-		case AlignLeft:
-			cx = 0
-		default:
-			cx = max((w-runeLen(b.title))/2, 0)
-		}
-		cv.Text(cx, 0, b.title, Style{})
+		cv.Text(0, 0, alignStyled(b.title, w, b.titleAlign, info.Unicode), Style{})
+
 		y = 2
 	}
+
 	for ri, row := range b.rows {
 		if ri > 0 || b.title != "" {
 			y += max(b.opts.gap, 1)
 		}
+
 		seg := segmentWidth(w, len(row))
 		x := 0
+
 		for _, e := range row {
 			h := b.diagramHeight(e.d, seg, w)
 			dcv := NewCanvas(seg, h)
+			rc.next = 0
 			e.d.Draw(rc, dcv)
 			cv.Blit(dcv, x, y)
+			entries = append(entries, LayoutEntry{Row: ri, X: x, Y: y, W: seg, H: h})
 			x += seg + sepW
 		}
+
 		y += rowHeights[ri]
 	}
+
+	return cv, info, entries
+}
+
+// RenderCanvas renders the board into a single Canvas preserving per-cell
+// style information, plus the Info the render resolved. It feeds the same
+// layout every other render path uses — width, title, gaps and diagram
+// placement — so the result serializes to the same output as Render. It
+// exists for incremental painters (the Live renderer) that diff frames
+// cell-by-cell instead of rewriting the whole screen.
+func (b *Board) RenderCanvas(width int) (*Canvas, Info) {
+	cv, info, _ := b.renderCanvas(width)
 	return cv, info
+}
+
+// RenderLayout is RenderCanvas plus per-diagram placement: it returns where
+// each diagram landed (see LayoutEntry) alongside the canvas and Info, so an
+// embedding library can build its own UI matching a chart's exact on-screen
+// size and position instead of guessing.
+func (b *Board) RenderLayout(width int) ([]LayoutEntry, *Canvas, Info) {
+	cv, info, entries := b.renderCanvas(width)
+	return entries, cv, info
 }
 
 // String renders at the detected terminal width.
@@ -378,13 +384,16 @@ func (b *Board) String() string { return b.Render(0) }
 // Rendering itself never fails.
 func (b *Board) RenderTo(w io.Writer, width ...int) error {
 	out := b.Render(width...)
+
 	n, err := w.Write([]byte(out))
 	if err == nil && n != len(out) {
 		err = io.ErrShortWrite
 	}
+
 	if err != nil {
 		return fmt.Errorf("tuichart: rendering to writer failed: %w", err)
 	}
+
 	return nil
 }
 
@@ -409,6 +418,7 @@ func alignStyled(s string, w int, a Align, uni bool) string {
 	if n >= w {
 		return ellipTrunc(s, w, uni)
 	}
+
 	switch a {
 	case AlignRight:
 		return strings.Repeat(" ", w-n) + s
@@ -419,6 +429,7 @@ func alignStyled(s string, w int, a Align, uni bool) string {
 		if pad < 0 {
 			pad = 0
 		}
+
 		return strings.Repeat(" ", pad) + s
 	}
 }

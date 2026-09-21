@@ -68,12 +68,7 @@ func (c *Candlestick) Format(layout string) *Candlestick { c.layout = layout; re
 
 // HeightHint returns the suggested height in rows for the given width.
 func (c *Candlestick) HeightHint(width int) int {
-	if h := c.chartBase.HeightHint(width); h > 0 {
-		return h
-	}
-	p := NewPlot()
-	p.chartBase = c.chartBase
-	return p.HeightHint(width)
+	return c.plotHeightHint(width)
 }
 
 // Draw renders the OHLC candles and wicks into the canvas.
@@ -93,39 +88,39 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 
 	hi := math.Inf(-1)
 	lo := math.Inf(1)
+
 	for _, k := range cs {
 		if math.IsNaN(k.Low) || math.IsNaN(k.High) || k.High < k.Low {
 			continue
 		}
+
 		lo = math.Min(lo, k.Low)
 		hi = math.Max(hi, k.High)
 	}
+
 	if lo > hi { // no valid candle
 		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
 	}
+
 	padv := (hi - lo) * 0.05
 	if padv <= 0 {
 		padv = 1
 	}
 
-	fmtFn := c.xFmt
-	if fmtFn == nil {
-		layout := c.layout
-		if layout == "" {
-			layout = autoTimeLayout(float64(cs[len(cs)-1].At.Unix() - cs[0].At.Unix()))
-		}
-		fmtFn = func(v float64) string { return time.Unix(int64(v), 0).Format(layout) }
-	}
+	fmtFn := timeTickFmt(c.xFmt, c.layout, float64(cs[len(cs)-1].At.Unix()-cs[0].At.Unix()))
 
 	var db dataBounds
+
 	db.empty = false
 	db.y0, db.y1 = lo-padv, hi+padv
 	db.x0 = float64(cs[0].At.Unix())
+
 	db.x1 = float64(cs[len(cs)-1].At.Unix())
 	if db.x1 == db.x0 {
 		db.x1 = db.x0 + 1
 	}
+
 	savedFmt := c.xFmt
 	c.xFmt = fmtFn
 	fr := prepareFrame(cv, rc, &c.chartBase, db, Linear, Linear, true)
@@ -133,14 +128,17 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 
 	wickCh, dashCh := '│', '─'
 	bodyUp, bodyDown := '█', '█'
+
 	if !uni {
 		wickCh, dashCh = '|', '-'
 	}
+
 	if mono { // colorless: distinguish direction by glyph
 		bodyUp, bodyDown = '#', '%'
 	}
 
 	n := len(cs)
+
 	gaps := make([]int, 0, n-1)
 	for i := 1; i < n; i++ {
 		d := fr.mxCol(float64(cs[i].At.Unix())) - fr.mxCol(float64(cs[i-1].At.Unix()))
@@ -148,15 +146,19 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 			gaps = append(gaps, d)
 		}
 	}
+
 	slot := inner.W / 3
+
 	if len(gaps) > 0 {
 		sort.Ints(gaps)
 		slot = gaps[len(gaps)/2]
 	}
+
 	bw := slot * 7 / 10
 	if bw < 1 {
 		bw = 1
 	}
+
 	if bw > 9 {
 		bw = 9
 	}
@@ -165,17 +167,21 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 		if math.IsNaN(k.Low) || math.IsNaN(k.High) || k.High < k.Low {
 			continue
 		}
+
 		bull := k.Close >= k.Open
 		col := c.up
 		bodyCh := bodyUp
+
 		if !bull {
 			col = c.down
 			bodyCh = bodyDown
 		}
+
 		st := NewStyle(col)
 		cx := fr.mxCol(float64(k.At.Unix()))
 
 		yHi := fr.myRow(math.Max(k.High, math.Max(k.Open, k.Close)))
+
 		yLo := fr.myRow(math.Min(k.Low, math.Min(k.Open, k.Close)))
 		for y := yHi; y <= yLo; y++ {
 			if y >= fr.area.Y && y <= fr.area.Y2() {
@@ -189,18 +195,22 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 		yb1 := fr.myRow(bLoV)
 		x0 := cx - bw/2
 		xs := max(x0, fr.area.X)
+
 		xe := min(x0+bw-1, fr.area.X2())
 		if bHiV == bLoV || yb1-yb0+1 < 1 {
 			// doji: flat line instead of an empty box
 			if yb0 >= fr.area.Y && yb0 <= fr.area.Y2() && xs <= xe {
 				cv.HLine(yb0, xs, xe, dashCh, st)
 			}
+
 			continue
 		}
+
 		for y := yb0; y <= yb1; y++ {
 			if y < fr.area.Y || y > fr.area.Y2() {
 				continue
 			}
+
 			for x := xs; x <= xe; x++ {
 				cv.Set(x, y, bodyCh, st)
 			}
@@ -212,6 +222,7 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 		if mono {
 			gu, gd = "#", "%"
 		}
+
 		drawLegendInside(cv, fr.area, []LegendEntry{
 			{Label: "up", Style: NewStyle(c.up), Glyph: gu},
 			{Label: "down", Style: NewStyle(c.down), Glyph: gd},

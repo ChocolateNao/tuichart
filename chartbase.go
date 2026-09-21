@@ -152,6 +152,7 @@ func (b *chartBase) HeightHint(int) int {
 	if b.height > 0 {
 		return b.height
 	}
+
 	return 0
 }
 
@@ -169,6 +170,7 @@ func (b *chartBase) SetTickCount(n int) {
 	if n < 2 {
 		n = 2
 	}
+
 	b.tickN = n
 }
 
@@ -191,20 +193,27 @@ func (b *chartBase) frameTitle(cv *Canvas, uni bool) Rect {
 				b.titleAlign,
 				r.W,
 			)
+
 			return Rect{X: 0, Y: 1, W: r.W, H: r.H - 1}.clip(r)
 		}
+
 		return r
 	}
+
 	st := NewStyle(Gray)
 	cv.Border(st, uni)
+
 	if b.title != "" && r.H > 2 {
 		t := " " + b.title + " "
 		if runeLen(t)+4 > r.W {
 			t = " " + ellipTrunc(b.title, max(r.W-6, 1), uni) + " "
 		}
+
 		drawAlignedText(cv, 0, t, NewStyle(Default).Bolder(), b.titleAlign, r.W)
+
 		return Rect{X: 1, Y: 1, W: r.W - 2, H: r.H - 2}.clip(r)
 	}
+
 	return Rect{X: 1, Y: 1, W: r.W - 2, H: r.H - 2}.clip(r)
 }
 
@@ -212,12 +221,14 @@ func (b *chartBase) frameTitle(cv *Canvas, uni bool) Rect {
 // text keeps a small margin so it clears frame borders.
 func drawAlignedText(cv *Canvas, y int, s string, st Style, a Align, w int) {
 	n := runeLen(s)
+
 	switch a {
 	case AlignRight:
 		x := w - n - 1
 		if x < 0 {
 			x = 0
 		}
+
 		cv.Text(x, y, s, st)
 	case AlignCenter:
 		cv.TextCenter(w/2, y, s, st)
@@ -226,6 +237,7 @@ func drawAlignedText(cv *Canvas, y int, s string, st Style, a Align, w int) {
 		if w > n+3 {
 			x = 2
 		}
+
 		cv.Text(x, y, s, st)
 	}
 }
@@ -235,21 +247,45 @@ func (r Rect) clip(o Rect) Rect {
 		r.W -= o.X - r.X
 		r.X = o.X
 	}
+
 	if r.Y < o.Y {
 		r.H -= o.Y - r.Y
 		r.Y = o.Y
 	}
+
 	if r.W > o.W-(r.X-o.X) {
 		r.W = o.W - (r.X - o.X)
 	}
+
 	if r.H > o.H-(r.Y-o.Y) {
 		r.H = o.H - (r.Y - o.Y)
 	}
+
 	if r.W < 0 {
 		r.W = 0
 	}
+
 	if r.H < 0 {
 		r.H = 0
 	}
+
 	return r
+}
+
+// clampInt bounds v to [lo, hi].
+func clampInt(v, lo, hi int) int {
+	return min(max(v, lo), hi)
+}
+
+// rampIdx maps a [0,1] fraction to a clamped ramp index.
+func rampIdx(t float64, n int) int { return clampInt(int(t*float64(n-1)+0.5), 0, n-1) }
+
+// plotHeightHint returns the height hint shared by plot-like diagrams
+// (Plot, TimeSeries, Candlestick) when no explicit height is set.
+func (b *chartBase) plotHeightHint(width int) int {
+	if h := b.HeightHint(width); h > 0 {
+		return h
+	}
+
+	return clampInt(width*2/5, 9, 24)
 }
