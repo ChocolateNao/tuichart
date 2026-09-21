@@ -37,6 +37,27 @@ for _, line := range rows {
 }
 ```
 
+### RenderLayout — per-diagram rectangles
+
+`RenderLayout(width)` returns the canvas and `Info` that `RenderCanvas` does,
+plus a `[]LayoutEntry` — one entry per diagram with its absolute position and
+size in the rendered board. Use the rects when the embedding framework needs to
+overlay chrome, route hit-testing, or lay out frames around each diagram:
+
+```go
+entries, cv, info := board.RenderLayout(width)
+for _, e := range entries {
+  // e.Row, e.X, e.Y, e.W, e.H — where diagram e sits in the canvas
+}
+```
+
+`X`/`Y` are absolute in the result canvas: `X` includes the gap between
+side-by-side diagrams, `Y` includes the board title rows and the blank row
+between stacked rows. Every integration example exercises this API: 09 counts
+the diagrams in its footer, 10 draws a geometry chip above each diagram,
+11 exposes the rects as JSON (`/layout`), 12 appends a manifest to its report
+file, and 13 shows the live chart geometry in its status strip.
+
 ### Live.Frame — render one frame without painting
 
 If you have a [Live renderer](live.md) but want to pull the current frame

@@ -67,8 +67,8 @@ covered in [Styling & degradation](styling.md).
 ## Also in this repo
 
 - `examples/` — runnable examples, one per directory (`01_sparkline` …
-  `12_file`). `09_bubbletea`, `10_tview`, `11_server`, and `12_file` are
-  separate modules: TUI embedding (bubbletea, tview), an HTTP server, and a file
-  writer.
+  `12_file`). `09_bubbletea`, `10_tview`, `11_server`, `12_file`, and
+  `13_gocui` are separate modules: TUI embedding (bubbletea, tview), an HTTP
+  server, a file writer, and a gocui paint.
 - `docs/adr/` — architecture decision records for notable design choices.
 - `docs/agents/` — agent-facing documentation for this repository.

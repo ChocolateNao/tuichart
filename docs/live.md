@@ -105,8 +105,7 @@ the live chart in another renderer.
 | Option              | Effect                                                          |
 | ------------------- | --------------------------------------------------------------- |
 | `WithLiveOutput(w)` | Redirect output away from `os.Stdout`.                          |
-| `WithInterval(d)`   | Minimum interval between repaints (clamped to 10 ms).           |
-| `WithFPS(fps)`      | Set the interval from a target frame rate.                      |
+| `WithInterval(d)`   | Minimum interval between repaints (clamped to 10 ms); a target frame rate is `time.Second/fps`. |
 | `OnUpdate(fn)`      | Register a callback invoked under the render lock on each tick. |
 
 ## Updating the chart
