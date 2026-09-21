@@ -501,7 +501,7 @@ func wrapText(s string, w int) []string {
 
 	var lines []string
 
-	for _, para := range strings.Split(s, "\n") {
+	for para := range strings.SplitSeq(s, "\n") {
 		cur := ""
 		flush := func() {
 			if cur != "" {
@@ -510,7 +510,7 @@ func wrapText(s string, w int) []string {
 			}
 		}
 
-		for _, word := range strings.Split(para, " ") {
+		for word := range strings.SplitSeq(para, " ") {
 			for runeLen(word) > w {
 				flush()
 
