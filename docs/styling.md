@@ -39,7 +39,7 @@ Detection is cached globally; tests that touch detection should call
 Colors are values of `tuichart.Color`. Three constructors exist:
 
 ```go
-Indexed(5)       // ANSI 256 palette index
+IndexedColor(5)       // ANSI 256 palette index
 RGB(255, 100, 0) // truecolor triplet
 ```
 

@@ -23,7 +23,7 @@ for y := 0; y < cv.Height(); y++ {
 
 Each `Cell` carries a position, a rune, and a `Style` (foreground, background,
 bold). You can convert the style to your framework's color model via
-`Color.RGB()` (truecolor), or use `Color.Indexed()` for 256-color terminals.
+`Color.RGB()` (truecolor), or use `Color.Index()` for 256-color terminals.
 
 ### RenderLines — row-by-row string slicing
 
@@ -132,12 +132,12 @@ fmt.Fprint(w, "</pre>")
 ## Color conversion
 
 `Color.RGB()` returns the `(r, g, b)` triplet for truecolor terminals. For
-256-color terminals use `Color.Indexed()` which returns the 0–255 palette index.
+256-color terminals use `Color.Index()` which returns the 0–255 palette index.
 When embedding into a terminal library that only supports 16 colors, downgrade
 via the ANSI approximation already built into `Style.emit` — the same logic your
 terminal uses. You do not need to implement this yourself; just render to a
 string via `Render` and let the host terminal handle the escape codes, or use
-`RenderCanvas` and convert `Style.Fg` via `Color.Indexed()`.
+`RenderCanvas` and convert `Style.Fg` via `Color.Index()`.
 
 See [`INTEGRATION.md`](../INTEGRATION.md) for the full API surface and
 additional examples.

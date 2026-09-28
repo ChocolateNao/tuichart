@@ -75,17 +75,17 @@ func TestColorRGBIndexed(t *testing.T) {
 		t.Errorf("Red -> %d,%d,%d", r, g, b)
 	}
 
-	r, g, b, _ = Indexed(16).RGB()
+	r, g, b, _ = IndexedColor(16).RGB()
 	if r != 0 || g != 0 || b != 0 {
 		t.Errorf("idx16 -> %d,%d,%d", r, g, b)
 	}
 
-	r, _, _, _ = Indexed(231).RGB()
+	r, _, _, _ = IndexedColor(231).RGB()
 	if r != 255 {
 		t.Errorf("idx231 r=%d", r)
 	}
 
-	r, _, _, _ = Indexed(255).RGB()
+	r, _, _, _ = IndexedColor(255).RGB()
 	if r != 238 {
 		t.Errorf("idx255 r=%d", r)
 	}

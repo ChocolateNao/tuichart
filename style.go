@@ -26,7 +26,7 @@ const (
 )
 
 // Color represents a terminal color. Use the predefined named color variables
-// (Red, Cyan, DimGray, ...) or construct one with Indexed or RGB.
+// (Red, Cyan, DimGray, ...) or construct one with IndexedColor or RGB.
 type Color struct {
 	kind colorKind
 	idx  uint8
@@ -35,52 +35,52 @@ type Color struct {
 	b    uint8
 }
 
-// Default is the zero value — no color assigned.
+// Default is the zero value: no color assigned.
 var Default = Color{}
 
 // ANSI 16-color palette.
 var (
-	Black   = Indexed(0)  // ANSI black
-	Maroon  = Indexed(1)  // ANSI maroon
-	Green   = Indexed(2)  // ANSI green
-	Olive   = Indexed(3)  // ANSI olive
-	Navy    = Indexed(4)  // ANSI navy
-	Purple  = Indexed(5)  // ANSI purple
-	Teal    = Indexed(6)  // ANSI teal
-	Silver  = Indexed(7)  // ANSI silver
-	Gray    = Indexed(8)  // ANSI gray
-	Red     = Indexed(9)  // ANSI red
-	Lime    = Indexed(10) // ANSI lime
-	Yellow  = Indexed(11) // ANSI yellow
-	Blue    = Indexed(12) // ANSI blue
-	Fuchsia = Indexed(13) // ANSI fuchsia
-	Cyan    = Indexed(14) // ANSI cyan
-	White   = Indexed(15) // ANSI white
+	Black   = IndexedColor(0)  // ANSI black
+	Maroon  = IndexedColor(1)  // ANSI maroon
+	Green   = IndexedColor(2)  // ANSI green
+	Olive   = IndexedColor(3)  // ANSI olive
+	Navy    = IndexedColor(4)  // ANSI navy
+	Purple  = IndexedColor(5)  // ANSI purple
+	Teal    = IndexedColor(6)  // ANSI teal
+	Silver  = IndexedColor(7)  // ANSI silver
+	Gray    = IndexedColor(8)  // ANSI gray
+	Red     = IndexedColor(9)  // ANSI red
+	Lime    = IndexedColor(10) // ANSI lime
+	Yellow  = IndexedColor(11) // ANSI yellow
+	Blue    = IndexedColor(12) // ANSI blue
+	Fuchsia = IndexedColor(13) // ANSI fuchsia
+	Cyan    = IndexedColor(14) // ANSI cyan
+	White   = IndexedColor(15) // ANSI white
 )
 
-// Extended 256-color palette — commonly used chart colors.
+// Extended 256-color palette: commonly used chart colors.
 var (
-	Azure          = Indexed(21)  // dark azure blue
-	DodgerBlue     = Indexed(39)  // bright dodger blue
-	CornflowerBlue = Indexed(69)  // cornflower blue
-	SkyBlue        = Indexed(75)  // sky blue
-	PaleGreen      = Indexed(114) // pale green
-	MediumPurple   = Indexed(141) // medium purple
-	LightGreen     = Indexed(156) // light green
-	Khaki          = Indexed(179) // khaki yellow
-	BrightRed      = Indexed(196) // bright red
-	HotPink        = Indexed(200) // hot pink
-	Salmon         = Indexed(203) // salmon
-	DeepPink       = Indexed(205) // deep pink
-	Orange         = Indexed(214) // orange
-	DimGray        = Indexed(240) // dim gray (axes, ticks)
-	WhiteSmoke     = Indexed(255) // near-white
+	Azure          = IndexedColor(21)  // dark azure blue
+	DodgerBlue     = IndexedColor(39)  // bright dodger blue
+	CornflowerBlue = IndexedColor(69)  // cornflower blue
+	SkyBlue        = IndexedColor(75)  // sky blue
+	PaleGreen      = IndexedColor(114) // pale green
+	MediumPurple   = IndexedColor(141) // medium purple
+	LightGreen     = IndexedColor(156) // light green
+	Khaki          = IndexedColor(179) // khaki yellow
+	BrightRed      = IndexedColor(196) // bright red
+	HotPink        = IndexedColor(200) // hot pink
+	Salmon         = IndexedColor(203) // salmon
+	DeepPink       = IndexedColor(205) // deep pink
+	Orange         = IndexedColor(214) // orange
+	DimGray        = IndexedColor(240) // dim gray (axes, ticks)
+	WhiteSmoke     = IndexedColor(255) // near-white
 )
 
-// Indexed creates a Color from a 256-color terminal index. Indices 0-15
+// IndexedColor creates a Color from a 256-color terminal index. Indices 0-15
 // map to the standard ANSI colors; 16-231 are a 6×6×6 RGB cube; 232-255
 // are a grayscale ramp. Prefer the named color variables when available.
-func Indexed(i int) Color {
+func IndexedColor(i int) Color {
 	if i < 0 {
 		i = 0
 	}
@@ -113,6 +113,20 @@ func (c Color) RGB() (r, g, b int, ok bool) {
 		return r, g, b, true
 	default:
 		return 0, 0, 0, false
+	}
+}
+
+// Index returns the 0-255 xterm palette index for the color. Indexed colors
+// resolve directly; truecolor values map to the nearest palette entry. The
+// inverse of IndexedColor.
+func (c Color) Index() int {
+	switch c.kind {
+	case colorIndexed:
+		return int(c.idx)
+	case colorRGB:
+		return rgbTo256(c.r, c.g, c.b)
+	default:
+		return 0
 	}
 }
 

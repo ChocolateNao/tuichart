@@ -46,6 +46,24 @@ func TestIndexedDowngrade(t *testing.T) {
 	}
 }
 
+func TestColorIndex(t *testing.T) {
+	if got := HotPink.Index(); got != 200 {
+		t.Errorf("HotPink.Index() = %d, want 200", got)
+	}
+
+	if got := White.Index(); got != 15 {
+		t.Errorf("White.Index() = %d, want 15", got)
+	}
+
+	if got := RGB(255, 0, 0).Index(); got != 196 {
+		t.Errorf("RGB(255,0,0).Index() = %d, want 196 (bright red)", got)
+	}
+
+	if got := Default.Index(); got != 0 {
+		t.Errorf("Default.Index() = %d, want 0", got)
+	}
+}
+
 func TestBgCodes(t *testing.T) {
 	st := NewStyle(Default).On(Blue)
 	if got := Level16.seq(st); got != "\x1b[104m" {
@@ -219,12 +237,12 @@ func TestColorRGB(t *testing.T) {
 }
 
 func TestIndexedClamp(t *testing.T) {
-	lo := Indexed(-5)
+	lo := IndexedColor(-5)
 	if lo.idx != 0 {
 		t.Errorf("negative index clamped to %d", lo.idx)
 	}
 
-	hi := Indexed(300)
+	hi := IndexedColor(300)
 	if hi.idx != 255 {
 		t.Errorf("overflow index clamped to %d", hi.idx)
 	}
@@ -272,9 +290,9 @@ func TestSeqZeroStyle(t *testing.T) {
 	}
 }
 
-func TestMixWithIndexed(t *testing.T) {
-	a := Indexed(9)  // Red
-	b := Indexed(12) // Blue
+func TestMixWithIndexedColor(t *testing.T) {
+	a := IndexedColor(9)  // Red
+	b := IndexedColor(12) // Blue
 
 	m := mix(a, b, 0.5)
 	if m.kind != colorRGB {
