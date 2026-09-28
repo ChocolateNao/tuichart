@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+
+      - name: Install gofumpt
+        run: go install mvdan.cc/gofumpt@latest
+
+      - name: Run tests and checks
+        run: just ci
+
+      - name: Determine previous tag
+        id: prev_tag
+        run: |
+          if git tag -l "v*" | sort -V | tail -2 | head -1 | grep -q .; then
+            echo "prev=$(git tag -l 'v*' | sort -V | tail -2 | head -1)" >> "$GITHUB_OUTPUT"
+          else
+            echo "prev=$(git rev-list --max-parents=0 HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          PREV="${{ steps.prev_tag.outputs.prev }}"
+          CURRENT="${GITHUB_REF_NAME}"
+          echo "Previous: $PREV"
+          echo "Current: $CURRENT"
+          ./scripts/generate-release-notes.sh "$PREV" "$CURRENT" > release-notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: false
+          body_path: release-notes.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify module on Go proxy
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          echo "Waiting for proxy to index $VERSION..."
+          sleep 10
+          GOPROXY=proxy.golang.org go list -m "github.com/ChocolateNao/tuichart@$VERSION"
+          echo "Module verified on proxy.golang.org"
