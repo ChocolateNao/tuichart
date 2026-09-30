@@ -23,11 +23,8 @@ jobs:
 
       - uses: extractions/setup-just@v4
 
-      - name: Install golangci-lint
-        run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
-
-      - name: Install gofumpt
-        run: go install mvdan.cc/gofumpt@latest
+      - name: Install necessary tooling
+        run: just setup-ci
 
       - name: Run tests and checks
         run: just ci

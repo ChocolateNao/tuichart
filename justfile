@@ -91,6 +91,9 @@ setup-fmt:
 # Install all dev tools
 setup: setup-lint setup-fmt setup-lefthook
 
+# Install dev tools for CI
+setup-ci: setup-lint setup-fmt
+
 # Set up git hooks via lefthook (run once after clone)
 setup-lefthook:
     @which lefthook > /dev/null 2>&1 || \
