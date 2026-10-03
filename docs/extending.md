@@ -278,22 +278,7 @@ func main() {
 }
 ```
 
-```
-                      service health
-
-
-┌─ p95 latency (ms) ─────────────────────────────────────┐
-│latency █████████████████░░░░░░░┃░░░░░░░░░▒▒▒▒target 250│
-│                                                        │
-│        0                      250                   500│
-└────────────────────────────────────────────────────────┘
-
-┌──────────────────────────┐  ┌──────────────────────────┐
-│cpu ███████████┃█target 50│  │orders ████████target 4500│
-│                          │  │                          │
-│    0         50       100│  │       0      3000    6000│
-└──────────────────────────┘  └──────────────────────────┘
-```
+![Bullet chart demo](../assets/demos/demo-bullet.gif)
 
 Because `Name()` is set, each bullet shows its own name; because `Zone` is
 called, the faint background shifts through distinct glyphs at each boundary

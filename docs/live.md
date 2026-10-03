@@ -48,6 +48,8 @@ Run it (needs a real TTY):
 go run ./examples/06_live
 ```
 
+![Live demo](../assets/demos/demo-live.gif)
+
 ## How painting works
 
 A `Live` instance holds:
