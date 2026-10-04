@@ -1,6 +1,7 @@
 Source ./_shared/base.tape
-Output ../assets/demos/readme-index.gif
+Output ../../assets/demos/readme-index.gif
+Set Height 610
 
-Type "go run ../../examples/02_plot"
+Type "./tuichartdemo -demo readme-index"
 Enter
-Sleep 3s
+Sleep 15s

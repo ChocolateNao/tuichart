@@ -15,7 +15,7 @@ func main() {
 	demo := flag.String(
 		"demo",
 		"all",
-		"demo to run: all, quickstart, plot, function, bar, stacked, horizontal, pie, donut, heatmap, gauge, sparkline, timeline, gantt, candlestick, timeseries, histogram, funnel, radar, treemap, ascii, composition, live, bullet",
+		"demo to run: all, quickstart, plot, function, bar, stacked, horizontal, pie, donut, heatmap, gauge, sparkline, timeline, gantt, candlestick, timeseries, histogram, funnel, radar, treemap, ascii, composition, live, bullet, readme-index",
 	)
 	width := flag.Int("width", 80, "output width")
 	noColor := flag.Bool("no-color", false, "disable color")
@@ -81,6 +81,8 @@ func main() {
 		runBullet(opts)
 	case "all":
 		runAll(opts)
+	case "readme-index":
+		runReadmeIndex(opts)
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown demo: %s\n", *demo)
 		flag.PrintDefaults()
@@ -89,8 +91,6 @@ func main() {
 }
 
 func runQuickstart(opts []tuichart.Option) {
-	fmt.Println("=== Quickstart Demo ===")
-
 	g := tuichart.New(opts...)
 	p := tuichart.NewPlot()
 
@@ -105,8 +105,6 @@ func runQuickstart(opts []tuichart.Option) {
 }
 
 func runPlot(opts []tuichart.Option) {
-	fmt.Println("=== Plot Demo ===")
-
 	g := tuichart.New(opts...)
 	p := tuichart.NewPlot()
 
@@ -121,8 +119,6 @@ func runPlot(opts []tuichart.Option) {
 }
 
 func runFunction(opts []tuichart.Option) {
-	fmt.Println("=== Function Demo ===")
-
 	g := tuichart.New(opts...)
 	f := tuichart.NewFunction(math.Cos).Domain(-math.Pi, math.Pi).Samples(60)
 	f.SetYRange(-1.2, 1.2)
@@ -131,8 +127,6 @@ func runFunction(opts []tuichart.Option) {
 }
 
 func runBar(opts []tuichart.Option) {
-	fmt.Println("=== Bar Chart Demo ===")
-
 	g := tuichart.New(opts...)
 	g.Add(tuichart.NewBarValues([]string{"mon", "tue", "wed", "thu", "fri", "sat", "sun"},
 		[]float64{120, 200, 150, 80, 70, 110, 130}).
@@ -141,8 +135,6 @@ func runBar(opts []tuichart.Option) {
 }
 
 func runStacked(opts []tuichart.Option) {
-	fmt.Println("=== Stacked Bar Chart Demo ===")
-
 	g := tuichart.New(opts...)
 	b := tuichart.NewBarValues([]string{"q1", "q2", "q3", "q4"},
 		[]float64{12, 15, 9, 14}).Title("north")
@@ -153,8 +145,6 @@ func runStacked(opts []tuichart.Option) {
 }
 
 func runHorizontal(opts []tuichart.Option) {
-	fmt.Println("=== Horizontal Bar Chart Demo ===")
-
 	g := tuichart.New(opts...)
 	b := tuichart.NewBarValues([]string{"orders", "returns", "refunds"},
 		[]float64{90, 40, 15}).Title("volume")
@@ -164,8 +154,6 @@ func runHorizontal(opts []tuichart.Option) {
 }
 
 func runPie(opts []tuichart.Option) {
-	fmt.Println("=== Pie Chart Demo ===")
-
 	g := tuichart.New(opts...)
 	g.Add(tuichart.NewPie().
 		Slice("web", 400).
@@ -176,8 +164,6 @@ func runPie(opts []tuichart.Option) {
 }
 
 func runDonut(opts []tuichart.Option) {
-	fmt.Println("=== Donut Chart Demo ===")
-
 	g := tuichart.New(opts...)
 	g.Add(tuichart.NewPie().
 		Slice("web", 400).
@@ -189,8 +175,6 @@ func runDonut(opts []tuichart.Option) {
 }
 
 func runHeatmap(opts []tuichart.Option) {
-	fmt.Println("=== Heatmap Demo ===")
-
 	g := tuichart.New(opts...)
 
 	grid := make([][]float64, 5)
@@ -206,8 +190,6 @@ func runHeatmap(opts []tuichart.Option) {
 }
 
 func runGauge(opts []tuichart.Option) {
-	fmt.Println("=== Gauge Demo ===")
-
 	g := tuichart.New(opts...)
 	g.Add(tuichart.NewGauge(72, 100).Title("cpu").Label("4 core"))
 	g.Add(
@@ -227,8 +209,6 @@ func runGauge(opts []tuichart.Option) {
 }
 
 func runSparkline(opts []tuichart.Option) {
-	fmt.Println("=== Sparkline Demo ===")
-
 	g := tuichart.New(opts...)
 	g.Add(tuichart.NewSpark(5, 4, 9, 8, 6, 7, 5, 3, 4, 6, 8, 7, 5, 2, 1).Title("packet loss"))
 	g.Add(tuichart.NewSpark(0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1))
@@ -236,8 +216,6 @@ func runSparkline(opts []tuichart.Option) {
 }
 
 func runTimeline(opts []tuichart.Option) {
-	fmt.Println("=== Timeline Demo ===")
-
 	g := tuichart.New(opts...)
 	now := time.Date(2026, 6, 2, 0, 0, 0, 0, time.UTC)
 	tl := tuichart.NewTimeline().Format("Jun 02")
@@ -254,8 +232,6 @@ func runTimeline(opts []tuichart.Option) {
 }
 
 func runGantt(opts []tuichart.Option) {
-	fmt.Println("=== Gantt Demo ===")
-
 	g := tuichart.New(opts...)
 	day := 24 * time.Hour
 	start := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
@@ -267,8 +243,6 @@ func runGantt(opts []tuichart.Option) {
 }
 
 func runCandlestick(opts []tuichart.Option) {
-	fmt.Println("=== Candlestick Demo ===")
-
 	g := tuichart.New(opts...)
 	base := time.Date(2026, 5, 25, 0, 0, 0, 0, time.UTC)
 	g.Add(tuichart.NewCandlestick().Title("ACME").Format("Jun 02").
@@ -280,8 +254,6 @@ func runCandlestick(opts []tuichart.Option) {
 }
 
 func runTimeSeries(opts []tuichart.Option) {
-	fmt.Println("=== TimeSeries Demo ===")
-
 	g := tuichart.New(opts...)
 	ts := tuichart.NewTimeSeries().Format("15:04").Title("requests")
 	base := time.Date(2026, 6, 2, 9, 0, 0, 0, time.UTC)
@@ -296,8 +268,6 @@ func runTimeSeries(opts []tuichart.Option) {
 }
 
 func runHistogram(opts []tuichart.Option) {
-	fmt.Println("=== Histogram Demo ===")
-
 	g := tuichart.New(opts...)
 	data := []float64{1, 2, 2, 3, 3, 3, 4, 4, 5, 5, 5, 5, 6, 6, 7, 7, 8, 8, 8, 8, 8, 9, 9, 10}
 	g.Add(tuichart.NewHistogram(data).Bins(5).Title("distribution"))
@@ -305,8 +275,6 @@ func runHistogram(opts []tuichart.Option) {
 }
 
 func runFunnel(opts []tuichart.Option) {
-	fmt.Println("=== Funnel Demo ===")
-
 	g := tuichart.New(opts...)
 	g.Add(tuichart.NewFunnel().
 		Title("conversion funnel").
@@ -318,8 +286,6 @@ func runFunnel(opts []tuichart.Option) {
 }
 
 func runRadar(opts []tuichart.Option) {
-	fmt.Println("=== Radar Demo ===")
-
 	g := tuichart.New(opts...)
 	g.Add(tuichart.NewRadar().Title("skill profile").
 		Axes("frontend", "backend", "data", "testing", "devops", "ux").
@@ -329,8 +295,6 @@ func runRadar(opts []tuichart.Option) {
 }
 
 func runTreemap(opts []tuichart.Option) {
-	fmt.Println("=== Treemap Demo ===")
-
 	g := tuichart.New(opts...)
 	g.Add(tuichart.NewTreemap().Title("disk use").
 		Add(&tuichart.TreemapNode{Name: "web", Children: []*tuichart.TreemapNode{
@@ -346,8 +310,6 @@ func runTreemap(opts []tuichart.Option) {
 }
 
 func runASCII(opts []tuichart.Option) {
-	fmt.Println("=== ASCII Fallback Demo ===")
-
 	asciiOpts := append(opts, tuichart.WithNoColor(), tuichart.WithUnicode(false))
 	g := tuichart.New(asciiOpts...)
 	p := tuichart.NewPlot().Title("sin")
@@ -363,8 +325,6 @@ func runASCII(opts []tuichart.Option) {
 }
 
 func runComposition(opts []tuichart.Option) {
-	fmt.Println("=== Composition Demo ===")
-
 	g := tuichart.New(opts...)
 	p := tuichart.NewPlot().Title("latency")
 	p.Add(tuichart.NewLineVals("p50", []float64{30, 28, 31, 29, 33, 30, 32}))
@@ -392,8 +352,6 @@ func runLive(opts []tuichart.Option) {
 }
 
 func runBullet(opts []tuichart.Option) {
-	fmt.Println("=== Bullet Graph Demo ===")
-
 	latency := bullet.NewBullet("latency", 180, 250, 500).
 		Title("p95 latency (ms)").
 		Zone(350).
@@ -457,4 +415,37 @@ func runAll(opts []tuichart.Option) {
 	runASCII(opts)
 	fmt.Println()
 	runComposition(opts)
+}
+
+func runReadmeIndex(opts []tuichart.Option) {
+	diagrams := []struct {
+		fn   func([]tuichart.Option)
+		name string
+	}{
+		{runFunction, "Function"},
+		{runBar, "Bar"},
+		{runStacked, "Stacked Bar"},
+		{runHorizontal, "Horizontal Bar"},
+		{runPie, "Pie"},
+		{runHeatmap, "Heatmap"},
+		{runGauge, "Gauge"},
+		{runSparkline, "Sparkline"},
+		{runTimeline, "Timeline"},
+		{runGantt, "Gantt"},
+		{runCandlestick, "Candlestick"},
+		{runTimeSeries, "TimeSeries"},
+		{runFunnel, "Funnel"},
+		{runRadar, "Radar"},
+		{runTreemap, "Treemap"},
+	}
+
+	for i, d := range diagrams {
+		fmt.Printf("\033[H\033[2J")
+		fmt.Printf("--- %s (%d/%d) ---\n\n", d.name, i+1, len(diagrams))
+		d.fn(opts)
+
+		if i < len(diagrams)-1 {
+			time.Sleep(1 * time.Second)
+		}
+	}
 }
