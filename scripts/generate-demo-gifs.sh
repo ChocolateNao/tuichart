@@ -13,22 +13,23 @@ TUICHART_MAX_CONCURRENT="${TUICHART_MAX_CONCURRENT:-4}"
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") [OPTIONS]
+Usage: $(basename "$0") <command> [OPTIONS]
 
-Build the demo binary and record all VHS tape files into GIFs, running
-up to \$TUICHART_MAX_CONCURRENT recordings in parallel.
+Commands:
+  help                Show this help message and exit
+  perform             Build the demo binary and record all VHS tapes into GIFs
 
-Options:
-  -j, --jobs N    Maximum number of concurrent recordings (default: $TUICHART_MAX_CONCURRENT)
-  -h, --help      Show this help message and exit
+Options for 'perform':
+  -j, --jobs N        Maximum number of concurrent recordings (default: $TUICHART_MAX_CONCURRENT)
+  -h, --help          Show this help message and exit
 
 Environment:
   TUICHART_MAX_CONCURRENT  Same as --jobs
 
 Examples:
-  $(basename "$0")
-  $(basename "$0") --jobs 8
-  TUICHART_MAX_CONCURRENT=2 $(basename "$0")
+  $(basename "$0") perform
+  $(basename "$0") perform --jobs 8
+  TUICHART_MAX_CONCURRENT=2 $(basename "$0") perform
 EOF
 }
 
@@ -63,8 +64,7 @@ parse_args() {
 }
 
 build_demo_binary() {
-    echo "Building demo binary..."
-    go build -o "$VHS_DIR/tuichartdemo" ./scripts/demo
+    go build -o "$VHS_DIR/tuichartdemo" ./scripts/demo >/dev/null 2>&1
 }
 
 # Record a single tape file. Runs VHS from the tape directory so that the
@@ -76,13 +76,11 @@ record_tape() {
     name="$(basename "$tape" .tape)"
     
     echo "▶ Recording $name"
-    ( cd "$VHS_DIR" && vhs "$(basename "$tape")" )
+    ( cd "$VHS_DIR" && vhs "$(basename "$tape")" >/dev/null 2>&1 )
     echo "✔ Finished $name"
 }
 
 record_all_tapes() {
-    echo "Recording demo GIFs (max $TUICHART_MAX_CONCURRENT concurrent)..."
-    
     local -a pids=()
     local -a names=()
     local failed=0
@@ -116,17 +114,15 @@ record_all_tapes() {
 }
 
 cleanup() {
-    echo "Cleaning up..."
     rm -f "$VHS_DIR/tuichartdemo"
 }
 
-main() {
+perform() {
     parse_args "$@"
     
     cd "$PROJECT_ROOT"
     mkdir -p "$ASSETS_DIR"
     
-    # Ensure cleanup runs even if recording fails.
     trap cleanup EXIT
     
     build_demo_binary
@@ -135,8 +131,26 @@ main() {
     cleanup
     trap - EXIT
     
-    echo "Done! GIFs are in $ASSETS_DIR"
-    ls -la "$ASSETS_DIR"/demo-*.gif 2>/dev/null || echo "No demo GIFs found"
+    ls -la "$ASSETS_DIR"/demo-*.gif 2>/dev/null | head -5
+}
+
+main() {
+    local cmd="${1:-help}"
+    shift || true
+    
+    case "$cmd" in
+        help|--help|-h)
+            usage
+            ;;
+        perform)
+            perform "$@"
+            ;;
+        *)
+            echo "Error: unknown command: $cmd" >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
 }
 
 main "$@"
