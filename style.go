@@ -157,6 +157,24 @@ func (s Style) isZero() bool {
 	return !s.Bold && s.Fg.IsZero() && s.Bg.IsZero()
 }
 
+func (s Style) degrade() Style {
+	switch s.Fg.kind {
+	case colorRGB:
+		s.Fg = RGB(128, 128, 128)
+	case colorIndexed:
+		s.Fg = IndexedColor(8)
+	}
+
+	switch s.Bg.kind {
+	case colorRGB:
+		s.Bg = RGB(0, 0, 0)
+	case colorIndexed:
+		s.Bg = IndexedColor(0)
+	}
+
+	return s
+}
+
 func (s Style) eq(o Style) bool {
 	return s.Bold == o.Bold && s.Fg == o.Fg && s.Bg == o.Bg
 }

@@ -32,10 +32,16 @@ type Canvas struct {
 	stride int
 	ox     int
 	oy     int
+	info   Info
 }
 
 // NewCanvas creates a blank canvas of the given width and height.
-func NewCanvas(w, h int) *Canvas {
+func NewCanvas(w, h int) *Canvas { return NewCanvasWithInfo(w, h, Info{}) }
+
+// NewCanvasWithInfo creates a canvas that knows the terminal capabilities it
+// is being drawn for. DrawGlyph needs them to pick glyphs and degrade styles;
+// a canvas built with NewCanvas assumes no capabilities.
+func NewCanvasWithInfo(w, h int, info Info) *Canvas {
 	if w < 1 {
 		w = 1
 	}
@@ -44,7 +50,7 @@ func NewCanvas(w, h int) *Canvas {
 		h = 1
 	}
 
-	c := &Canvas{w: w, h: h, stride: w, buf: make([]cell, w*h)}
+	c := &Canvas{w: w, h: h, stride: w, buf: make([]cell, w*h), info: info}
 	c.Clear()
 
 	return c
@@ -307,6 +313,24 @@ func (c *Canvas) Render(lvl Level) string {
 }
 
 func runeLen(s string) int { return len([]rune(s)) }
+
+// DrawGlyph draws a rune at position (x, y), picking uni unless the terminal
+// lacks unicode or color, in which case the distinguishable mono glyph is
+// used and the style is degraded. It is the single place glyph and style
+// degradation is decided.
+func (cv *Canvas) DrawGlyph(x, y int, uni, mono rune, st Style) {
+	ch := uni
+
+	if !cv.info.Unicode || cv.info.Level == LevelNone {
+		ch = mono
+	}
+
+	if cv.info.Level == LevelNone {
+		st = st.degrade()
+	}
+
+	cv.Set(x, y, ch, st)
+}
 
 func truncStr(s string, n int) string {
 	r := []rune(s)
