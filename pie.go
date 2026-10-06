@@ -11,13 +11,14 @@ type pieSlice struct {
 // PieChart renders slices as a pie (or donut) chart with a legend.
 type PieChart struct {
 	slices []pieSlice
-	chartBase
+	DisplayConfig
+	AxisConfig
 	donut bool
 }
 
 // NewPie creates an empty PieChart.
 func NewPie() *PieChart {
-	return &PieChart{chartBase: newChartBase(), donut: false}
+	return &PieChart{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig(), donut: false}
 }
 
 // Slice appends a slice; the color is assigned from the palette when omitted.
@@ -47,11 +48,16 @@ func (p *PieChart) Title(t string) *PieChart { p.SetTitle(t); return p }
 
 // HeightHint returns the suggested height in rows for the given width.
 func (p *PieChart) HeightHint(width int) int {
-	if h := p.chartBase.HeightHint(width); h > 0 {
+	if h := p.DisplayConfig.HeightHint(width); h > 0 {
 		return h
 	}
 
 	return clampInt(width*3/5, 8, 22)
+}
+
+// WidthHint returns the suggested width for the given height.
+func (p *PieChart) WidthHint(height int) int {
+	return clampInt(height*5/3, 10, 100)
 }
 
 var pieASCIIChars = []rune{'#', '@', '*', 'o', '=', '+', '~', '%'}
@@ -62,13 +68,15 @@ func (p *PieChart) Draw(rc *Ctx, cv *Canvas) {
 
 	for i := range p.slices {
 		if p.slices[i].color.IsZero() {
-			p.slices[i].color = rc.Next()
+			c, rc2 := rc.WithNextColor()
+			p.slices[i].color = c
+			rc = rc2
 		}
 
 		total += math.Max(p.slices[i].val, 0)
 	}
 
-	inner := p.frameTitle(cv, rc.Info.Unicode)
+	inner := frameTitle(cv, rc.Info.Unicode, p.title, p.titleAlign, p.frame)
 
 	if total <= 0 || inner.W < 6 || inner.H < 4 {
 		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
@@ -101,12 +109,8 @@ func (p *PieChart) Draw(rc *Ctx, cv *Canvas) {
 		acc += v
 		to := acc / total
 		st := NewStyle(s.color)
-		mono := rc.Info.Level == LevelNone
 
-		fillCh := '█'
-		if mono || !rc.Info.Unicode {
-			fillCh = pieASCIIChars[i%len(pieASCIIChars)]
-		}
+		fillCh := pieASCIIChars[i%len(pieASCIIChars)]
 
 		drawPieSector(cv, cx, cy, rx, ry, from, to, fillCh, st, p.donut)
 
@@ -119,7 +123,7 @@ func (p *PieChart) Draw(rc *Ctx, cv *Canvas) {
 		}
 
 		glyph := "██"
-		if mono || !rc.Info.Unicode {
+		if !rc.Info.Unicode || rc.Info.Level == LevelNone {
 			glyph = string(fillCh) + string(fillCh)
 		}
 
@@ -147,7 +151,7 @@ func drawPieSector(
 	cv *Canvas,
 	cx, cy, rx, ry int,
 	from, to float64,
-	ch rune,
+	monoCh rune,
 	st Style,
 	donut bool,
 ) {
@@ -172,8 +176,12 @@ func drawPieSector(
 
 			t := ang / (2 * math.Pi)
 			if t >= from-1e-9 && t < to+1e-9 {
-				cv.Set(cx+dx, cy+dy, ch, st)
+				cv.DrawGlyph(cx+dx, cy+dy, '█', monoCh, st)
 			}
 		}
 	}
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (p *PieChart) Reset() { p.AxisConfig.Reset(); p.DisplayConfig.Reset() }

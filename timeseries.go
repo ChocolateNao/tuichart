@@ -45,12 +45,13 @@ func (l *TimeSeriesLine) Marker(m rune) *TimeSeriesLine { l.marker = m; return l
 type TimeSeries struct {
 	layout string
 	lines  []*TimeSeriesLine
-	chartBase
+	DisplayConfig
+	AxisConfig
 }
 
 // NewTimeSeries creates an empty TimeSeries chart.
 func NewTimeSeries() *TimeSeries {
-	return &TimeSeries{chartBase: newChartBase()}
+	return &TimeSeries{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig()}
 }
 
 // Title sets the chart title.
@@ -80,10 +81,15 @@ func (ts *TimeSeries) HeightHint(width int) int {
 	return ts.plotHeightHint(width)
 }
 
+// WidthHint returns the suggested width for the given height.
+func (ts *TimeSeries) WidthHint(height int) int {
+	return clampInt(height*2, 20, 100)
+}
+
 // Draw renders the time-series lines onto an X/Y plot in the canvas.
 func (ts *TimeSeries) Draw(rc *Ctx, cv *Canvas) {
 	p := NewPlot()
-	p.chartBase = ts.chartBase
+	p.AxisConfig, p.DisplayConfig = ts.AxisConfig, ts.DisplayConfig
 
 	minU, maxU := float64(0), float64(0)
 	first := true
@@ -117,3 +123,7 @@ func (ts *TimeSeries) Draw(rc *Ctx, cv *Canvas) {
 
 	p.Draw(rc, cv)
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (ts *TimeSeries) Reset() { ts.AxisConfig.Reset(); ts.DisplayConfig.Reset() }

@@ -57,7 +57,7 @@ func (fr frame) my(v float64) float64 {
 func (fr frame) myRow(v float64) int { return int(math.Round(fr.my(v))) }
 func (fr frame) mxCol(v float64) int { return int(math.Round(fr.mx(v))) }
 
-func resolveScales(b *chartBase, db dataBounds, xk, yk Kind) (Scale, Scale) {
+func resolveScales(b *AxisConfig, db dataBounds, xk, yk Kind) (Scale, Scale) {
 	var xs, ys Scale
 	if b.xSet {
 		xs = fixedScale(xk, b.x0, b.x1)
@@ -91,25 +91,33 @@ func fmtTicks(t []Tick, f func(float64) string) []Tick {
 	return out
 }
 
-func prepareFrame(cv *Canvas, rc *Ctx, b *chartBase, db dataBounds, xk, yk Kind, autoX bool) frame {
+func prepareFrame(
+	cv *Canvas,
+	rc *Ctx,
+	ax *AxisConfig,
+	dc *DisplayConfig,
+	db dataBounds,
+	xk, yk Kind,
+	autoX bool,
+) frame {
 	uni := rc.Info.Unicode
-	inner := b.frameTitle(cv, uni)
+	inner := frameTitle(cv, uni, dc.title, dc.titleAlign, ax.frame)
 
-	xsc, ysc := resolveScales(b, db, xk, yk)
+	xsc, ysc := resolveScales(ax, db, xk, yk)
 
-	yt := b.yTicks
+	yt := ax.yTicks
 	if yt == nil {
-		yt = ysc.Ticks(b.tickN)
+		yt = ysc.Ticks(ax.tickN)
 	}
 
-	yt = fmtTicks(yt, b.yFmt)
+	yt = fmtTicks(yt, ax.yFmt)
 
-	xt := b.xTicks
+	xt := ax.xTicks
 	if xt == nil && autoX {
-		xt = xsc.Ticks(b.tickN)
+		xt = xsc.Ticks(ax.tickN)
 	}
 
-	xt = fmtTicks(xt, b.xFmt)
+	xt = fmtTicks(xt, ax.xFmt)
 
 	gutter := 1
 	for _, t := range yt {
@@ -121,11 +129,11 @@ func prepareFrame(cv *Canvas, rc *Ctx, b *chartBase, db dataBounds, xk, yk Kind,
 	bottom := 2
 
 	top := 0
-	if b.title != "" {
+	if dc.title != "" {
 		top = 1
 	}
 
-	if b.xLabel != "" {
+	if ax.xLabel != "" {
 		bottom++
 	}
 
@@ -148,7 +156,7 @@ func prepareFrame(cv *Canvas, rc *Ctx, b *chartBase, db dataBounds, xk, yk Kind,
 		gridCh = '.'
 	}
 
-	if b.grid {
+	if ax.grid {
 		for _, t := range yt {
 			row := fr.myRow(t.Value)
 			cv.HLine(row, plot.X, plot.X2(), gridCh, dim)
@@ -236,11 +244,11 @@ func prepareFrame(cv *Canvas, rc *Ctx, b *chartBase, db dataBounds, xk, yk Kind,
 		}
 	}
 
-	if b.xLabel != "" {
+	if ax.xLabel != "" {
 		cv.TextCenter(
 			plot.X+plot.W/2,
 			axisRow+2,
-			ellipTrunc(b.xLabel, plot.W, uni),
+			ellipTrunc(ax.xLabel, plot.W, uni),
 			NewStyle(Silver),
 		)
 	}

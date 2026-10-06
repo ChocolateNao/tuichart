@@ -18,14 +18,20 @@ type BarSeries struct {
 type BarChart struct {
 	cats   []string
 	series []BarSeries
-	chartBase
+	DisplayConfig
+	AxisConfig
 	stacked    bool
 	horizontal bool
 }
 
 // NewBar creates a bar chart with the given categories and series.
 func NewBar(cats []string, series ...BarSeries) *BarChart {
-	return &BarChart{chartBase: newChartBase(), cats: cats, series: series}
+	return &BarChart{
+		AxisConfig:    newAxisConfig(),
+		DisplayConfig: newDisplayConfig(),
+		cats:          cats,
+		series:        series,
+	}
 }
 
 // NewBarValues creates a bar chart with a single series from the given values.
@@ -66,7 +72,7 @@ func (b *BarChart) isHorizontal() bool {
 
 // HeightHint returns the suggested height for the given width.
 func (b *BarChart) HeightHint(width int) int {
-	if h := b.chartBase.HeightHint(width); h > 0 {
+	if h := b.DisplayConfig.HeightHint(width); h > 0 {
 		return h
 	}
 
@@ -77,6 +83,18 @@ func (b *BarChart) HeightHint(width int) int {
 	}
 
 	return clampInt(width/3, 6, 20)
+}
+
+// WidthHint returns the suggested width for the given height.
+func (b *BarChart) WidthHint(height int) int {
+	if b.isHorizontal() {
+		// For horizontal bars, width depends on number of categories and
+		// bar formatting. Use a reasonable default based on category count.
+		return clampInt(height*3, 20, 200)
+	}
+
+	// For vertical bars, width follows the number of categories.
+	return clampInt(height*3, 20, 200)
 }
 
 // Draw renders the bar chart onto the canvas.
@@ -127,7 +145,7 @@ func (b *BarChart) drawVertical(rc *Ctx, cv *Canvas) {
 	}
 
 	db.x0, db.x1 = 0, 1
-	fr := prepareFrame(cv, rc, &b.chartBase, db, Linear, Linear, false)
+	fr := prepareFrame(cv, rc, &b.AxisConfig, &b.DisplayConfig, db, Linear, Linear, false)
 
 	area := fr.area
 	if area.W < 2 || area.H < 2 || len(b.cats) == 0 || len(b.series) == 0 {
@@ -144,7 +162,9 @@ func (b *BarChart) drawVertical(rc *Ctx, cv *Canvas) {
 
 	for i := range b.series {
 		if b.series[i].Color.IsZero() {
-			b.series[i].Color = rc.Next()
+			c, rc2 := rc.WithNextColor()
+			b.series[i].Color = c
+			rc = rc2
 		}
 	}
 
@@ -416,7 +436,7 @@ func valueAtRow(fr frame, y int) float64 {
 }
 
 func (b *BarChart) drawHorizontal(rc *Ctx, cv *Canvas) {
-	inner := b.frameTitle(cv, rc.Info.Unicode)
+	inner := frameTitle(cv, rc.Info.Unicode, b.title, b.titleAlign, b.frame)
 	uni := rc.Info.Unicode
 
 	if len(b.cats) == 0 || len(b.series) == 0 || inner.W < 10 || inner.H < 2 {
@@ -509,3 +529,7 @@ func (b *BarChart) drawHorizontal(rc *Ctx, cv *Canvas) {
 		cv.Text(inner.X+gutter+w+1, y, FormatValue(v), NewStyle(Gray))
 	}
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (b *BarChart) Reset() { b.AxisConfig.Reset(); b.DisplayConfig.Reset() }

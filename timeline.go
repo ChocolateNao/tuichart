@@ -39,14 +39,15 @@ type TimelineEvent struct {
 type Timeline struct {
 	layout string
 	events []TimelineEvent
-	chartBase
+	DisplayConfig
+	AxisConfig
 	color       Color
 	detailColor Color
 }
 
 // NewTimeline creates an empty Timeline.
 func NewTimeline() *Timeline {
-	return &Timeline{chartBase: newChartBase()}
+	return &Timeline{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig()}
 }
 
 // Title sets the chart title.
@@ -85,7 +86,7 @@ func (t *Timeline) ResetDetailColor() { t.detailColor = Color{} }
 
 // HeightHint returns the suggested height in rows for the given width.
 func (t *Timeline) HeightHint(width int) int {
-	if h := t.chartBase.HeightHint(width); h > 0 {
+	if h := t.DisplayConfig.HeightHint(width); h > 0 {
 		return h
 	}
 
@@ -107,9 +108,16 @@ func (t *Timeline) HeightHint(width int) int {
 	return h
 }
 
+// WidthHint returns the suggested width for the given height.
+func (t *Timeline) WidthHint(height int) int {
+	// Timeline needs width for event labels and detail text.
+	// Use a reasonable default based on height.
+	return height * 5
+}
+
 // Draw renders the time axis, event markers, and labels into the canvas.
 func (t *Timeline) Draw(rc *Ctx, cv *Canvas) {
-	inner := t.frameTitle(cv, rc.Info.Unicode)
+	inner := frameTitle(cv, rc.Info.Unicode, t.title, t.titleAlign, t.frame)
 	if len(t.events) == 0 || inner.W < 8 || inner.H < 3 {
 		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
@@ -536,3 +544,7 @@ func wrapText(s string, w int) []string {
 
 	return lines
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (t *Timeline) Reset() { t.AxisConfig.Reset(); t.DisplayConfig.Reset() }

@@ -9,7 +9,8 @@ import (
 type Histogram struct {
 	name string
 	data []float64
-	chartBase
+	DisplayConfig
+	AxisConfig
 	bins  int
 	color Color
 }
@@ -17,10 +18,10 @@ type Histogram struct {
 // NewHistogram creates a Histogram from the given data slice.
 func NewHistogram(data []float64) *Histogram {
 	return &Histogram{
-		chartBase: newChartBase(),
-		data:      data,
-		bins:      defaultBins(len(data)),
-		name:      "count",
+		AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig(),
+		data: data,
+		bins: defaultBins(len(data)),
+		name: "count",
 	}
 }
 
@@ -115,7 +116,7 @@ func (h *Histogram) Counts() (counts []int, edges []float64) {
 
 // HeightHint returns the suggested height in rows for the given width.
 func (h *Histogram) HeightHint(width int) int {
-	if hh := h.chartBase.HeightHint(width); hh > 0 {
+	if hh := h.DisplayConfig.HeightHint(width); hh > 0 {
 		return hh
 	}
 
@@ -127,11 +128,22 @@ func (h *Histogram) HeightHint(width int) int {
 	return clampInt(width/3, 8, 20)
 }
 
+// WidthHint returns the suggested width for the given height.
+func (h *Histogram) WidthHint(height int) int {
+	if h.orient == OrientHorizontal {
+		// For horizontal histogram, width follows the number of bins.
+		return clampInt(height*3, 20, 200)
+	}
+
+	// For vertical histogram, width is flexible.
+	return height * 10
+}
+
 // Draw bins the data and renders the histogram as a bar chart.
 func (h *Histogram) Draw(rc *Ctx, cv *Canvas) {
 	counts, edges := h.Counts()
 	if counts == nil {
-		h.frameTitle(cv, rc.Info.Unicode)
+		frameTitle(cv, rc.Info.Unicode, h.title, h.titleAlign, h.frame)
 		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 
 		return
@@ -152,6 +164,10 @@ func (h *Histogram) Draw(rc *Ctx, cv *Canvas) {
 	}
 
 	bc := NewBar(cats, BarSeries{Name: h.name, Values: vals, Color: h.color})
-	bc.chartBase = h.chartBase
+	bc.AxisConfig, bc.DisplayConfig = h.AxisConfig, h.DisplayConfig
 	bc.Draw(rc, cv)
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (h *Histogram) Reset() { h.AxisConfig.Reset(); h.DisplayConfig.Reset() }

@@ -20,12 +20,13 @@ type GanttBar struct {
 type Gantt struct {
 	layout string
 	bars   []GanttBar
-	chartBase
+	DisplayConfig
+	AxisConfig
 }
 
 // NewGantt creates an empty Gantt chart.
 func NewGantt() *Gantt {
-	return &Gantt{chartBase: newChartBase()}
+	return &Gantt{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig()}
 }
 
 // Title sets the chart title.
@@ -53,7 +54,7 @@ func (g *Gantt) Format(layout string) *Gantt { g.layout = layout; return g }
 
 // HeightHint returns the suggested height in rows for the given width.
 func (g *Gantt) HeightHint(width int) int {
-	if h := g.chartBase.HeightHint(width); h > 0 {
+	if h := g.DisplayConfig.HeightHint(width); h > 0 {
 		return h
 	}
 
@@ -69,9 +70,16 @@ func (g *Gantt) HeightHint(width int) int {
 	return rows + 3 // grid + tick row + frame
 }
 
+// WidthHint returns the suggested width for the given height.
+func (g *Gantt) WidthHint(height int) int {
+	// Gantt width depends on number of bars and label length.
+	// Use a reasonable default based on height.
+	return height * 10
+}
+
 // Draw renders the activity bars and time axis into the canvas.
 func (g *Gantt) Draw(rc *Ctx, cv *Canvas) {
-	inner := g.frameTitle(cv, rc.Info.Unicode)
+	inner := frameTitle(cv, rc.Info.Unicode, g.title, g.titleAlign, g.frame)
 	uni := rc.Info.Unicode
 
 	if len(g.bars) == 0 || inner.W < 10 || inner.H < 3 {
@@ -131,7 +139,9 @@ func (g *Gantt) Draw(rc *Ctx, cv *Canvas) {
 
 		st := NewStyle(b.Color)
 		if b.Color.IsZero() {
-			st = NewStyle(rc.Next())
+			c, rc2 := rc.WithNextColor()
+			st = NewStyle(c)
+			rc = rc2
 		}
 
 		if gutter > 1 {
@@ -170,3 +180,7 @@ func (g *Gantt) Draw(rc *Ctx, cv *Canvas) {
 		writeLabel(cv, tickRow, col, lbl, NewStyle(Default), inner, uni)
 	}
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (g *Gantt) Reset() { g.AxisConfig.Reset(); g.DisplayConfig.Reset() }

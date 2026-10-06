@@ -7,6 +7,7 @@ type Ctx struct {
 	next    int
 }
 
+// newCtx creates a new Ctx with the given info and default palette.
 func newCtx(info Info) *Ctx {
 	pal := defaultPalette
 	return &Ctx{Info: info, Palette: pal}
@@ -16,12 +17,11 @@ func newCtx(info Info) *Ctx {
 // directly into a Canvas without going through a Board.
 func NewRenderCtx(info Info) *Ctx { return newCtx(info) }
 
-// Next returns the next unused palette color, cycling when exhausted.
-func (rc *Ctx) Next() Color {
+// WithNextColor returns the next palette color and a new Ctx with the
+// cycled index. This is immutable - the original Ctx is not mutated.
+func (rc *Ctx) WithNextColor() (Color, *Ctx) {
 	c := rc.Palette[rc.next%len(rc.Palette)]
-	rc.next++
-
-	return c
+	return c, &Ctx{Palette: rc.Palette, Info: rc.Info, next: rc.next + 1}
 }
 
 // LegendEntry is one row of a chart legend.
@@ -37,6 +37,18 @@ type LegendEntry struct {
 type Drawable interface {
 	Draw(rc *Ctx, cv *Canvas)
 	HeightHint(width int) int
+	WidthHint(height int) int
+}
+
+// Diagram is a Drawable whose title can be read and written. Every built-in
+// diagram satisfies it by embedding DisplayConfig, which is why it is spelled
+// GetTitle rather than Title: the fluent setter is Title(string) *T on each
+// diagram type, and a Title() string getter on the embedded config would be
+// shadowed by it. Board.Diagrams returns them as Diagram.
+type Diagram interface {
+	Drawable
+	GetTitle() string
+	SetTitle(string)
 }
 
 func drawLegendInside(cv *Canvas, r Rect, entries []LegendEntry, unicode bool) {

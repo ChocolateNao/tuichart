@@ -6,7 +6,8 @@ import "math"
 type FunctionPlot struct {
 	fn   func(float64) float64
 	name string
-	chartBase
+	DisplayConfig
+	AxisConfig
 	lo      float64
 	hi      float64
 	samples int
@@ -17,11 +18,11 @@ type FunctionPlot struct {
 // NewFunction creates a function plot with default domain [-10, 10].
 func NewFunction(f func(float64) float64) *FunctionPlot {
 	return &FunctionPlot{
-		chartBase: newChartBase(),
-		fn:        f,
-		lo:        -10,
-		hi:        10,
-		name:      "f(x)",
+		AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig(),
+		fn:   f,
+		lo:   -10,
+		hi:   10,
+		name: "f(x)",
 	}
 }
 
@@ -100,11 +101,16 @@ func (p *FunctionPlot) sample(width int) [][]Point {
 
 // HeightHint returns the suggested height for the given width.
 func (p *FunctionPlot) HeightHint(width int) int {
-	if h := p.chartBase.HeightHint(width); h > 0 {
+	if h := p.DisplayConfig.HeightHint(width); h > 0 {
 		return h
 	}
 
 	return clampInt(width*2/5, 9, 24)
+}
+
+// WidthHint returns the suggested width for the given height.
+func (p *FunctionPlot) WidthHint(height int) int {
+	return clampInt(height*5/2, 10, 100)
 }
 
 // Draw renders the function plot onto the canvas.
@@ -142,7 +148,7 @@ func (p *FunctionPlot) Draw(rc *Ctx, cv *Canvas) {
 		}
 	}
 
-	fr := prepareFrame(cv, rc, &p.chartBase, db, Linear, p.yKind, true)
+	fr := prepareFrame(cv, rc, &p.AxisConfig, &p.DisplayConfig, db, Linear, p.yKind, true)
 	line.draw(cv, fr, NewStyle(color))
 
 	glyph := "───"
@@ -156,3 +162,7 @@ func (p *FunctionPlot) Draw(rc *Ctx, cv *Canvas) {
 		Glyph: glyph,
 	}}, fr.uni)
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (p *FunctionPlot) Reset() { p.AxisConfig.Reset(); p.DisplayConfig.Reset() }

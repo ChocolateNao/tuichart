@@ -240,14 +240,18 @@ func (s *Scatter) legendEntry(st Style, uni bool) LegendEntry {
 // Plot is an XY chart containing line and scatter series.
 type Plot struct {
 	order []seriesI
-	chartBase
+	DisplayConfig
+	AxisConfig
 	xKind Kind
 	yKind Kind
 }
 
 // NewPlot creates a new Plot.
 func NewPlot() *Plot {
-	return &Plot{chartBase: newChartBase()}
+	return &Plot{
+		AxisConfig:    newAxisConfig(),
+		DisplayConfig: newDisplayConfig(),
+	}
 }
 
 // Title sets the plot title.
@@ -313,24 +317,34 @@ func (p *Plot) HeightHint(width int) int {
 	return p.plotHeightHint(width)
 }
 
+// WidthHint returns the suggested width for the given height.
+func (p *Plot) WidthHint(height int) int {
+	return clampInt(height*2, 10, 100)
+}
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (p *Plot) Reset() { p.AxisConfig.Reset(); p.DisplayConfig.Reset() }
+
 // Draw renders the plot onto the canvas.
 func (p *Plot) Draw(rc *Ctx, cv *Canvas) {
-	base := &p.chartBase
+	ax := &p.AxisConfig
+	dc := &p.DisplayConfig
 	xk, yk := p.xKind, p.yKind
 
-	swap := base.orient == OrientHorizontal
+	swap := dc.orient == OrientHorizontal
 	if swap {
 		// Present the transposed view: series points are swapped and all
 		// per-axis configuration follows them.
-		cp := *base
-		cp.xLabel, cp.yLabel = base.yLabel, base.xLabel
-		cp.xTicks, cp.yTicks = base.yTicks, base.xTicks
-		cp.xFmt, cp.yFmt = base.yFmt, base.xFmt
-		cp.x0, cp.x1 = base.y0, base.y1
-		cp.y0, cp.y1 = base.x0, base.x1
-		cp.xSet, cp.ySet = base.ySet, base.xSet
+		cp := *ax
+		cp.xLabel, cp.yLabel = ax.yLabel, ax.xLabel
+		cp.xTicks, cp.yTicks = ax.yTicks, ax.xTicks
+		cp.xFmt, cp.yFmt = ax.yFmt, ax.xFmt
+		cp.x0, cp.x1 = ax.y0, ax.y1
+		cp.y0, cp.y1 = ax.x0, ax.x1
+		cp.xSet, cp.ySet = ax.ySet, ax.xSet
 		xk, yk = yk, xk
-		base = &cp
+		ax = &cp
 	}
 
 	var db dataBounds
@@ -342,11 +356,14 @@ func (p *Plot) Draw(rc *Ctx, cv *Canvas) {
 
 	for _, s := range p.order {
 		if !s.hasColor() {
-			s.setColor(rc.Next())
+			c, rc2 := rc.WithNextColor()
+			s.setColor(c)
+
+			rc = rc2
 		}
 	}
 
-	fr := prepareFrame(cv, rc, base, db, xk, yk, true)
+	fr := prepareFrame(cv, rc, ax, dc, db, xk, yk, true)
 
 	for _, s := range p.order {
 		st := NewStyle(s.colorOf())

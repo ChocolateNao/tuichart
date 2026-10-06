@@ -10,6 +10,8 @@ import (
 const sepW = 2
 
 // Options configures a Board at construction time.
+// Prefer using the functional options (WithWidth, WithGap, etc.) rather than
+// constructing this struct directly.
 type Options struct {
 	palette         []Color
 	levelOverride   Level
@@ -108,6 +110,19 @@ func New(opts ...Option) *Board {
 		opt(&b.opts)
 	}
 
+	// Validate options
+	if b.opts.width < 0 {
+		b.opts.width = 0
+	}
+
+	if b.opts.gap < 0 {
+		b.opts.gap = 0
+	}
+
+	if b.opts.diagramHeight < 0 {
+		b.opts.diagramHeight = 0
+	}
+
 	return b
 }
 
@@ -137,6 +152,23 @@ func (b *Board) Row(ds ...Drawable) *Board {
 
 // Clear removes all diagrams and the title from the board.
 func (b *Board) Clear() *Board { b.rows = nil; return b }
+
+// Diagrams returns every diagram on the board, in row-major order, as the
+// Diagram interface. Diagrams that do not expose title management are
+// skipped, so a fully type-asserted board returns exactly Len() entries.
+func (b *Board) Diagrams() []Diagram {
+	out := make([]Diagram, 0, b.Len())
+
+	for _, r := range b.rows {
+		for _, e := range r {
+			if d, ok := e.d.(Diagram); ok {
+				out = append(out, d)
+			}
+		}
+	}
+
+	return out
+}
 
 // Len returns the total number of diagrams across all rows.
 func (b *Board) Len() int {
@@ -314,7 +346,7 @@ func (b *Board) renderCanvas(width int) (*Canvas, Info, []LayoutEntry) {
 		totalH += mh
 	}
 
-	cv := NewCanvas(w, totalH)
+	cv := NewCanvasWithInfo(w, totalH, info)
 	entries := make([]LayoutEntry, 0, b.Len())
 	y := 0
 
@@ -334,8 +366,7 @@ func (b *Board) renderCanvas(width int) (*Canvas, Info, []LayoutEntry) {
 
 		for _, e := range row {
 			h := b.diagramHeight(e.d, seg, w)
-			dcv := NewCanvas(seg, h)
-			rc.next = 0
+			dcv := NewCanvasWithInfo(seg, h, info)
 			e.d.Draw(rc, dcv)
 			cv.Blit(dcv, x, y)
 			entries = append(entries, LayoutEntry{Row: ri, X: x, Y: y, W: seg, H: h})

@@ -26,7 +26,8 @@ const (
 // like any other Drawable.
 type Gauge struct {
 	label string
-	chartBase
+	DisplayConfig
+	AxisConfig
 	value   float64
 	max     float64
 	color   Color
@@ -37,10 +38,10 @@ type Gauge struct {
 // NewGauge creates a Gauge that displays value as a fraction of max.
 func NewGauge(value, max float64) *Gauge {
 	return &Gauge{
-		chartBase: newChartBase(),
-		value:     value,
-		max:       max,
-		showPct:   true,
+		AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig(),
+		value:   value,
+		max:     max,
+		showPct: true,
 	}
 }
 
@@ -67,7 +68,7 @@ func (g *Gauge) ShowPercent(on bool) *Gauge { g.showPct = on; return g }
 
 // HeightHint returns the suggested height in rows for the given width.
 func (g *Gauge) HeightHint(width int) int {
-	if h := g.chartBase.HeightHint(width); h > 0 {
+	if h := g.DisplayConfig.HeightHint(width); h > 0 {
 		return h
 	}
 
@@ -78,9 +79,15 @@ func (g *Gauge) HeightHint(width int) int {
 	return 1
 }
 
+// WidthHint returns the suggested width for the given height.
+func (g *Gauge) WidthHint(height int) int {
+	// Gauge is typically 1 row high; width is flexible.
+	return height * 10
+}
+
 // Draw renders the gauge bar into the canvas area.
 func (g *Gauge) Draw(rc *Ctx, cv *Canvas) {
-	inner := g.frameTitle(cv, rc.Info.Unicode)
+	inner := frameTitle(cv, rc.Info.Unicode, g.title, g.titleAlign, g.frame)
 	if inner.W < 3 || inner.H < 1 {
 		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
 		return
@@ -243,3 +250,7 @@ func gaugeFillEighths(cv *Canvas, row, x, w int, frac float64, st Style, fullRun
 		cv.Set(x+i, row, ch, st)
 	}
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (g *Gauge) Reset() { g.AxisConfig.Reset(); g.DisplayConfig.Reset() }

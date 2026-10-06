@@ -34,165 +34,201 @@ const (
 	OrientVertical
 )
 
-// chartBase holds configuration shared by all built-in diagrams, including
-// the Set*/Reset* API for size, scale and axis marks.
-type chartBase struct {
-	yFmt       func(float64) string
-	xFmt       func(float64) string
-	title      string
-	xLabel     string
-	yLabel     string
-	yTicks     []Tick
-	xTicks     []Tick
-	cellW      int
-	tickN      int
-	y1         float64
-	height     int
-	y0         float64
-	x1         float64
-	x0         float64
-	grid       bool
-	titleAlign Align
-	xSet       bool
-	ySet       bool
-	frame      bool
-	legend     bool
-	orient     Orientation
-	showVals   bool
+// AxisConfig holds the axis, scale and frame configuration shared by
+// diagrams that plot values against axes: axis labels, ticks, formatters,
+// explicit ranges and the grid/frame/legend toggles. Embed it to get the
+// axis half of the Set*/Reset* API promoted onto your type.
+type AxisConfig struct {
+	xFmt   func(float64) string
+	yFmt   func(float64) string
+	xLabel string
+	yLabel string
+	xTicks []Tick
+	yTicks []Tick
+	x0     float64
+	x1     float64
+	y0     float64
+	y1     float64
+	tickN  int
+	grid   bool
+	frame  bool
+	legend bool
+	xSet   bool
+	ySet   bool
 }
 
-func newChartBase() chartBase {
-	return chartBase{grid: true, frame: true, legend: true, tickN: defaultTickTarget}
+func newAxisConfig() AxisConfig {
+	return AxisConfig{grid: true, frame: true, legend: true, tickN: defaultTickTarget}
 }
-
-// SetTitle sets the diagram's frame title.
-func (b *chartBase) SetTitle(t string) { b.title = t }
-
-// ResetTitle clears the diagram's frame title.
-func (b *chartBase) ResetTitle() { b.title = "" }
-
-// SetShowValues toggles numeric value annotations (bar tops, heatmap
-// cells, pie legend values).
-func (b *chartBase) SetShowValues(v bool) { b.showVals = v }
-
-// ResetShowValues disables numeric value annotations.
-func (b *chartBase) ResetShowValues() { b.showVals = false }
-
-// SetCellWidth fixes the heatmap cell width in columns; 0 restores the
-// automatic stretch that fills the frame width.
-func (b *chartBase) SetCellWidth(n int) { b.cellW = n }
-
-// ResetCellWidth restores automatic heatmap cell width.
-func (b *chartBase) ResetCellWidth() { b.cellW = 0 }
-
-// SetTitleAlign sets where the diagram title sits within its frame.
-func (b *chartBase) SetTitleAlign(a Align) { b.titleAlign = a }
-
-// ResetTitleAlign restores left alignment.
-func (b *chartBase) ResetTitleAlign() { b.titleAlign = AlignLeft }
-
-// SetOrientation switches the value axis; see Orientation for semantics.
-// Diagrams that cannot swap axes ignore it.
-func (b *chartBase) SetOrientation(o Orientation) { b.orient = o }
-
-// ResetOrientation restores each diagram's default axis layout.
-func (b *chartBase) ResetOrientation() { b.orient = OrientAuto }
 
 // SetXLabel sets the label text displayed below the X axis.
-func (b *chartBase) SetXLabel(l string) { b.xLabel = l }
+func (a *AxisConfig) SetXLabel(l string) { a.xLabel = l }
 
 // SetYLabel sets the label text displayed beside the Y axis.
-func (b *chartBase) SetYLabel(l string) { b.yLabel = l }
+func (a *AxisConfig) SetYLabel(l string) { a.yLabel = l }
 
 // ResetLabels clears both axis labels.
-func (b *chartBase) ResetLabels() { b.xLabel, b.yLabel = "", "" }
+func (a *AxisConfig) ResetLabels() { a.xLabel, a.yLabel = "", "" }
 
 // SetXTicks overrides the auto-generated X-axis ticks with explicit values.
-func (b *chartBase) SetXTicks(t []Tick) { b.xTicks = t }
+func (a *AxisConfig) SetXTicks(t []Tick) { a.xTicks = t }
 
 // SetYTicks overrides the auto-generated Y-axis ticks with explicit values.
-func (b *chartBase) SetYTicks(t []Tick) { b.yTicks = t }
+func (a *AxisConfig) SetYTicks(t []Tick) { a.yTicks = t }
 
 // ResetTicks clears custom ticks, restoring auto-generation.
-func (b *chartBase) ResetTicks() { b.xTicks, b.yTicks = nil, nil }
+func (a *AxisConfig) ResetTicks() { a.xTicks, a.yTicks = nil, nil }
 
 // SetXFormatter provides a custom formatter for X-axis tick labels.
-func (b *chartBase) SetXFormatter(f func(float64) string) { b.xFmt = f }
+func (a *AxisConfig) SetXFormatter(f func(float64) string) { a.xFmt = f }
 
 // SetYFormatter provides a custom formatter for Y-axis tick labels.
-func (b *chartBase) SetYFormatter(f func(float64) string) { b.yFmt = f }
+func (a *AxisConfig) SetYFormatter(f func(float64) string) { a.yFmt = f }
 
 // ResetFormatters clears custom formatters, restoring default formatting.
-func (b *chartBase) ResetFormatters() { b.xFmt, b.yFmt = nil, nil }
+func (a *AxisConfig) ResetFormatters() { a.xFmt, a.yFmt = nil, nil }
 
 // SetScale fixes both axis ranges, disabling auto-scaling.
-func (b *chartBase) SetScale(x0, x1, y0, y1 float64) {
-	b.x0, b.x1, b.y0, b.y1 = x0, x1, y0, y1
-	b.xSet, b.ySet = true, true
+func (a *AxisConfig) SetScale(x0, x1, y0, y1 float64) {
+	a.x0, a.x1, a.y0, a.y1 = x0, x1, y0, y1
+	a.xSet, a.ySet = true, true
 }
 
 // SetXRange fixes the X axis range, disabling auto-scaling on that axis.
-func (b *chartBase) SetXRange(lo, hi float64) { b.x0, b.x1, b.xSet = lo, hi, true }
+func (a *AxisConfig) SetXRange(lo, hi float64) { a.x0, a.x1, a.xSet = lo, hi, true }
 
 // SetYRange fixes the Y axis range, disabling auto-scaling on that axis.
-func (b *chartBase) SetYRange(lo, hi float64) { b.y0, b.y1, b.ySet = lo, hi, true }
+func (a *AxisConfig) SetYRange(lo, hi float64) { a.y0, a.y1, a.ySet = lo, hi, true }
 
 // ResetScale re-enables automatic scaling from data.
-func (b *chartBase) ResetScale() {
-	b.xSet, b.ySet = false, false
-	b.xTicks, b.yTicks = nil, nil
+func (a *AxisConfig) ResetScale() {
+	a.xSet, a.ySet = false, false
+	a.xTicks, a.yTicks = nil, nil
 }
 
+// SetGrid enables or disables the background grid lines.
+func (a *AxisConfig) SetGrid(on bool) { a.grid = on }
+
+// SetBorder enables or disables the frame border around the diagram.
+func (a *AxisConfig) SetBorder(on bool) { a.frame = on }
+
+// SetLegend enables or disables the legend box.
+func (a *AxisConfig) SetLegend(on bool) { a.legend = on }
+
+// SetTickCount sets the target number of ticks per axis; minimum is 2.
+func (a *AxisConfig) SetTickCount(n int) {
+	if n < 2 {
+		n = 2
+	}
+
+	a.tickN = n
+}
+
+// Reset restores every axis property to its default.
+func (a *AxisConfig) Reset() { *a = newAxisConfig() }
+
+// DisplayConfig holds presentation configuration that applies to every
+// diagram whether or not it has axes: frame title and alignment, orientation,
+// value annotations, cell width and pinned height. Embed it to get the
+// presentation half of the Set*/Reset* API promoted onto your type.
+type DisplayConfig struct {
+	title      string
+	titleAlign Align
+	orient     Orientation
+	showVals   bool
+	cellW      int
+	height     int
+}
+
+func newDisplayConfig() DisplayConfig { return DisplayConfig{} }
+
+// SetTitle sets the diagram's frame title.
+func (d *DisplayConfig) SetTitle(t string) { d.title = t }
+
+// GetTitle returns the frame title. It makes every diagram embedding
+// DisplayConfig satisfy the Diagram interface.
+func (d *DisplayConfig) GetTitle() string { return d.title }
+
+// ResetTitle clears the diagram's frame title.
+func (d *DisplayConfig) ResetTitle() { d.title = "" }
+
+// SetShowValues toggles numeric value annotations (bar tops, heatmap
+// cells, pie legend values).
+func (d *DisplayConfig) SetShowValues(v bool) { d.showVals = v }
+
+// ResetShowValues disables numeric value annotations.
+func (d *DisplayConfig) ResetShowValues() { d.showVals = false }
+
+// SetCellWidth fixes the heatmap cell width in columns; 0 restores the
+// automatic stretch that fills the frame width.
+func (d *DisplayConfig) SetCellWidth(n int) { d.cellW = n }
+
+// ResetCellWidth restores automatic heatmap cell width.
+func (d *DisplayConfig) ResetCellWidth() { d.cellW = 0 }
+
+// SetTitleAlign sets where the diagram title sits within its frame.
+func (d *DisplayConfig) SetTitleAlign(a Align) { d.titleAlign = a }
+
+// ResetTitleAlign restores left alignment.
+func (d *DisplayConfig) ResetTitleAlign() { d.titleAlign = AlignLeft }
+
+// SetOrientation switches the value axis; see Orientation for semantics.
+// Diagrams that cannot swap axes ignore it.
+func (d *DisplayConfig) SetOrientation(o Orientation) { d.orient = o }
+
+// ResetOrientation restores each diagram's default axis layout.
+func (d *DisplayConfig) ResetOrientation() { d.orient = OrientAuto }
+
 // SetSize pins this diagram's height in rows when rendered in a Board.
-func (b *chartBase) SetSize(rows int) { b.height = rows }
+func (d *DisplayConfig) SetSize(rows int) { d.height = rows }
 
 // ResetSize clears the pinned height, letting the Board container decide.
-func (b *chartBase) ResetSize() { b.height = 0 }
+func (d *DisplayConfig) ResetSize() { d.height = 0 }
 
 // HeightHint returns the pinned height or 0 to let the container decide.
-func (b *chartBase) HeightHint(int) int {
-	if b.height > 0 {
-		return b.height
+func (d *DisplayConfig) HeightHint(int) int {
+	if d.height > 0 {
+		return d.height
 	}
 
 	return 0
 }
 
-// SetGrid enables or disables the background grid lines.
-func (b *chartBase) SetGrid(on bool) { b.grid = on }
+// WidthHint reports the width this diagram would like for the given height.
+// Zero means "no preference"; horizontal layouts may negotiate with it.
+func (d *DisplayConfig) WidthHint(int) int { return 0 }
 
-// SetBorder enables or disables the frame border around the diagram.
-func (b *chartBase) SetBorder(on bool) { b.frame = on }
-
-// SetLegend enables or disables the legend box.
-func (b *chartBase) SetLegend(on bool) { b.legend = on }
-
-// SetTickCount sets the target number of ticks per axis; minimum is 2.
-func (b *chartBase) SetTickCount(n int) {
-	if n < 2 {
-		n = 2
+// plotHeightHint returns the height hint shared by plot-like diagrams
+// (Plot, TimeSeries, Candlestick) when no explicit height is set.
+func (d *DisplayConfig) plotHeightHint(width int) int {
+	if h := d.HeightHint(width); h > 0 {
+		return h
 	}
 
-	b.tickN = n
+	return clampInt(width*2/5, 9, 24)
 }
 
-// Reset restores every configurable property to its default.
-func (b *chartBase) Reset() {
-	title := b.title
-	*b = newChartBase()
-	b.title = title
+// Reset restores every presentation property to its default, keeping the
+// title so Reset can be used to clear a board's styling in one call.
+func (d *DisplayConfig) Reset() {
+	title := d.title
+	*d = newDisplayConfig()
+	d.title = title
 }
 
-func (b *chartBase) frameTitle(cv *Canvas, uni bool) Rect {
+// frameTitle paints the diagram frame and title, returning the rectangle
+// left for content. frame comes from AxisConfig, title and align from
+// DisplayConfig.
+func frameTitle(cv *Canvas, uni bool, title string, align Align, frame bool) Rect {
 	r := cv.Rect()
-	if !b.frame {
-		if b.title != "" && r.H > 1 {
+	if !frame {
+		if title != "" && r.H > 1 {
 			drawAlignedText(
 				cv,
 				0,
-				ellipTrunc(b.title, r.W, uni),
+				ellipTrunc(title, r.W, uni),
 				NewStyle(Default).Bolder(),
-				b.titleAlign,
+				align,
 				r.W,
 			)
 
@@ -205,13 +241,13 @@ func (b *chartBase) frameTitle(cv *Canvas, uni bool) Rect {
 	st := NewStyle(Gray)
 	cv.Border(st, uni)
 
-	if b.title != "" && r.H > 2 {
-		t := " " + b.title + " "
+	if title != "" && r.H > 2 {
+		t := " " + title + " "
 		if runeLen(t)+4 > r.W {
-			t = " " + ellipTrunc(b.title, max(r.W-6, 1), uni) + " "
+			t = " " + ellipTrunc(title, max(r.W-6, 1), uni) + " "
 		}
 
-		drawAlignedText(cv, 0, t, NewStyle(Default).Bolder(), b.titleAlign, r.W)
+		drawAlignedText(cv, 0, t, NewStyle(Default).Bolder(), align, r.W)
 
 		return Rect{X: 1, Y: 1, W: r.W - 2, H: r.H - 2}.clip(r)
 	}
@@ -281,16 +317,6 @@ func clampInt(v, lo, hi int) int {
 
 // rampIdx maps a [0,1] fraction to a clamped ramp index.
 func rampIdx(t float64, n int) int { return clampInt(int(t*float64(n-1)+0.5), 0, n-1) }
-
-// plotHeightHint returns the height hint shared by plot-like diagrams
-// (Plot, TimeSeries, Candlestick) when no explicit height is set.
-func (b *chartBase) plotHeightHint(width int) int {
-	if h := b.HeightHint(width); h > 0 {
-		return h
-	}
-
-	return clampInt(width*2/5, 9, 24)
-}
 
 // horizontalBarHeight sizes a left-to-right bar chart: one row per
 // category plus border/margin allowance, bounded like the other diagrams.

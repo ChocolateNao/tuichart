@@ -14,12 +14,13 @@ type funnelStep struct {
 // is proportional to each stage's value, with a legend to the right.
 type FunnelChart struct {
 	steps []funnelStep
-	chartBase
+	DisplayConfig
+	AxisConfig
 }
 
 // NewFunnel creates an empty funnel chart.
 func NewFunnel() *FunnelChart {
-	return &FunnelChart{chartBase: newChartBase()}
+	return &FunnelChart{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig()}
 }
 
 // Step appends a stage; the widest stage sets the funnel's full width.
@@ -46,7 +47,7 @@ func (f *FunnelChart) ShowValues(v bool) *FunnelChart { f.SetShowValues(v); retu
 
 // HeightHint returns the suggested height in rows for the given width.
 func (f *FunnelChart) HeightHint(width int) int {
-	if h := f.chartBase.HeightHint(width); h > 0 {
+	if h := f.DisplayConfig.HeightHint(width); h > 0 {
 		return h
 	}
 
@@ -62,11 +63,17 @@ func (f *FunnelChart) HeightHint(width int) int {
 	return h
 }
 
+// WidthHint returns the suggested width for the given height.
+func (f *FunnelChart) WidthHint(height int) int {
+	// Funnel width depends on number of steps and labels.
+	// Use a reasonable default based on height.
+	return height * 5
+}
+
 // Draw renders the trapezoid stages and legend into the canvas.
 func (f *FunnelChart) Draw(rc *Ctx, cv *Canvas) {
-	inner := f.frameTitle(cv, rc.Info.Unicode)
+	inner := frameTitle(cv, rc.Info.Unicode, f.title, f.titleAlign, f.frame)
 	uni := rc.Info.Unicode
-	mono := rc.Info.Level == LevelNone
 
 	n := len(f.steps)
 	if n == 0 {
@@ -78,7 +85,9 @@ func (f *FunnelChart) Draw(rc *Ctx, cv *Canvas) {
 
 	for i := range f.steps {
 		if f.steps[i].color.IsZero() {
-			f.steps[i].color = rc.Next()
+			c, rc2 := rc.WithNextColor()
+			f.steps[i].color = c
+			rc = rc2
 		}
 
 		if f.steps[i].val > maxVal {
@@ -145,11 +154,6 @@ func (f *FunnelChart) Draw(rc *Ctx, cv *Canvas) {
 	for i := 0; i < n; i++ {
 		st := NewStyle(f.steps[i].color)
 
-		fill := '█'
-		if mono || !uni {
-			fill = pieASCIIChars[i%len(pieASCIIChars)]
-		}
-
 		y0, y1 := bi[i], bi[i+1]
 		if y1 <= y0 {
 			y1 = y0 + 1
@@ -164,7 +168,7 @@ func (f *FunnelChart) Draw(rc *Ctx, cv *Canvas) {
 
 			x0 := inner.X + plotW/2 - half
 			for x := 0; x < int(w); x++ {
-				cv.Set(x0+x, y, fill, st)
+				cv.DrawGlyph(x0+x, y, '█', pieASCIIChars[i%len(pieASCIIChars)], st)
 			}
 		}
 	}
@@ -192,3 +196,7 @@ func pctOfTop(v, top float64) float64 {
 
 	return v / top * 100
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (f *FunnelChart) Reset() { f.AxisConfig.Reset(); f.DisplayConfig.Reset() }

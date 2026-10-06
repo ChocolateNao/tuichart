@@ -11,13 +11,14 @@ var sparkASCII = []rune{'_', '.', '-', '=', '+', '*', '#', '%', '@'}
 // a sequence of values — useful for inline or embedded mini-charts.
 type Sparkline struct {
 	vals []float64
-	chartBase
+	DisplayConfig
+	AxisConfig
 	color Color
 }
 
 // NewSpark creates a Sparkline with the given initial values.
 func NewSpark(vals ...float64) *Sparkline {
-	return &Sparkline{chartBase: newChartBase(), vals: vals}
+	return &Sparkline{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig(), vals: vals}
 }
 
 // Title is accepted for symmetry with other diagrams; it renders above the
@@ -48,6 +49,12 @@ func (s *Sparkline) HeightHint(int) int {
 	}
 
 	return 1
+}
+
+// WidthHint returns the suggested width for the given height.
+func (s *Sparkline) WidthHint(height int) int {
+	// Sparklines are typically 1 row high; width is flexible.
+	return height * 10
 }
 
 // Draw renders the sparkline into the canvas.
@@ -120,10 +127,14 @@ func Spark(vals []float64) string {
 	info := Detect()
 	line := renderSpark(vals, info.Unicode, SkyBlue, newCtx(info))
 
-	cv := NewCanvas(len(line), 1)
+	cv := NewCanvasWithInfo(len(line), 1, info)
 	for x, sr := range line {
 		cv.Set(x, 0, sr.r, NewStyle(sr.c))
 	}
 
 	return strings.TrimSuffix(cv.Render(info.Level), "\n")
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (s *Sparkline) Reset() { s.AxisConfig.Reset(); s.DisplayConfig.Reset() }

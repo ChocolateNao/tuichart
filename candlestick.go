@@ -23,7 +23,8 @@ type Candle struct {
 type Candlestick struct {
 	layout  string
 	candles []Candle
-	chartBase
+	DisplayConfig
+	AxisConfig
 	up   Color
 	down Color
 }
@@ -31,9 +32,9 @@ type Candlestick struct {
 // NewCandlestick creates an empty Candlestick chart with default colors.
 func NewCandlestick() *Candlestick {
 	return &Candlestick{
-		chartBase: newChartBase(),
-		up:        Green,
-		down:      Maroon,
+		AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig(),
+		up:   Green,
+		down: Maroon,
 	}
 }
 
@@ -71,11 +72,16 @@ func (c *Candlestick) HeightHint(width int) int {
 	return c.plotHeightHint(width)
 }
 
+// WidthHint returns the suggested width for the given height.
+func (c *Candlestick) WidthHint(height int) int {
+	return clampInt(height*2, 20, 100)
+}
+
 // Draw renders the OHLC candles and wicks into the canvas.
 func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 	uni := rc.Info.Unicode
 	mono := rc.Info.Level == LevelNone
-	inner := c.frameTitle(cv, uni)
+	inner := frameTitle(cv, uni, c.title, c.titleAlign, c.frame)
 
 	if len(c.candles) == 0 || inner.W < 8 || inner.H < 4 {
 		cv.TextCenter(cv.Width()/2, cv.Height()/2, "(no data)", NewStyle(Gray))
@@ -123,7 +129,7 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 
 	savedFmt := c.xFmt
 	c.xFmt = fmtFn
-	fr := prepareFrame(cv, rc, &c.chartBase, db, Linear, Linear, true)
+	fr := prepareFrame(cv, rc, &c.AxisConfig, &c.DisplayConfig, db, Linear, Linear, true)
 	c.xFmt = savedFmt
 
 	wickCh, dashCh := '│', '─'
@@ -229,3 +235,7 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 		}, uni)
 	}
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (c *Candlestick) Reset() { c.AxisConfig.Reset(); c.DisplayConfig.Reset() }

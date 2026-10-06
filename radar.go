@@ -17,14 +17,15 @@ type radarSeries struct {
 type RadarChart struct {
 	axes   []string
 	series []radarSeries
-	chartBase
+	DisplayConfig
+	AxisConfig
 	max  float64
 	fill bool
 }
 
 // NewRadar creates an empty radar chart.
 func NewRadar() *RadarChart {
-	return &RadarChart{chartBase: newChartBase()}
+	return &RadarChart{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig()}
 }
 
 // Axes names the variables; each series must provide one value per axis.
@@ -63,11 +64,16 @@ func (r *RadarChart) ShowValues(v bool) *RadarChart { r.SetShowValues(v); return
 
 // HeightHint returns the suggested height in rows for the given width.
 func (r *RadarChart) HeightHint(width int) int {
-	if h := r.chartBase.HeightHint(width); h > 0 {
+	if h := r.DisplayConfig.HeightHint(width); h > 0 {
 		return h
 	}
 
 	return clampInt(width/2+4, 8, 24)
+}
+
+// WidthHint returns the suggested width for the given height.
+func (r *RadarChart) WidthHint(height int) int {
+	return clampInt(height*2, 20, 100)
 }
 
 type radarPt struct {
@@ -78,7 +84,7 @@ type radarPt struct {
 
 // Draw renders the rings, spokes, series polygons, and labels.
 func (r *RadarChart) Draw(rc *Ctx, cv *Canvas) {
-	inner := r.frameTitle(cv, rc.Info.Unicode)
+	inner := frameTitle(cv, rc.Info.Unicode, r.title, r.titleAlign, r.frame)
 	uni := rc.Info.Unicode
 
 	if len(r.axes) < 3 || inner.W < 10 || inner.H < 6 {
@@ -147,7 +153,9 @@ func (r *RadarChart) Draw(rc *Ctx, cv *Canvas) {
 	for si := range r.series {
 		s := &r.series[si]
 		if s.color.IsZero() {
-			s.color = rc.Next()
+			c, rc2 := rc.WithNextColor()
+			s.color = c
+			rc = rc2
 		}
 	}
 
@@ -288,3 +296,7 @@ func fillDotPolygon(cv *Canvas, pts []radarPt, c Color) {
 		}
 	}
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (r *RadarChart) Reset() { r.AxisConfig.Reset(); r.DisplayConfig.Reset() }

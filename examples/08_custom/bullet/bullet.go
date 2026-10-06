@@ -13,25 +13,30 @@ import (
 // Bullet renders one value against a target and qualitative zones (Stephen
 // Few's bullet graph): a faint band shows how the full scale is divided into
 // zones, a bold bar shows the measured value, and a marker shows the target.
+//
+// DisplayConfig supplies the frame title and the pinned height, so this type
+// only has to implement the parts that are specific to a bullet graph.
 type Bullet struct {
-	title  string
-	name   string
-	zones  []float64
+	name  string
+	zones []float64
+	tuichart.DisplayConfig
 	value  float64
 	target float64
 	max    float64
-	height int
 	color  tuichart.Color
 }
 
 // NewBullet creates a Bullet named name measuring value against target on a
 // scale of 0..max.
 func NewBullet(name string, value, target, max float64) *Bullet {
-	return &Bullet{name: name, value: value, target: target, max: max, height: 5}
+	b := &Bullet{name: name, value: value, target: target, max: max}
+	b.SetSize(5)
+
+	return b
 }
 
 // Title sets the frame title above the diagram.
-func (b *Bullet) Title(t string) *Bullet { b.title = t; return b }
+func (b *Bullet) Title(t string) *Bullet { b.SetTitle(t); return b }
 
 // Color sets the value-bar color; zero uses the chart palette.
 func (b *Bullet) Color(c tuichart.Color) *Bullet { b.color = c; return b }
@@ -41,9 +46,11 @@ func (b *Bullet) Color(c tuichart.Color) *Bullet { b.color = c; return b }
 // Call it in ascending order.
 func (b *Bullet) Zone(boundary float64) *Bullet { b.zones = append(b.zones, boundary); return b }
 
-// HeightHint is part of the Drawable contract. The chart gives us at most
-// this many rows and possibly fewer when space is tight.
-func (b *Bullet) HeightHint(int) int { return b.height }
+// WidthHint returns the suggested width for the given height: a bullet is
+// much wider than it is tall.
+func (b *Bullet) WidthHint(height int) int {
+	return height * 10
+}
 
 // Draw paints the bullet graph into the canvas area we were given.
 func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
@@ -70,8 +77,8 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 
 	cv.Border(tuichart.NewStyle(tuichart.Gray), uni)
 
-	if b.title != "" {
-		cv.Text(2, 0, " "+b.title+" ", tuichart.NewStyle(tuichart.Default).Bolder())
+	if title := b.GetTitle(); title != "" {
+		cv.Text(2, 0, " "+title+" ", tuichart.NewStyle(tuichart.Default).Bolder())
 	}
 
 	inner := tuichart.Rect{X: 1, Y: 1, W: cv.Width() - 2, H: cv.Height() - 2}

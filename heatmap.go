@@ -8,7 +8,8 @@ type Heatmap struct {
 	grid      [][]float64
 	rowLabels []string
 	colLabels []string
-	chartBase
+	DisplayConfig
+	AxisConfig
 	low  Color
 	high Color
 }
@@ -16,10 +17,10 @@ type Heatmap struct {
 // NewHeat creates a Heatmap from a two-dimensional grid of values.
 func NewHeat(grid [][]float64) *Heatmap {
 	return &Heatmap{
-		chartBase: newChartBase(),
-		grid:      grid,
-		low:       Azure,
-		high:      BrightRed,
+		AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig(),
+		grid: grid,
+		low:  Azure,
+		high: BrightRed,
 	}
 }
 
@@ -45,7 +46,7 @@ func (h *Heatmap) ShowValues(v bool) *Heatmap { h.SetShowValues(v); return h }
 
 // HeightHint returns the suggested height in rows for the given width.
 func (h *Heatmap) HeightHint(width int) int {
-	if h := h.chartBase.HeightHint(width); h > 0 {
+	if h := h.DisplayConfig.HeightHint(width); h > 0 {
 		return h
 	}
 
@@ -66,13 +67,20 @@ func (h *Heatmap) HeightHint(width int) int {
 	return hh
 }
 
+// WidthHint returns the suggested width for the given height.
+func (h *Heatmap) WidthHint(height int) int {
+	// Heatmap width depends on number of columns and cell width.
+	// Use a reasonable default based on height.
+	return height * 10
+}
+
 var heatRampASCII = []rune{' ', '.', ':', '-', '=', '+', '*', '#', '%', '@'}
 
 // Draw renders the heatmap grid, labels, and color bar into the canvas.
 func (h *Heatmap) Draw(rc *Ctx, cv *Canvas) {
-	inner := h.frameTitle(cv, rc.Info.Unicode)
+	inner := frameTitle(cv, rc.Info.Unicode, h.title, h.titleAlign, h.frame)
 	uni := rc.Info.Unicode
-	mono := rc.Info.Level == LevelNone
+	mono := rc.Info.Level == LevelNone // the colour bar keeps blocks in ascii mode
 
 	lo, hi := math.Inf(1), math.Inf(-1)
 
@@ -181,14 +189,11 @@ func (h *Heatmap) Draw(rc *Ctx, cv *Canvas) {
 			t := (v - lo) / (hi - lo)
 			st := NewStyle(mix(h.low, h.high, t))
 
-			ch := '█'
-			if mono || !uni {
-				ch = heatRampASCII[rampIdx(t, len(heatRampASCII))]
-			}
+			ch := heatRampASCII[rampIdx(t, len(heatRampASCII))]
 
 			for yy := 0; yy < chh && y+yy <= gridBottom; yy++ {
 				for xx := 0; xx < cw && ci*cw+xx < cellW; xx++ {
-					cv.Set(inner.X+labelGutter+ci*cw+xx, y+yy, ch, st)
+					cv.DrawGlyph(inner.X+labelGutter+ci*cw+xx, y+yy, '█', ch, st)
 				}
 			}
 
@@ -222,3 +227,7 @@ func (h *Heatmap) Draw(rc *Ctx, cv *Canvas) {
 		}
 	}
 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (h *Heatmap) Reset() { h.AxisConfig.Reset(); h.DisplayConfig.Reset() }

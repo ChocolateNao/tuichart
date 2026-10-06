@@ -36,12 +36,13 @@ func (n *TreemapNode) value() float64 {
 // areas are proportional to their summed values.
 type TreemapChart struct {
 	roots []*TreemapNode
-	chartBase
+	DisplayConfig
+	AxisConfig
 }
 
 // NewTreemap creates an empty treemap.
 func NewTreemap() *TreemapChart {
-	return &TreemapChart{chartBase: newChartBase()}
+	return &TreemapChart{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig()}
 }
 
 // Item appends a leaf root node with the given value.
@@ -63,11 +64,16 @@ func (t *TreemapChart) ShowValues(v bool) *TreemapChart { t.SetShowValues(v); re
 
 // HeightHint returns the suggested height in rows for the given width.
 func (t *TreemapChart) HeightHint(width int) int {
-	if h := t.chartBase.HeightHint(width); h > 0 {
+	if h := t.DisplayConfig.HeightHint(width); h > 0 {
 		return h
 	}
 
 	return clampInt(width*3/5, 8, 24)
+}
+
+// WidthHint returns the suggested width for the given height.
+func (t *TreemapChart) WidthHint(height int) int {
+	return clampInt(height*5/3, 10, 100)
 }
 
 type treemapRect struct {
@@ -80,9 +86,8 @@ type treemapRect struct {
 
 // Draw lays out the tree and fills each leaf rectangle.
 func (t *TreemapChart) Draw(rc *Ctx, cv *Canvas) {
-	inner := t.frameTitle(cv, rc.Info.Unicode)
+	inner := frameTitle(cv, rc.Info.Unicode, t.title, t.titleAlign, t.frame)
 	uni := rc.Info.Unicode
-	mono := rc.Info.Level == LevelNone
 
 	total := 0.0
 	for _, n := range t.roots {
@@ -102,18 +107,14 @@ func (t *TreemapChart) Draw(rc *Ctx, cv *Canvas) {
 	var rects []treemapRect
 	layoutTreemap(sorted, inner.X, inner.Y, inner.W, inner.H, total, true, &rects)
 
-	fill := '█'
-	if mono || !uni {
-		fill = pieASCIIChars[0]
-	}
-
 	for i := range rects {
 		rt := &rects[i]
 
 		c := rt.node.Color
 		if c.IsZero() {
-			c = rc.Next()
-			rt.node.Color = c
+			nc, rc2 := rc.WithNextColor()
+			c, rt.node.Color = nc, nc
+			rc = rc2
 		}
 
 		if len(rt.node.Children) > 0 {
@@ -122,7 +123,7 @@ func (t *TreemapChart) Draw(rc *Ctx, cv *Canvas) {
 
 		for y := rt.y0; y <= rt.y1; y++ {
 			for x := rt.x0; x <= rt.x1; x++ {
-				cv.Set(x, y, fill, NewStyle(c))
+				cv.DrawGlyph(x, y, '█', pieASCIIChars[0], NewStyle(c))
 			}
 		}
 	}
@@ -235,3 +236,7 @@ func recurseTreemap(
 
 func (r *treemapRect) width() int  { return r.x1 - r.x0 + 1 }
 func (r *treemapRect) height() int { return r.y1 - r.y0 + 1 }
+
+// Reset restores every configurable property to its default, keeping the
+// title.
+func (t *TreemapChart) Reset() { t.AxisConfig.Reset(); t.DisplayConfig.Reset() }
