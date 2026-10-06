@@ -18,13 +18,20 @@ type coord struct{ X, Y int16 }
 
 type smallRect struct{ Left, Top, Right, Bottom int16 }
 
+// consoleScreenBufferInfo mirrors the Win32 CONSOLE_SCREEN_BUFFER_INFO
+// record. Only Size and Window are read, but the unread fields are kept as
+// byte pads so every field stays at its documented offset and the buffer
+// remains large enough for GetConsoleScreenBufferInfo to fill.
 type consoleScreenBufferInfo struct {
-	Size              coord
-	CursorPosition    coord
-	Attributes        uint16
-	Window            smallRect
-	MaximumWindowSize coord
+	Size   coord     // dwSize, offset 0
+	_      [6]byte   // dwCursorPosition (4) + wAttributes (2), offset 4
+	Window smallRect // srWindow, offset 10
+	_      [4]byte   // dwMaximumWindowSize, offset 18
 }
+
+// The pads above are only correct if the struct is exactly the size Win32
+// writes. Fail the Windows build rather than corrupting memory at runtime.
+var _ [22]byte = [unsafe.Sizeof(consoleScreenBufferInfo{})]byte{}
 
 func stdoutHandle() uintptr {
 	h, _, _ := procGetStdHandle.Call(^uintptr(10))
