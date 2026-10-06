@@ -74,8 +74,8 @@ path renders everywhere; you never need to branch on the level yourself.
 ## Palettes
 
 Diagrams that show multiple data series draw from a shared _palette_ — a
-`[]Color` embedded in the rendering context. Each new series advances a palette
-cursor (`rc.Next()`) that cycles when it runs out.
+`[]Color` embedded in the rendering context. Each new series takes the next
+color with `rc.WithNextColor()`, which cycles when the palette runs out.
 
 Default palette (in order):
 
@@ -92,6 +92,17 @@ g := tuichart.New(tuichart.WithPalette(tuichart.Cyan, tuichart.BrightRed, tuicha
 
 Or set per-diagram colors explicitly with the `.Color(c)` fluent setter
 available on most diagram types.
+
+The palette cursor is immutable. `WithNextColor` returns the color plus a fresh
+context, and leaves the receiver untouched — so a `*Ctx` can be shared without
+series stealing each other's colors:
+
+```go
+c, rc := rc.WithNextColor()
+```
+
+Store the returned `rc` and pass it to the next `WithNextColor` call; the
+original context always starts again from the first palette entry.
 
 ## Degradation tables
 
@@ -139,18 +150,19 @@ The default gradient maps to a text-density ramp:
 
 ## Tips for writing custom diagrams
 
-- Always use `rc.Palette[i]` or `rc.Next()` for series colors; never hard-code a
-  color index. That way your diagram adapts to the user's palette.
-- Always check `rc.Info.Unicode` when choosing between Unicode glyphs and ASCII
-  fallback characters. Example from the tutorial's `bullet` package:
+- Always use `rc.Palette[i]` or `rc.WithNextColor()` for series colors; never
+  hard-code a color index. That way your diagram adapts to the user's palette.
+- Don't branch on `rc.Info.Unicode` or `rc.Info.Level` yourself. Call
+  `cv.DrawGlyph(x, y, uniRune, monoRune, st)` and it picks the glyph and
+  degrades the style for the terminal:
 
 ```go
-zoneCh, valCh, markCh := '░', '█', '┃'
-if !uni {
- zoneCh, valCh, markCh = '.', '#', '|'
-}
+cv.DrawGlyph(x, y, '█', '#', tuichart.NewStyle(color))
 ```
 
+  That is the single place degradation is decided. Only bypass it when your two
+  fallbacks are genuinely independent (the candlestick chart picks a wick glyph
+  from unicode and a body glyph from color support, separately).
 - Use `FormatValue(v)` for tick labels; it rounds and abbreviates automatically
   and respects the available width.
 

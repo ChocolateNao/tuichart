@@ -6,12 +6,17 @@ Every built-in diagram implements the `Drawable` interface:
 type Drawable interface {
   Draw(rc *Ctx, cv *Canvas)
   HeightHint(width int) int
+  WidthHint(height int) int
 }
 ```
 
 `Draw` receives a rendering context `rc` and a fresh, empty canvas `cv`. The
 canvas is as wide as the chart allows and exactly `HeightHint` rows tall. Use
-`cv.Set` and `cv.Text` to paint.
+`cv.Set` and `cv.Text` to paint, or `cv.DrawGlyph(x, y, uni, mono, st)` to let
+the canvas pick the glyph and degrade the style for the terminal.
+
+All 15 types also satisfy the `Diagram` interface (`Drawable` plus
+`GetTitle() string` and `SetTitle(string)`), so `Board.Diagrams()` reports them.
 
 Below is one example per diagram type. Code and output were captured
 deterministically (see [Getting started](quickstart.md)).

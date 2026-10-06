@@ -6,10 +6,11 @@ tuichart's `Drawable` interface is deliberately tiny:
 type Drawable interface {
   Draw(rc *Ctx, cv *Canvas)
   HeightHint(width int) int
+  WidthHint(height int) int
 }
 ```
 
-`HeightHint` tells the board how many rows you would like; `Draw` paints into
+`HeightHint` tells the board how many rows you would like, `WidthHint` tells the width (shocking); `Draw` paints into
 whatever canvas the board gives you. That is the whole contract.
 
 This page walks you through building a complete custom diagram — a **bullet
@@ -87,7 +88,7 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 ```
 
 The frame row is painted by `cv.Border`, and we overwrite cell (2, 0) with the
-title — exactly the trick `chartBase` uses internally.
+title — the same trick the built-in diagrams use.
 
 ---
 
@@ -146,7 +147,12 @@ collapse to the same glyph.
 ## Stage 4 — fluent setters, ASCII fallback, and a working chart
 
 The final step turns the loose functions into a proper type with fluent setters,
-a `Zone` method, a `Title` setter, and a graceful ASCII fallback:
+a `Zone` method, a `Title` setter, and a graceful ASCII fallback.
+
+Rather than hand-rolling a `title` field and a `height` field, we embed
+`tuichart.DisplayConfig`. That gives us `SetTitle`, `SetSize`, `HeightHint` and
+the rest of the presentation API for free, and leaves this type holding only the
+fields a bullet graph actually owns:
 
 ```go
 package bullet
@@ -158,25 +164,27 @@ import (
 )
 
 type Bullet struct {
-  title  string
+  tuichart.DisplayConfig
   name   string
+  zones  []float64
   value  float64
   target float64
   max    float64
-  zones  []float64
   color  tuichart.Color
-  height int
 }
 
 func NewBullet(name string, value, target, max float64) *Bullet {
-  return &Bullet{name: name, value: value, target: target, max: max, height: 5}
+  b := &Bullet{name: name, value: value, target: target, max: max}
+  b.SetSize(5) // pin the height; HeightHint now reports it
+  return b
 }
 
-func (b *Bullet) Title(t string) *Bullet   { b.title = t; return b }
+func (b *Bullet) Title(t string) *Bullet   { b.SetTitle(t); return b }
 func (b *Bullet) Color(c tuichart.Color) *Bullet { b.color = c; return b }
 func (b *Bullet) Zone(boundary float64) *Bullet  { b.zones = append(b.zones, boundary); return b }
 
-func (b *Bullet) HeightHint(int) int { return b.height }
+// WidthHint: a bullet is much wider than it is tall.
+func (b *Bullet) WidthHint(height int) int { return height * 10 }
 
 func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
   uni := rc.Info.Unicode
@@ -193,8 +201,8 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
   }
 
   cv.Border(tuichart.NewStyle(tuichart.Gray), uni)
-  if b.title != "" {
-    cv.Text(2, 0, " "+b.title+" ", tuichart.NewStyle(tuichart.Default).Bolder())
+  if title := b.GetTitle(); title != "" {
+    cv.Text(2, 0, " "+title+" ", tuichart.NewStyle(tuichart.Default).Bolder())
   }
   inner := tuichart.Rect{X: 1, Y: 1, W: cv.Width()-2, H: cv.Height()-2}
   barRow := inner.Y
@@ -253,6 +261,10 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 }
 ```
 
+Note what is _gone_: no `height` field, no `HeightHint` method, no `title`
+field. `DisplayConfig` supplies both, and our own `WidthHint` simply shadows the
+zero-value default it promotes.
+
 Drop it into a chart:
 
 ```go
@@ -286,7 +298,58 @@ threshold.
 
 ---
 
-## Mixing with built-in diagrams
+## The two config structs
+
+Every built-in diagram is built from two embeddable config structs. You can use
+them too, and they are the reason a bullet chart only needed ~30 lines of real
+code above.
+
+| Embed | Brings you |
+| ------- | ----------- |
+| `tuichart.DisplayConfig` | `SetTitle` / `GetTitle`, `SetTitleAlign`, `SetSize`, `HeightHint` (pinned height), `WidthHint` (no preference), `SetShowValues`, `SetCellWidth`, `SetOrientation`, plus matching `Reset*` |
+| `tuichart.AxisConfig` | `SetXLabel` / `SetYLabel`, `SetXTicks` / `SetYTicks`, `SetXFormatter` / `SetYFormatter`, `SetScale` / `SetXRange` / `SetYRange`, `SetGrid`, `SetBorder`, `SetLegend`, `SetTickCount`, plus matching `Reset*` |
+
+Embed only what you need. A single-value indicator like the bullet graph wants
+`DisplayConfig`; a diagram that plots against axes wants both. Embedding
+`AxisConfig` gives you the setters but **not** the frame painting — that stays
+internal, so a diagram embedding it still has to draw its own frame.
+
+Two things fall out of embedding:
+
+- **`HeightHint` and `WidthHint` come free.** `DisplayConfig.HeightHint` returns
+  the pinned `SetSize` value (or 0 for "container decides"), and
+  `DisplayConfig.WidthHint` returns 0 for "no preference". Define either method
+  on your own type to override it — your definition shadows the promoted one.
+- **`Reset` collides.** Both structs define `Reset`, so a type embedding both
+  must supply its own:
+
+  ```go
+  func (b *Bullet) Reset() { b.AxisConfig.Reset(); b.DisplayConfig.Reset() }
+  ```
+
+Both structs work with their zero value, which is all an external embedder
+needs. `AxisConfig`'s library defaults (`grid`, `frame`, `legend` on; five
+ticks) are internal — they matter to the built-in diagrams' frame painter, not
+to yours — so set explicitly whatever your diagram actually reads.
+
+### Satisfying `Diagram`
+
+If your type embeds `DisplayConfig` it already satisfies the `Diagram`
+interface — `Drawable` plus `GetTitle() string` and `SetTitle(string)` — so
+`Board.Diagrams()` will report it:
+
+```go
+for _, d := range g.Diagrams() {
+  fmt.Println(d.GetTitle())
+}
+```
+
+`Diagram` asks for `GetTitle` rather than `Title` because all 15 built-in types
+define `Title(string) *T` as a fluent setter, and that setter shadows any
+embedded `Title()` getter. A name you don't shadow is what makes the interface
+implementable by everything.
+
+---
 
 Your custom type is a `Drawable`, so `Row` works just as it does for any other
 diagram:
@@ -327,6 +390,12 @@ when unicode is disabled:
 
 `'░'` → `.`, `'█'` → `#`, `'┃'` → `|`, box drawing → ASCII border. No code
 changes, no extra branches — just the `uni` check we wrote once.
+
+That check is the right shape here because the three glyphs fall back together.
+When a single rune needs to degrade, hand the choice to the library instead of
+branching — `cv.DrawGlyph(x, y, '█', '#', st)` picks the glyph and degrades the
+style from the canvas's own capabilities. The built-in funnel, treemap, pie and
+heatmap all work that way; see [Styling & degradation](styling.md).
 
 ---
 
