@@ -226,6 +226,65 @@ func TestTreemapHeightHintBounds(t *testing.T) {
 	}
 }
 
+// A treemap item with no explicit color must be filled from the palette. The
+// string-based tests above cannot catch a regression here because they all
+// render with WithNoColor, which drops the SGR that carries the color.
+func TestTreemapFillsFromPalette(t *testing.T) {
+	tr := NewTreemap().Item("a", 60).Item("b", 40)
+	cv := NewCanvasWithInfo(40, 12, Info{Level: Level256, Unicode: true})
+	tr.Draw(NewRenderCtx(Info{Level: Level256, Unicode: true}), cv)
+
+	seen := map[Color]int{}
+
+	cv.EachCell(func(x, y int, cl Cell) {
+		if cl.Ch != '█' {
+			return
+		}
+
+		if cl.Fg.IsZero() {
+			t.Errorf("cell (%d,%d) has no foreground color", x, y)
+		}
+
+		seen[cl.Fg]++
+	})
+
+	if len(seen) != 2 {
+		t.Errorf("got %d distinct fill colors, want 2 (one per item): %v", len(seen), seen)
+	}
+}
+
+// An explicit node color must win over the palette.
+func TestTreemapExplicitColorWins(t *testing.T) {
+	tr := NewTreemap().
+		Add(&TreemapNode{Name: "a", Value: 10, Color: BrightRed}).
+		Item("b", 40)
+	cv := NewCanvasWithInfo(40, 12, Info{Level: Level256, Unicode: true})
+	tr.Draw(NewRenderCtx(Info{Level: Level256, Unicode: true}), cv)
+
+	red, palette := 0, 0
+
+	cv.EachCell(func(_, _ int, cl Cell) {
+		if cl.Ch != '█' {
+			return
+		}
+
+		switch {
+		case cl.Fg == BrightRed:
+			red++
+		case !cl.Fg.IsZero():
+			palette++
+		}
+	})
+
+	if red == 0 {
+		t.Error("explicit BrightRed fill missing")
+	}
+
+	if palette == 0 {
+		t.Error("second item did not take a palette color")
+	}
+}
+
 // rowWhere returns the first line of out containing substr, or -1.
 func rowWhere(out, substr string) int {
 	for i, ln := range splitLines(out) {
