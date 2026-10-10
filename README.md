@@ -196,24 +196,14 @@ tuichart.ResetDetection() // back to env-based detection
 
 ## Colors
 
-Use named color variables instead of raw `IndexedColor()` calls:
+Use named color variables instead of raw `IndexedColor()` calls. See the full
+list in [Styling & degradation](docs/styling.md#named-color-variables).
 
 ```go
 line := tuichart.NewLine("cpu", pts...).Color(tuichart.Cyan)
 bar := tuichart.BarSeries{Name: "ok", Values: v, Color: tuichart.Lime}
 heat := tuichart.NewHeat(grid).Colors(tuichart.Azure, tuichart.BrightRed)
 ```
-
-Available variables — ANSI 16-color:
-
-`Black`, `Maroon`, `Green`, `Olive`, `Navy`, `Purple`, `Teal`, `Silver`, `Gray`,
-`Red`, `Lime`, `Yellow`, `Blue`, `Fuchsia`, `Cyan`, `White`
-
-Extended 256-color palette:
-
-`Azure`, `DodgerBlue`, `CornflowerBlue`, `SkyBlue`, `PaleGreen`, `MediumPurple`,
-`LightGreen`, `Khaki`, `BrightRed`, `HotPink`, `Salmon`, `DeepPink`, `Orange`,
-`DimGray`, `WhiteSmoke`
 
 For colors not in the palette, use `RGB(r, g, b)` for 24-bit truecolor or
 `IndexedColor(n)` for any xterm-256 index.
@@ -369,6 +359,7 @@ Implement one interface to plug in custom diagrams:
 type Drawable interface {
     Draw(rc *Ctx, cv *Canvas)
     HeightHint(width int) int
+    WidthHint(height int) int
 }
 ```
 

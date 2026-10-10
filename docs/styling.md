@@ -104,6 +104,31 @@ c, rc := rc.WithNextColor()
 Store the returned `rc` and pass it to the next `WithNextColor` call; the
 original context always starts again from the first palette entry.
 
+## Named color variables
+
+All available named color constants. Use these instead of raw `IndexedColor()`
+calls for clarity and portability.
+
+```go
+line := tuichart.NewLine("cpu", pts...).Color(tuichart.Cyan)
+bar := tuichart.BarSeries{Name: "ok", Values: v, Color: tuichart.Lime}
+heat := tuichart.NewHeat(grid).Colors(tuichart.Azure, tuichart.BrightRed)
+```
+
+ANSI 16-color:
+
+`Black`, `Maroon`, `Green`, `Olive`, `Navy`, `Purple`, `Teal`, `Silver`, `Gray`,
+`Red`, `Lime`, `Yellow`, `Blue`, `Fuchsia`, `Cyan`, `White`
+
+Extended 256-color palette:
+
+`Azure`, `DodgerBlue`, `CornflowerBlue`, `SkyBlue`, `PaleGreen`, `MediumPurple`,
+`LightGreen`, `Khaki`, `BrightRed`, `HotPink`, `Salmon`, `DeepPink`, `Orange`,
+`DimGray`, `WhiteSmoke`
+
+For colors not in the palette, use `RGB(r, g, b)` for 24-bit truecolor or
+`IndexedColor(n)` for any xterm-256 index.
+
 ## Degradation tables
 
 When the terminal lacks truecolor, tuichart approximates the nearest ANSI
