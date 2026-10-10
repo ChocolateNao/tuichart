@@ -23,7 +23,7 @@ func setDot(cv *Canvas, gx, gy int, c Color) {
 }
 
 func intBresenham(x0, y0, x1, y1 int, fn func(x, y, i int)) {
-	dx, dy := absInt(x1-x0), absInt(y1-y0)
+	dx, dy := max(x1-x0, -(x1-x0)), max(y1-y0, -(y1-y0))
 
 	sx, sy := 1, 1
 	if x0 > x1 {
@@ -80,11 +80,11 @@ func slopeChar(dx, dy int) rune {
 		return '|'
 	}
 
-	if absInt(dx) >= 2*absInt(dy) {
+	if dx >= 2*dy {
 		return '-'
 	}
 
-	if absInt(dy) >= 2*absInt(dx) {
+	if dy >= 2*dx {
 		return '|'
 	}
 

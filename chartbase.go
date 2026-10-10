@@ -198,6 +198,18 @@ func (d *DisplayConfig) HeightHint(int) int {
 // Zero means "no preference"; horizontal layouts may negotiate with it.
 func (d *DisplayConfig) WidthHint(int) int { return 0 }
 
+// configs combines AxisConfig and DisplayConfig
+// with a single Reset method.
+type configs struct {
+	DisplayConfig
+	AxisConfig
+}
+
+func (c *configs) Reset() {
+	c.AxisConfig.Reset()
+	c.DisplayConfig.Reset()
+}
+
 // plotHeightHint returns the height hint shared by plot-like diagrams
 // (Plot, TimeSeries, Candlestick) when no explicit height is set.
 func (d *DisplayConfig) plotHeightHint(width int) int {
@@ -205,7 +217,7 @@ func (d *DisplayConfig) plotHeightHint(width int) int {
 		return h
 	}
 
-	return clampInt(width*2/5, 9, 24)
+	return max(9, min(width*2/5, 24))
 }
 
 // Reset restores every presentation property to its default, keeping the
@@ -310,18 +322,13 @@ func (r Rect) clip(o Rect) Rect {
 	return r
 }
 
-// clampInt bounds v to [lo, hi].
-func clampInt(v, lo, hi int) int {
-	return min(max(v, lo), hi)
-}
-
 // rampIdx maps a [0,1] fraction to a clamped ramp index.
-func rampIdx(t float64, n int) int { return clampInt(int(t*float64(n-1)+0.5), 0, n-1) }
+func rampIdx(t float64, n int) int { return max(0, min(int(t*float64(n-1)+0.5), n-1)) }
 
 // horizontalBarHeight sizes a left-to-right bar chart: one row per
 // category plus border/margin allowance, bounded like the other diagrams.
 func horizontalBarHeight(cats int) int {
-	return clampInt(cats+3, 6, 30)
+	return max(6, min(cats+3, 30))
 }
 
 // writeLabel draws a centered label at the given column, clamped to the

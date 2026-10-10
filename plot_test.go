@@ -79,30 +79,6 @@ func TestPlotMaybeSwapNoData(t *testing.T) {
 	}
 }
 
-type fakeSeries struct{}
-
-func (fakeSeries) bounds(db *dataBounds)               { db.add(0, 0); db.add(1, 1) }
-func (fakeSeries) hasColor() bool                      { return true }
-func (fakeSeries) setColor(Color)                      {}
-func (fakeSeries) colorOf() Color                      { return Red }
-func (fakeSeries) draw(cv *Canvas, fr frame, st Style) {}
-func (fakeSeries) legendEntry(Style, bool) LegendEntry {
-	return LegendEntry{Label: "fake", Glyph: "x"}
-}
-
-// maybeSwap returns non-Line/Scatter series untouched even when swapping.
-func TestPlotMaybeSwapPassthrough(t *testing.T) {
-	s := fakeSeries{}
-	if got := maybeSwap(s, true); got != s {
-		t.Error("non-Line/Scatter series should pass through untouched")
-	}
-
-	line := NewLine("l", Point{X: 1, Y: 2})
-	if got := maybeSwap(line, false); got != line {
-		t.Error("swap=false should return series as-is")
-	}
-}
-
 func TestPlotYRangeClip(t *testing.T) {
 	p := monoPlot()
 	p.SetYRange(0, 100)

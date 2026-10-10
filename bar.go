@@ -18,8 +18,7 @@ type BarSeries struct {
 type BarChart struct {
 	cats   []string
 	series []BarSeries
-	DisplayConfig
-	AxisConfig
+	configs
 	stacked    bool
 	horizontal bool
 }
@@ -27,10 +26,9 @@ type BarChart struct {
 // NewBar creates a bar chart with the given categories and series.
 func NewBar(cats []string, series ...BarSeries) *BarChart {
 	return &BarChart{
-		AxisConfig:    newAxisConfig(),
-		DisplayConfig: newDisplayConfig(),
-		cats:          cats,
-		series:        series,
+		AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig(),
+		cats:   cats,
+		series: series,
 	}
 }
 
@@ -82,7 +80,7 @@ func (b *BarChart) HeightHint(width int) int {
 		return horizontalBarHeight(len(b.cats))
 	}
 
-	return clampInt(width/3, 6, 20)
+	return max(6, min(width/3, 20))
 }
 
 // WidthHint returns the suggested width for the given height.
@@ -90,11 +88,11 @@ func (b *BarChart) WidthHint(height int) int {
 	if b.isHorizontal() {
 		// For horizontal bars, width depends on number of categories and
 		// bar formatting. Use a reasonable default based on category count.
-		return clampInt(height*3, 20, 200)
+		return max(20, min(height*3, 200))
 	}
 
 	// For vertical bars, width follows the number of categories.
-	return clampInt(height*3, 20, 200)
+	return max(20, min(height*3, 200))
 }
 
 // Draw renders the bar chart onto the canvas.
@@ -529,7 +527,3 @@ func (b *BarChart) drawHorizontal(rc *Ctx, cv *Canvas) {
 		cv.Text(inner.X+gutter+w+1, y, FormatValue(v), NewStyle(Gray))
 	}
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (b *BarChart) Reset() { b.AxisConfig.Reset(); b.DisplayConfig.Reset() }

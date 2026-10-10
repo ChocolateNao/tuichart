@@ -6,8 +6,7 @@ import "math"
 type FunctionPlot struct {
 	fn   func(float64) float64
 	name string
-	DisplayConfig
-	AxisConfig
+	configs
 	lo      float64
 	hi      float64
 	samples int
@@ -105,12 +104,12 @@ func (p *FunctionPlot) HeightHint(width int) int {
 		return h
 	}
 
-	return clampInt(width*2/5, 9, 24)
+	return max(9, min(width*2/5, 24))
 }
 
 // WidthHint returns the suggested width for the given height.
 func (p *FunctionPlot) WidthHint(height int) int {
-	return clampInt(height*5/2, 10, 100)
+	return max(10, min(height*5/2, 100))
 }
 
 // Draw renders the function plot onto the canvas.
@@ -163,6 +162,8 @@ func (p *FunctionPlot) Draw(rc *Ctx, cv *Canvas) {
 	}}, fr.uni)
 }
 
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (p *FunctionPlot) Reset() { p.AxisConfig.Reset(); p.DisplayConfig.Reset() }
+// SetFunction sets the function to be plotted.
+func (p *FunctionPlot) SetFunction(f func(float64) float64) *FunctionPlot {
+	p.fn = f
+	return p
+}

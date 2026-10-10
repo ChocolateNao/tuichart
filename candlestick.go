@@ -23,8 +23,7 @@ type Candle struct {
 type Candlestick struct {
 	layout  string
 	candles []Candle
-	DisplayConfig
-	AxisConfig
+	configs
 	up   Color
 	down Color
 }
@@ -74,7 +73,7 @@ func (c *Candlestick) HeightHint(width int) int {
 
 // WidthHint returns the suggested width for the given height.
 func (c *Candlestick) WidthHint(height int) int {
-	return clampInt(height*2, 20, 100)
+	return max(20, min(height*2, 100))
 }
 
 // Draw renders the OHLC candles and wicks into the canvas.
@@ -235,7 +234,3 @@ func (c *Candlestick) Draw(rc *Ctx, cv *Canvas) {
 		}, uni)
 	}
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (c *Candlestick) Reset() { c.AxisConfig.Reset(); c.DisplayConfig.Reset() }

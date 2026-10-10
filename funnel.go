@@ -14,13 +14,15 @@ type funnelStep struct {
 // is proportional to each stage's value, with a legend to the right.
 type FunnelChart struct {
 	steps []funnelStep
-	DisplayConfig
-	AxisConfig
+	configs
 }
 
 // NewFunnel creates an empty funnel chart.
 func NewFunnel() *FunnelChart {
-	return &FunnelChart{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig()}
+	return &FunnelChart{
+		AxisConfig:    newAxisConfig(),
+		DisplayConfig: newDisplayConfig(),
+	}
 }
 
 // Step appends a stage; the widest stage sets the funnel's full width.
@@ -196,7 +198,3 @@ func pctOfTop(v, top float64) float64 {
 
 	return v / top * 100
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (f *FunnelChart) Reset() { f.AxisConfig.Reset(); f.DisplayConfig.Reset() }

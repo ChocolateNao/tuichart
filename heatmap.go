@@ -8,8 +8,7 @@ type Heatmap struct {
 	grid      [][]float64
 	rowLabels []string
 	colLabels []string
-	DisplayConfig
-	AxisConfig
+	configs
 	low  Color
 	high Color
 }
@@ -227,7 +226,3 @@ func (h *Heatmap) Draw(rc *Ctx, cv *Canvas) {
 		}
 	}
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (h *Heatmap) Reset() { h.AxisConfig.Reset(); h.DisplayConfig.Reset() }

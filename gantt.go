@@ -20,8 +20,7 @@ type GanttBar struct {
 type Gantt struct {
 	layout string
 	bars   []GanttBar
-	DisplayConfig
-	AxisConfig
+	configs
 }
 
 // NewGantt creates an empty Gantt chart.
@@ -180,7 +179,3 @@ func (g *Gantt) Draw(rc *Ctx, cv *Canvas) {
 		writeLabel(cv, tickRow, col, lbl, NewStyle(Default), inner, uni)
 	}
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (g *Gantt) Reset() { g.AxisConfig.Reset(); g.DisplayConfig.Reset() }

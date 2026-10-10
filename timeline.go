@@ -39,15 +39,17 @@ type TimelineEvent struct {
 type Timeline struct {
 	layout string
 	events []TimelineEvent
-	DisplayConfig
-	AxisConfig
+	configs
 	color       Color
 	detailColor Color
 }
 
 // NewTimeline creates an empty Timeline.
 func NewTimeline() *Timeline {
-	return &Timeline{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig()}
+	return &Timeline{
+		AxisConfig:    newAxisConfig(),
+		DisplayConfig: newDisplayConfig(),
+	}
 }
 
 // Title sets the chart title.
@@ -544,7 +546,3 @@ func wrapText(s string, w int) []string {
 
 	return lines
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (t *Timeline) Reset() { t.AxisConfig.Reset(); t.DisplayConfig.Reset() }

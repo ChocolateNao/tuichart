@@ -11,14 +11,17 @@ type pieSlice struct {
 // PieChart renders slices as a pie (or donut) chart with a legend.
 type PieChart struct {
 	slices []pieSlice
-	DisplayConfig
-	AxisConfig
+	configs
 	donut bool
 }
 
 // NewPie creates an empty PieChart.
 func NewPie() *PieChart {
-	return &PieChart{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig(), donut: false}
+	return &PieChart{
+		AxisConfig:    newAxisConfig(),
+		DisplayConfig: newDisplayConfig(),
+		donut:         false,
+	}
 }
 
 // Slice appends a slice; the color is assigned from the palette when omitted.
@@ -52,12 +55,12 @@ func (p *PieChart) HeightHint(width int) int {
 		return h
 	}
 
-	return clampInt(width*3/5, 8, 22)
+	return max(8, min(width*3/5, 22))
 }
 
 // WidthHint returns the suggested width for the given height.
 func (p *PieChart) WidthHint(height int) int {
-	return clampInt(height*5/3, 10, 100)
+	return max(10, min(height*5/3, 100))
 }
 
 var pieASCIIChars = []rune{'#', '@', '*', 'o', '=', '+', '~', '%'}
@@ -181,7 +184,3 @@ func drawPieSector(
 		}
 	}
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (p *PieChart) Reset() { p.AxisConfig.Reset(); p.DisplayConfig.Reset() }

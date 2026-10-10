@@ -184,7 +184,7 @@ func (b *Board) Len() int {
 func (b *Board) Reset() *Board { b.Clear(); return b }
 
 func defaultDiagramHeight(width int) int {
-	return clampInt(width/3, 9, 20)
+	return max(9, min(width/3, 20))
 }
 
 // resolveWidthInfo resolves the effective rendering width and the terminal

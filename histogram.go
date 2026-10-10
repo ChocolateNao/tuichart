@@ -9,8 +9,7 @@ import (
 type Histogram struct {
 	name string
 	data []float64
-	DisplayConfig
-	AxisConfig
+	configs
 	bins  int
 	color Color
 }
@@ -125,14 +124,14 @@ func (h *Histogram) HeightHint(width int) int {
 		return horizontalBarHeight(h.bins)
 	}
 
-	return clampInt(width/3, 8, 20)
+	return max(8, min(width/3, 20))
 }
 
 // WidthHint returns the suggested width for the given height.
 func (h *Histogram) WidthHint(height int) int {
 	if h.orient == OrientHorizontal {
 		// For horizontal histogram, width follows the number of bins.
-		return clampInt(height*3, 20, 200)
+		return max(20, min(height*3, 200))
 	}
 
 	// For vertical histogram, width is flexible.
@@ -167,7 +166,3 @@ func (h *Histogram) Draw(rc *Ctx, cv *Canvas) {
 	bc.AxisConfig, bc.DisplayConfig = h.AxisConfig, h.DisplayConfig
 	bc.Draw(rc, cv)
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (h *Histogram) Reset() { h.AxisConfig.Reset(); h.DisplayConfig.Reset() }

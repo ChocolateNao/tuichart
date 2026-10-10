@@ -36,13 +36,15 @@ func (n *TreemapNode) value() float64 {
 // areas are proportional to their summed values.
 type TreemapChart struct {
 	roots []*TreemapNode
-	DisplayConfig
-	AxisConfig
+	configs
 }
 
 // NewTreemap creates an empty treemap.
 func NewTreemap() *TreemapChart {
-	return &TreemapChart{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig()}
+	return &TreemapChart{
+		AxisConfig:    newAxisConfig(),
+		DisplayConfig: newDisplayConfig(),
+	}
 }
 
 // Item appends a leaf root node with the given value.
@@ -68,12 +70,12 @@ func (t *TreemapChart) HeightHint(width int) int {
 		return h
 	}
 
-	return clampInt(width*3/5, 8, 24)
+	return max(8, min(width*3/5, 24))
 }
 
 // WidthHint returns the suggested width for the given height.
 func (t *TreemapChart) WidthHint(height int) int {
-	return clampInt(height*5/3, 10, 100)
+	return max(10, min(height*5/3, 100))
 }
 
 type treemapRect struct {
@@ -212,7 +214,7 @@ func layoutTreemap(
 func recurseTreemap(
 	n *TreemapNode,
 	rc treemapRect,
-	total float64,
+	_ float64,
 	vertical bool,
 	out *[]treemapRect,
 ) {
@@ -239,4 +241,4 @@ func (r *treemapRect) height() int { return r.y1 - r.y0 + 1 }
 
 // Reset restores every configurable property to its default, keeping the
 // title.
-func (t *TreemapChart) Reset() { t.AxisConfig.Reset(); t.DisplayConfig.Reset() }
+func (t *TreemapChart) Reset() { t.configs.Reset(); t.DisplayConfig.Reset() }

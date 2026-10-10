@@ -26,8 +26,7 @@ const (
 // like any other Drawable.
 type Gauge struct {
 	label string
-	DisplayConfig
-	AxisConfig
+	configs
 	value   float64
 	max     float64
 	color   Color
@@ -250,7 +249,3 @@ func gaugeFillEighths(cv *Canvas, row, x, w int, frac float64, st Style, fullRun
 		cv.Set(x+i, row, ch, st)
 	}
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (g *Gauge) Reset() { g.AxisConfig.Reset(); g.DisplayConfig.Reset() }

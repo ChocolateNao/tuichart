@@ -11,8 +11,7 @@ var sparkASCII = []rune{'_', '.', '-', '=', '+', '*', '#', '%', '@'}
 // a sequence of values — useful for inline or embedded mini-charts.
 type Sparkline struct {
 	vals []float64
-	DisplayConfig
-	AxisConfig
+	configs
 	color Color
 }
 
@@ -134,7 +133,3 @@ func Spark(vals []float64) string {
 
 	return strings.TrimSuffix(cv.Render(info.Level), "\n")
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (s *Sparkline) Reset() { s.AxisConfig.Reset(); s.DisplayConfig.Reset() }

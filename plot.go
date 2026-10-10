@@ -15,15 +15,6 @@ func Seq(vals ...float64) []Point {
 	return out
 }
 
-type seriesI interface {
-	bounds(db *dataBounds)
-	hasColor() bool
-	setColor(c Color)
-	colorOf() Color
-	draw(cv *Canvas, fr frame, st Style)
-	legendEntry(st Style, uni bool) LegendEntry
-}
-
 // Line is a series rendered as connected line segments.
 type Line struct {
 	name   string
@@ -84,18 +75,6 @@ func project(fr frame, p Point) projPt {
 	return projPt{x: fr.mx(p.X), y: fr.my(p.Y)}
 }
 
-func clampF(v, lo, hi float64) float64 {
-	if v < lo {
-		return lo
-	}
-
-	if v > hi {
-		return hi
-	}
-
-	return v
-}
-
 func (l *Line) draw(cv *Canvas, fr frame, st Style) {
 	if len(l.pts) == 0 {
 		return
@@ -115,16 +94,32 @@ func (l *Line) draw(cv *Canvas, fr frame, st Style) {
 		}
 
 		if fr.uni && fr.ysc.Kind == Linear && fr.xsc.Kind == Linear {
-			gx0 := int(math.Round(clampF(a.x, float64(area.X-1), float64(area.X2()+1)) * 2))
-			gy0 := int(math.Round(clampF(a.y, float64(area.Y-1), float64(area.Y2()+1)) * 4))
-			gx1 := int(math.Round(clampF(b.x, float64(area.X-1), float64(area.X2()+1)) * 2))
-			gy1 := int(math.Round(clampF(b.y, float64(area.Y-1), float64(area.Y2()+1)) * 4))
+			gx0 := int(math.Round(
+				math.Max(float64(area.X-1), math.Min(a.x, float64(area.X2()+1))) * 2,
+			))
+			gy0 := int(math.Round(
+				math.Max(float64(area.Y-1), math.Min(a.y, float64(area.Y2()+1))) * 4,
+			))
+			gx1 := int(math.Round(
+				math.Max(float64(area.X-1), math.Min(b.x, float64(area.X2()+1))) * 2,
+			))
+			gy1 := int(math.Round(
+				math.Max(float64(area.Y-1), math.Min(b.y, float64(area.Y2()+1))) * 4,
+			))
 			dotLine(cv, gx0, gy0, gx1, gy1, st.Fg, l.dashed)
 		} else {
-			x0 := int(math.Round(clampF(a.x, float64(area.X), float64(area.X2()))))
-			y0 := int(math.Round(clampF(a.y, float64(area.Y), float64(area.Y2()))))
-			x1 := int(math.Round(clampF(b.x, float64(area.X), float64(area.X2()))))
-			y1 := int(math.Round(clampF(b.y, float64(area.Y), float64(area.Y2()))))
+			x0 := int(math.Round(
+				math.Max(float64(area.X), math.Min(a.x, float64(area.X2()))),
+			))
+			y0 := int(math.Round(
+				math.Max(float64(area.Y), math.Min(a.y, float64(area.Y2()))),
+			))
+			x1 := int(math.Round(
+				math.Max(float64(area.X), math.Min(b.x, float64(area.X2()))),
+			))
+			y1 := int(math.Round(
+				math.Max(float64(area.Y), math.Min(b.y, float64(area.Y2()))),
+			))
 			asciiLine(cv, x0, y0, x1, y1, st)
 		}
 	}
@@ -146,8 +141,12 @@ func (l *Line) drawMarkers(cv *Canvas, fr frame, st Style) {
 			continue
 		}
 
-		x := int(math.Round(clampF(q.x, float64(area.X), float64(area.X2()))))
-		y := int(math.Round(clampF(q.y, float64(area.Y), float64(area.Y2()))))
+		x := int(math.Round(
+			math.Max(float64(area.X), math.Min(q.x, float64(area.X2()))),
+		))
+		y := int(math.Round(
+			math.Max(float64(area.Y), math.Min(q.y, float64(area.Y2()))),
+		))
 		cv.Set(x, y, m, st)
 	}
 }
@@ -222,8 +221,12 @@ func (s *Scatter) draw(cv *Canvas, fr frame, st Style) {
 			continue
 		}
 
-		x := int(math.Round(clampF(q.x, float64(area.X), float64(area.X2()))))
-		y := int(math.Round(clampF(q.y, float64(area.Y), float64(area.Y2()))))
+		x := int(math.Round(
+			math.Max(float64(area.X), math.Min(q.x, float64(area.X2()))),
+		))
+		y := int(math.Round(
+			math.Max(float64(area.Y), math.Min(q.y, float64(area.Y2()))),
+		))
 		cv.Set(x, y, m, st)
 	}
 }
@@ -239,19 +242,15 @@ func (s *Scatter) legendEntry(st Style, uni bool) LegendEntry {
 
 // Plot is an XY chart containing line and scatter series.
 type Plot struct {
-	order []seriesI
-	DisplayConfig
-	AxisConfig
+	order []any // *Line or *Scatter
+	configs
 	xKind Kind
 	yKind Kind
 }
 
 // NewPlot creates a new Plot.
 func NewPlot() *Plot {
-	return &Plot{
-		AxisConfig:    newAxisConfig(),
-		DisplayConfig: newDisplayConfig(),
-	}
+	return &Plot{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig()}
 }
 
 // Title sets the plot title.
@@ -319,12 +318,8 @@ func (p *Plot) HeightHint(width int) int {
 
 // WidthHint returns the suggested width for the given height.
 func (p *Plot) WidthHint(height int) int {
-	return clampInt(height*2, 10, 100)
+	return max(10, min(height*2, 100))
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (p *Plot) Reset() { p.AxisConfig.Reset(); p.DisplayConfig.Reset() }
 
 // Draw renders the plot onto the canvas.
 func (p *Plot) Draw(rc *Ctx, cv *Canvas) {
@@ -350,29 +345,60 @@ func (p *Plot) Draw(rc *Ctx, cv *Canvas) {
 	var db dataBounds
 
 	db.empty = true
+
 	for _, s := range p.order {
-		maybeSwap(s, swap).bounds(&db)
+		switch v := s.(type) {
+		case *Line:
+			maybeSwapLine(v, swap).bounds(&db)
+		case *Scatter:
+			maybeSwapScatter(v, swap).bounds(&db)
+		}
 	}
 
 	for _, s := range p.order {
-		if !s.hasColor() {
-			c, rc2 := rc.WithNextColor()
-			s.setColor(c)
+		switch v := s.(type) {
+		case *Line:
+			if !v.hasColor() {
+				c, rc2 := rc.WithNextColor()
+				v.setColor(c)
 
-			rc = rc2
+				rc = rc2
+			}
+		case *Scatter:
+			if !v.hasColor() {
+				c, rc2 := rc.WithNextColor()
+				v.setColor(c)
+
+				rc = rc2
+			}
 		}
 	}
 
 	fr := prepareFrame(cv, rc, ax, dc, db, xk, yk, true)
 
 	for _, s := range p.order {
-		st := NewStyle(s.colorOf())
-		maybeSwap(s, swap).draw(cv, fr, st)
+		switch v := s.(type) {
+		case *Line:
+			st := NewStyle(v.colorOf())
+			maybeSwapLine(v, swap).draw(cv, fr, st)
+		case *Scatter:
+			st := NewStyle(v.colorOf())
+			maybeSwapScatter(v, swap).draw(cv, fr, st)
+		}
 	}
 
 	entries := make([]LegendEntry, 0, len(p.order))
 	for _, s := range p.order {
-		entries = append(entries, s.legendEntry(NewStyle(s.colorOf()), rc.Info.Unicode))
+		switch v := s.(type) {
+		case *Line:
+			entries = append(entries,
+				maybeSwapLine(v, swap).legendEntry(NewStyle(v.colorOf()), rc.Info.Unicode),
+			)
+		case *Scatter:
+			entries = append(entries,
+				maybeSwapScatter(v, swap).legendEntry(NewStyle(v.colorOf()), rc.Info.Unicode),
+			)
+		}
 	}
 
 	drawLegendInside(cv, fr.area, entries, rc.Info.Unicode)
@@ -382,28 +408,30 @@ func (p *Plot) Draw(rc *Ctx, cv *Canvas) {
 	}
 }
 
-// maybeSwap returns a shallow copy of the series with transposed points
-// when swap is set; Line and Scatter are supported, anything else passes
-// through untouched.
-func maybeSwap(s seriesI, swap bool) seriesI {
+// maybeSwapLine returns a shallow copy of the Line with transposed points
+// when swap is set.
+func maybeSwapLine(s *Line, swap bool) *Line {
 	if !swap {
 		return s
 	}
 
-	switch v := s.(type) {
-	case *Line:
-		c := *v
-		c.pts = transposePts(v.pts)
+	c := *s
+	c.pts = transposePts(s.pts)
 
-		return &c
-	case *Scatter:
-		c := *v
-		c.pts = transposePts(v.pts)
+	return &c
+}
 
-		return &c
+// maybeSwapScatter returns a shallow copy of the Scatter with transposed points
+// when swap is set.
+func maybeSwapScatter(s *Scatter, swap bool) *Scatter {
+	if !swap {
+		return s
 	}
 
-	return s
+	c := *s
+	c.pts = transposePts(s.pts)
+
+	return &c
 }
 
 func transposePts(pts []Point) []Point {

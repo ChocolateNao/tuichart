@@ -17,15 +17,17 @@ type radarSeries struct {
 type RadarChart struct {
 	axes   []string
 	series []radarSeries
-	DisplayConfig
-	AxisConfig
+	configs
 	max  float64
 	fill bool
 }
 
 // NewRadar creates an empty radar chart.
 func NewRadar() *RadarChart {
-	return &RadarChart{AxisConfig: newAxisConfig(), DisplayConfig: newDisplayConfig()}
+	return &RadarChart{
+		AxisConfig:    newAxisConfig(),
+		DisplayConfig: newDisplayConfig(),
+	}
 }
 
 // Axes names the variables; each series must provide one value per axis.
@@ -68,12 +70,12 @@ func (r *RadarChart) HeightHint(width int) int {
 		return h
 	}
 
-	return clampInt(width/2+4, 8, 24)
+	return max(8, min(width/2+4, 24))
 }
 
 // WidthHint returns the suggested width for the given height.
 func (r *RadarChart) WidthHint(height int) int {
-	return clampInt(height*2, 20, 100)
+	return max(20, min(height*2, 100))
 }
 
 type radarPt struct {
@@ -296,7 +298,3 @@ func fillDotPolygon(cv *Canvas, pts []radarPt, c Color) {
 		}
 	}
 }
-
-// Reset restores every configurable property to its default, keeping the
-// title.
-func (r *RadarChart) Reset() { r.AxisConfig.Reset(); r.DisplayConfig.Reset() }
