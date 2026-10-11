@@ -328,6 +328,8 @@ func (b *Board) renderCanvas(width int) (*Canvas, Info, []LayoutEntry) {
 	}
 
 	rowHeights := make([]int, len(b.rows))
+
+	rowWidths := make([][]int, len(b.rows))
 	for ri, row := range b.rows {
 		if ri > 0 || b.title != "" {
 			totalH += max(b.opts.gap, 1)
@@ -336,15 +338,24 @@ func (b *Board) renderCanvas(width int) (*Canvas, Info, []LayoutEntry) {
 		seg := segmentWidth(w, len(row))
 
 		mh := 0
-		for _, e := range row {
-			if h := b.diagramHeight(e.d, seg, w); h > mh {
+		widths := make([]int, len(row))
+
+		for i, e := range row {
+			h := b.diagramHeight(e.d, seg, w)
+			if h > mh {
 				mh = h
 			}
+
+			widths[i] = e.d.WidthHint(h)
 		}
+
+		rowWidths[ri] = widths
 
 		rowHeights[ri] = mh
 		totalH += mh
 	}
+
+	allocateWidths(rowWidths, w, sepW)
 
 	cv := NewCanvasWithInfo(w, totalH, info)
 	entries := make([]LayoutEntry, 0, b.Len())
@@ -361,10 +372,11 @@ func (b *Board) renderCanvas(width int) (*Canvas, Info, []LayoutEntry) {
 			y += max(b.opts.gap, 1)
 		}
 
-		seg := segmentWidth(w, len(row))
+		widths := rowWidths[ri]
 		x := 0
 
-		for _, e := range row {
+		for i, e := range row {
+			seg := widths[i]
 			h := b.diagramHeight(e.d, seg, w)
 			dcv := NewCanvasWithInfo(seg, h, info)
 			e.d.Draw(rc, dcv)
@@ -377,6 +389,77 @@ func (b *Board) renderCanvas(width int) (*Canvas, Info, []LayoutEntry) {
 	}
 
 	return cv, info, entries
+}
+
+// allocateWidths distributes the available width w among diagrams in each row
+// according to their WidthHint(height). If total hints fit within available
+// space, the remainder is distributed proportionally so the board fills w.
+// If they exceed w, they are scaled down proportionally. Minimum width is 8.
+func allocateWidths(rowWidths [][]int, w, sep int) {
+	for _, widths := range rowWidths {
+		if len(widths) == 0 {
+			continue
+		}
+
+		avail := w - (len(widths)-1)*sep
+
+		total := 0
+		for _, v := range widths {
+			total += v
+		}
+
+		if total <= avail {
+			// Distribute remaining space proportionally to hints
+			if total > 0 {
+				extra := avail - total
+				for i := range widths {
+					widths[i] += int(float64(widths[i]) * float64(extra) / float64(total))
+				}
+				// Fix rounding: give remaining pixels to first diagrams
+				diff := avail
+				for _, v := range widths {
+					diff -= v
+				}
+
+				for i := 0; i < diff && i < len(widths); i++ {
+					widths[i]++
+				}
+			} else {
+				// No hints: equal split
+				eq := avail / len(widths)
+				for i := range widths {
+					widths[i] = eq
+				}
+
+				for i := 0; i < avail%len(widths); i++ {
+					widths[i]++
+				}
+			}
+		} else {
+			// Scale down proportionally
+			scale := float64(avail) / float64(total)
+			for i := range widths {
+				widths[i] = int(float64(widths[i]) * scale)
+				if widths[i] < 8 {
+					widths[i] = 8
+				}
+			}
+			// Ensure sum doesn't exceed avail after minimum clamping
+			sum := 0
+			for _, v := range widths {
+				sum += v
+			}
+
+			for sum > avail {
+				for i := range widths {
+					if widths[i] > 8 && sum > avail {
+						widths[i]--
+						sum--
+					}
+				}
+			}
+		}
+	}
 }
 
 // RenderCanvas renders the board into a single Canvas preserving per-cell
