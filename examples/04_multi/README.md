@@ -1,4 +1,4 @@
-# 04 — Multi
+# 04: Multi
 
 Multiple diagrams stacked together.
 

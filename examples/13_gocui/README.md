@@ -1,4 +1,4 @@
-# 13_gocui — a tuichart board inside a real gocui window
+# 13_gocui: a tuichart board inside a real gocui window
 
 Embeds a tuichart `Board` in a [gocui](https://github.com/awesome-gocui/gocui)
 app as an actual window: a framed, titled `View` wraps the chart, and the

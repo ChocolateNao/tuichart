@@ -1,4 +1,4 @@
-# 03 — Bar
+# 03: Bar
 
 Grouped bar chart with values shown.
 

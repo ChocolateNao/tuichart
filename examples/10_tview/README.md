@@ -1,4 +1,4 @@
-# 10 — tview
+# 10: tview
 
 A live tuichart chart embedded in a tview (tcell-based) application.
 

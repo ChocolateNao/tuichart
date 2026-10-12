@@ -1,4 +1,4 @@
-# 02 — Plot
+# 02: Plot
 
 A static sine-wave line plot.
 

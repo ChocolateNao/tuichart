@@ -6,7 +6,7 @@ custom logging pipeline.
 
 ## The key APIs
 
-### RenderCanvas — raw cell access
+### RenderCanvas: raw cell access
 
 `RenderCanvas(width)` returns a `*Canvas` and an `Info` describing the
 terminal's profile and unicode capability. You can iterate every cell:
@@ -25,7 +25,7 @@ Each `Cell` carries a position, a rune, and a `Style` (foreground, background,
 bold). You can convert the style to your framework's color model via
 `Color.RGB()` (truecolor), or use `Color.Index()` for 256-color terminals.
 
-### RenderLines — row-by-row string slicing
+### RenderLines: row-by-row string slicing
 
 `RenderLines(width)` returns `[]string` with one element per row, no trailing
 newlines. Use this when your renderer expects an array of horizontal spans:
@@ -37,10 +37,10 @@ for _, line := range rows {
 }
 ```
 
-### RenderLayout — per-diagram rectangles
+### RenderLayout: per-diagram rectangles
 
 `RenderLayout(width)` returns the canvas and `Info` that `RenderCanvas` does,
-plus a `[]LayoutEntry` — one entry per diagram with its absolute position and
+plus a `[]LayoutEntry`, one entry per diagram with its absolute position and
 size in the rendered board. Use the rects when the embedding framework needs to
 overlay chrome, route hit-testing, or lay out frames around each diagram:
 
@@ -58,7 +58,7 @@ the diagrams in its footer, 10 draws a geometry chip above each diagram,
 11 exposes the rects as JSON (`/layout`), 12 appends a manifest to its report
 file, and 13 shows the live chart geometry in its status strip.
 
-### Live.Frame — render one frame without painting
+### Live.Frame: render one frame without painting
 
 If you have a [Live renderer](live.md) but want to pull the current frame
 without entering the live loop or touching the screen, call `Live.Frame(width)`

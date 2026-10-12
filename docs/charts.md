@@ -1,7 +1,7 @@
 # Charts: composition & layout
 
 The `Board` is the container. It owns the shared title and the layout of
-whatever diagrams you add to it, and it renders only as wide as you ask —
+whatever diagrams you add to it, and it renders only as wide as you ask:
 diagram frames, tick labels, and legends all negotiate the space together.
 
 ## The render pipeline
@@ -17,8 +17,8 @@ Board
 
 Diagrams are placed in **rows**. A row holds one or more diagrams:
 
-- `Add(d)` — one diagram, taking the full width.
-- `Row(a, b, c, …)` — several diagrams side by side, sharing the row equally.
+- `Add(d)`: one diagram, taking the full width.
+- `Row(a, b, c, …)`: several diagrams side by side, sharing the row equally.
 
 Rows render in order, top to bottom, and the tallest diagram in a row makes the
 row's height. Diagrams also _suggest_ a preferred height through
@@ -67,11 +67,11 @@ piping to another program, pick an explicit width.
 
 ## Title and layout controls
 
-- `g.Title("service health")` — centered by default.
-- `g.TitleAlign(tuichart.AlignLeft | AlignCenter | AlignRight)` — board-level
+- `g.Title("service health")`: centered by default.
+- `g.TitleAlign(tuichart.AlignLeft | AlignCenter | AlignRight)`: board-level
   title alignment.
-- `g.Add(d)` / `g.Row(ds...)` — lay out diagrams; `g.Row` splits width equally.
-- `g.Clear()` / `g.Reset()` — drop everything and start again.
+- `g.Add(d)` / `g.Row(ds...)`: lay out diagrams; `g.Row` splits width equally.
+- `g.Clear()` / `g.Reset()`: drop everything and start again.
 
 ## Rendering
 
@@ -82,12 +82,12 @@ canvases:
 | ------------------------------------- | -------------------------------------------------------------- |
 | `Render(width ...int)`                | A string; optional explicit width.                             |
 | `RenderLines(width ...int)`           | `[]string`, one cell-row per element (no trailing newlines).   |
-| `RenderCanvas(width int)`             | `(*Canvas, Info)` — draw into a raw cell buffer for embedding. |
+| `RenderCanvas(width int)`             | `(*Canvas, Info)`: draw into a raw cell buffer for embedding. |
 | `RenderTo(w io.Writer, width ...int)` | Writes the rendered string to a writer.                        |
 | `WriteTo(w io.Writer)`                | `io.WriterTo` implementation.                                  |
 | `Reader()`                            | An `io.Reader` wrapping `RenderLines` for streaming.           |
 
-`RenderCanvas` is the hook for embedding tuichart inside another render loop —
+`RenderCanvas` is the hook for embedding tuichart inside another render loop,
 see [Embedding in other UIs](embedding.md).
 
 ## Nested composition

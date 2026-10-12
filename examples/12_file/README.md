@@ -1,4 +1,4 @@
-# 12 — File
+# 12: File
 
 Write a rendered chart to a plain-text file.
 

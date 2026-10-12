@@ -67,7 +67,7 @@ cv.Set(x, y, '█', tuichart.NewStyle(tuichart.Lime).Bolder())
 cv.Text(5, 0, "hello", tuichart.NewStyle(tuichart.DodgerBlue))
 ```
 
-When the level is `LevelNone` the SGR emission is empty — the character is
+When the level is `LevelNone` the SGR emission is empty, this means the character is
 written, but no color or bold attribute follows it. This means a single code
 path renders everywhere; you never need to branch on the level yourself.
 

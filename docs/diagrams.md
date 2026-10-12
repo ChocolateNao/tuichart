@@ -23,7 +23,7 @@ deterministically (see [Getting started](quickstart.md)).
 
 ---
 
-## Plot — line charts
+## Plot: line charts
 
 Braille-mode scatter/line plots, one or more series, optional legends and tick
 marks.
@@ -61,7 +61,7 @@ Both are fluent: `.Color(...)`, `.Marker(rune)`, `.Dashed(true)`.
 
 ---
 
-## Function — plot a formula
+## Function: plot a formula
 
 `NewFunction` evaluates a `func(float64) float64` over a domain and draws the
 result with braille glyphs.
@@ -87,7 +87,7 @@ Key methods:
 
 ---
 
-## BarChart — vertical, horizontal, stacked
+## BarChart: vertical, horizontal, stacked
 
 Categorical bars, either single-series or stacked, with optional value labels.
 
@@ -200,7 +200,7 @@ Key methods:
 
 ---
 
-## Gauge — single-value indicators
+## Gauge: single-value indicators
 
 ```go
 g := fixed(46)
@@ -245,7 +245,7 @@ Key methods:
 
 ---
 
-## Timeline — annotated time axis
+## Timeline: annotated time axis
 
 ```go
 g := fixed(52)
@@ -271,7 +271,7 @@ Key methods:
 
 ---
 
-## Gantt — activity bars over time
+## Gantt: activity bars over time
 
 ```go
 g := fixed(52)
@@ -295,7 +295,7 @@ Key methods:
 
 ---
 
-## Candlestick — OHLC financial bars
+## Candlestick: OHLC financial bars
 
 ```go
 g := fixed(52)
@@ -319,7 +319,7 @@ Key methods:
 
 ---
 
-## TimeSeries — timestamps × values
+## TimeSeries: timestamps × values
 
 A wrapper around `Plot` with `time.Time` X-axis values:
 
@@ -346,7 +346,7 @@ Key methods:
 
 ---
 
-## Histogram — frequency distribution
+## Histogram: frequency distribution
 
 Bins the input data and draws the frequency of each bin:
 
@@ -367,7 +367,7 @@ Key methods:
 
 ---
 
-## Funnel — stacked conversion stages
+## Funnel: stacked conversion stages
 
 Centered trapezoids whose width is proportional to each stage's value, with a
 legend to the right. `ShowValues` adds the raw value next to each stage.
@@ -394,7 +394,7 @@ Key methods:
 
 ---
 
-## Radar — multivariate comparison
+## Radar: multivariate comparison
 
 Concentric rings with one spoke per variable; each series is a polygon whose
 vertex on any spoke is its value on that variable.
@@ -422,7 +422,7 @@ Key methods:
 
 ---
 
-## Treemap — hierarchical proportions
+## Treemap: hierarchical proportions
 
 Nested rectangles sized by summed values; interior nodes lay out their children
 and gain a caption row when there is room.
@@ -453,7 +453,7 @@ Key methods:
 
 ---
 
-## ASCII fallback — no Unicode, no color
+## ASCII fallback: no Unicode, no color
 
 When `WithUnicode(false)` or `WithNoColor()` is active the entire library
 degrades to printable ASCII:

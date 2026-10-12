@@ -106,7 +106,7 @@ Notes:
 
 Two solid options.
 
-### Option A — TextView + ANSI translation
+### Option A: TextView + ANSI translation
 
 `tview.TranslateANSI` converts SGR sequences into tview color tags:
 
@@ -128,7 +128,7 @@ Track the width you gave the view in your layout (e.g. store it when building
 flex/grid items, or fix it with `SetSize`). `QueueUpdateDraw` is required
 because tview is single-threaded.
 
-### Option B — custom Primitive (full fidelity, no markup parsing)
+### Option B: custom Primitive (full fidelity, no markup parsing)
 
 Embed a `*tview.Box`, render the diagram into a tuichart canvas, then copy cells
 onto the tcell screen. This preserves exact per-cell colors including truecolor

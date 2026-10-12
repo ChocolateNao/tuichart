@@ -1,4 +1,4 @@
-# 06 — Live
+# 06: Live
 
 Real-time multi-diagram live rendering.
 

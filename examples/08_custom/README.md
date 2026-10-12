@@ -1,4 +1,4 @@
-# 08 — Custom
+# 08: Custom
 
 A custom diagram type (bullet graph) built from the public API.
 

@@ -1,11 +1,11 @@
-# 05 — Styled
+# 05: Styled
 
 Heatmap, timeline, and candlestick with a custom palette.
 
 ## What it shows
 
 A heatmap with explicit row/column labels, a timeline with event detail
-sidebars, and a candlestick chart — all sharing a custom palette
+sidebars, and a candlestick chart — all are sharing a custom palette
 (`Cyan, Salmon, Lime, Orange`) passed through `WithPalette`.
 
 ## How to run

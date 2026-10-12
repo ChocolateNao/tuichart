@@ -5,7 +5,7 @@ your terminal. It is a pure Go, zero-dependency library: everything it needs is
 in the standard library, and a single `go get` pulls in no transitive
 dependencies.
 
-Every diagram is a _Drawable_ — an object that paints itself onto a cell buffer
+Every diagram is a _Drawable_, which is an object that paints itself onto a cell buffer
 given a rendering context. You compose diagram types freely with the `Board`
 container, render them once to a string, or drive them continuously with the
 `Live` renderer.
@@ -24,21 +24,21 @@ container, render them once to a string, or drive them continuously with the
 
 ## Capabilities at a glance
 
-- **Line & function plots** — Unicode braille or ASCII-slope rendering: `Plot`,
+- **Line & function plots**: Unicode braille or ASCII-slope rendering: `Plot`,
   `Function`, `TimeSeries`.
-- **Categorical charts** — `BarChart` (vertical, horizontal, stacked),
+- **Categorical charts**: `BarChart` (vertical, horizontal, stacked),
   `Histogram`, `PieChart` (pie and donut), `Heatmap`.
-- **Shape & hierarchy charts** — `FunnelChart` (conversion stages), `RadarChart`
+- **Shape & hierarchy charts**: `FunnelChart` (conversion stages), `RadarChart`
   (multivariate comparison), `TreemapChart` (nested proportions).
-- **Time-oriented views** — `Timeline` (annotated events), `Gantt` (activity
+- **Time-oriented views**: `Timeline` (annotated events), `Gantt` (activity
   bars), `TimeSeries` (real timestamps).
-- **Single-value widgets** — `Gauge` (five styles), `Sparkline`, and a growing
+- **Single-value widgets**: `Gauge` (five styles), `Sparkline`, and a growing
   family of small status widgets.
-- **Composition** — any diagrams mixed, stacked or side-by-side, with a shared
+- **Composition**: any diagrams mixed, stacked or side-by-side, with a shared
   title and frame.
-- **Degradation** — truecolor → 256 → 16 → mono glyph ramps; Unicode braille →
+- **Degradation**: truecolor → 256 → 16 → mono glyph ramps; Unicode braille →
   printable ASCII. No garbled terminals.
-- **Live mode** — `Live` paints diffs at up to your refresh rate, redraws on
+- **Live mode**: `Live` paints diffs at up to your refresh rate, redraws on
   `SIGWINCH`, swallows stray input, and always restores your terminal.
 
 ## Deterministic outputs in these docs
@@ -70,5 +70,3 @@ covered in [Styling & degradation](styling.md).
   `12_file`). `09_bubbletea`, `10_tview`, `11_server`, `12_file`, and
   `13_gocui` are separate modules: TUI embedding (bubbletea, tview), an HTTP
   server, a file writer, and a gocui paint.
-- `docs/adr/` — architecture decision records for notable design choices.
-- `docs/agents/` — agent-facing documentation for this repository.

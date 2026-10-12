@@ -85,10 +85,10 @@ The three moving parts:
 
 The next three pages are the practical reference:
 
-- [Charts](charts.md) — stacking, side-by-side rows, sizing, options.
-- [Diagrams](diagrams.md) — every diagram type: bar, pie, gauge, sparkline,
+- [Charts](charts.md): stacking, side-by-side rows, sizing, options.
+- [Diagrams](diagrams.md): every diagram type: bar, pie, gauge, sparkline,
   timeline, gantt, candlestick, time series, histogram, heatmap.
-- [Styling](styling.md) — colors, profiles, and automatic degradation to
+- [Styling](styling.md): colors, profiles, and automatic degradation to
   terminals without color or Unicode.
 
 When you want the diagram to _animate_, see [Live rendering](live.md). When you

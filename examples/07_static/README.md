@@ -1,4 +1,4 @@
-# 07 — Static
+# 07: Static
 
 All diagram types rendered once as static output.
 

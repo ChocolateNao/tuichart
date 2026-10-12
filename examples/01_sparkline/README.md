@@ -1,4 +1,4 @@
-# 01 — Sparkline
+# 01: Sparkline
 
 A minimal one-liner sparkline.
 

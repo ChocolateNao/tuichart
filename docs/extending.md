@@ -13,8 +13,8 @@ type Drawable interface {
 `HeightHint` tells the board how many rows you would like, `WidthHint` tells the width (shocking); `Draw` paints into
 whatever canvas the board gives you. That is the whole contract.
 
-This page walks you through building a complete custom diagram — a **bullet
-graph** (Stephen Few's compact single-value indicator) — from a one-line stub to
+This page walks you through building a complete custom diagram, a **bullet
+graph** (Stephen Few's compact single-value indicator), from a one-line stub to
 a fully polished package that integrates with charts, degrades to ASCII, and
 plays nicely with the palette.
 
@@ -23,7 +23,7 @@ and `WithUnicode(true)` so you can reproduce it exactly.
 
 ---
 
-## Stage 1 — make it visible
+## Stage 1: make it visible
 
 The quickest way to confirm that your `Drawable` works: fill a row with a block
 bar.
@@ -55,7 +55,7 @@ it. Already you can tell the fraction is working.
 
 ---
 
-## Stage 2 — frame and tick labels
+## Stage 2: frame and tick labels
 
 A bare row is useful, but a real diagram needs a title, a border, and tick
 labels so the reader knows what they are looking at. With a fixed height of 5
@@ -88,11 +88,11 @@ func (b *Bullet) Draw(rc *tuichart.Ctx, cv *tuichart.Canvas) {
 ```
 
 The frame row is painted by `cv.Border`, and we overwrite cell (2, 0) with the
-title — the same trick the built-in diagrams use.
+title, the same trick the built-in diagrams use.
 
 ---
 
-## Stage 3 — qualitative zones and a target marker
+## Stage 3: qualitative zones and a target marker
 
 A bullet graph's signature is the faint band behind the value bar showing
 "qualitative zones" (safe / concern / danger), and a vertical rule marking the
@@ -144,7 +144,7 @@ collapse to the same glyph.
 
 ---
 
-## Stage 4 — fluent setters, ASCII fallback, and a working chart
+## Stage 4: fluent setters, ASCII fallback, and a working chart
 
 The final step turns the loose functions into a proper type with fluent setters,
 a `Zone` method, a `Title` setter, and a graceful ASCII fallback.
@@ -311,7 +311,7 @@ code above.
 
 Embed only what you need. A single-value indicator like the bullet graph wants
 `DisplayConfig`; a diagram that plots against axes wants both. Embedding
-`AxisConfig` gives you the setters but **not** the frame painting — that stays
+`AxisConfig` gives you the setters but **not** the frame painting, that stays
 internal, so a diagram embedding it still has to draw its own frame.
 
 Two things fall out of embedding:
@@ -329,13 +329,13 @@ Two things fall out of embedding:
 
 Both structs work with their zero value, which is all an external embedder
 needs. `AxisConfig`'s library defaults (`grid`, `frame`, `legend` on; five
-ticks) are internal — they matter to the built-in diagrams' frame painter, not
-to yours — so set explicitly whatever your diagram actually reads.
+ticks) are internal: they matter to the built-in diagrams' frame painter, not
+to yours, so set explicitly whatever your diagram actually reads.
 
 ### Satisfying `Diagram`
 
 If your type embeds `DisplayConfig` it already satisfies the `Diagram`
-interface — `Drawable` plus `GetTitle() string` and `SetTitle(string)` — so
+interface: `Drawable` plus `GetTitle() string` and `SetTitle(string)`, so
 `Board.Diagrams()` will report it:
 
 ```go
@@ -393,7 +393,7 @@ changes, no extra branches — just the `uni` check we wrote once.
 
 That check is the right shape here because the three glyphs fall back together.
 When a single rune needs to degrade, hand the choice to the library instead of
-branching — `cv.DrawGlyph(x, y, '█', '#', st)` picks the glyph and degrades the
+branching: `cv.DrawGlyph(x, y, '█', '#', st)` picks the glyph and degrades the
 style from the canvas's own capabilities. The built-in funnel, treemap, pie and
 heatmap all work that way; see [Styling & degradation](styling.md).
 

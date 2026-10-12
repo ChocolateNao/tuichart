@@ -1,4 +1,4 @@
-# 09 — Bubble Tea
+# 09: Bubble Tea
 
 A live tuichart chart embedded in a Bubble Tea application.
 
