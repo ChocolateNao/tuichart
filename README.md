@@ -1,7 +1,16 @@
 # tuichart
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ChocolateNao/tuichart/ci.yml)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/ChocolateNao/tuichart)
+![GitHub Release](https://img.shields.io/github/v/release/ChocolateNao/tuichart)
+![GitHub License](https://img.shields.io/github/license/ChocolateNao/tuichart)
+
 Render charts and diagrams as colored ANSI text in any terminal. With zero
 dependencies.
+
+```bash
+go get github.com/ChocolateNao/tuichart
+```
 
 ![Readme Demo](./assets/demos/readme-index.gif)
 
