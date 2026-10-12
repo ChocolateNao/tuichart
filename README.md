@@ -34,17 +34,20 @@ func main() {
 
 ## Documentation
 
+> [!NOTE]
+> The project currently is __under active development__, although I'm not planning on huge refactorings, the public-facing API might change. I will include migration guides with major releases if necessary
+
 The full guide lives in [`docs/`](docs/index.md):
 
-- [Getting started](docs/quickstart.md) — install and your first chart
-- [Charts: composition & layout](docs/charts.md) — `Add`/`Row`, options,
+- [Getting started](docs/quickstart.md): install and your first chart
+- [Charts: composition & layout](docs/charts.md): `Add`/`Row`, options,
   rendering
-- [Diagram reference](docs/diagrams.md) — every built-in diagram with real
+- [Diagram reference](docs/diagrams.md): every built-in diagram with real
   output
-- [Styling & degradation](docs/styling.md) — colors, profiles, ASCII fallbacks
-- [Live rendering](docs/live.md) — real-time diff-painted frames
-- [Embedding in other UIs](docs/embedding.md) — bubbletea, tview, HTTP
-- [Writing your own diagrams](docs/extending.md) — step-by-step custom diagram
+- [Styling & degradation](docs/styling.md): colors, profiles, ASCII fallbacks
+- [Live rendering](docs/live.md): real-time diff-painted frames
+- [Embedding in other UIs](docs/embedding.md): bubbletea, tview, HTTP
+- [Writing your own diagrams](docs/extending.md): step-by-step custom diagram
 
 ## Features
 
@@ -55,7 +58,7 @@ The full guide lives in [`docs/`](docs/index.md):
 - Function plots (`y = f(x)`) and one-line sparklines
 - Multiple diagrams per chart: stacked rows or side-by-side `Row` layout
 - Automatic terminal detection: truecolor / 256 / 16 colors / none, Unicode vs
-  ASCII — overridable globally or per chart
+  ASCII: overridable globally or per chart
 - Every setting resettable back to auto behavior
 
 ## Diagrams
@@ -102,7 +105,7 @@ detail color (`tuichart.Gray`-like dim gray by default, override with
 Gantt and TimeSeries share the timeline's time-axis formatting rules:
 `.Format(layout)` or a full `SetXFormatter` override, automatic presets when
 unset. A Gantt bar is drawn from its start to its end date on its own row; a
-TimeSeries connects `(timestamp, value)` points chronologically — use it for
+TimeSeries connects `(timestamp, value)` points chronologically, use it for
 peaks-and-troughs reporting over time.
 
 Candlestick charts show one OHLC observation per candle: a body spanning
@@ -134,8 +137,7 @@ call.
 ## Output to any `io.Writer`
 
 Rendering is not tied to stdout. Every chart can stream into anything that
-implements `io.Writer` — files, network connections, HTTP responses, log buffers
-— with the usual width convention (detected when omitted, explicit otherwise):
+implements `io.Writer`: files, network connections, HTTP responses, log buffers, with the usual width convention (detected when omitted, explicit otherwise):
 
 ```go
 // any writer; errors are returned, rendering itself never fails
@@ -168,7 +170,7 @@ Notes:
 - The live renderer already streams through `WithLiveOutput(io.Writer)` (default
   stdout), so real-time charts target buffers and connections too.
 - TUI frameworks don't need any of this: use `RenderLines`, or draw cell by cell
-  via `Canvas.CellAt`/`EachCell` — see [INTEGRATION.md](INTEGRATION.md).
+  via `Canvas.CellAt`/`EachCell`, see [INTEGRATION.md](INTEGRATION.md) for more integraion examples.
 
 ## Styling & options
 
@@ -214,7 +216,7 @@ Unicode support is detected from the locale, in order `LC_ALL` → `LC_CTYPE` �
 `LANG`: the first variable that is set decides, and it enables unicode only if
 it contains `utf-8`/`utf8`. If none of them is set at all (bare containers,
 `env -i`), the library assumes a modern UTF-8 terminal. Note that `TERM=dumb`
-affects color only — never unicode.
+affects color only, never unicode.
 
 When unicode is off, every diagram degrades to plain ASCII so output stays
 readable on legacy consoles and codepage-limited shells:
@@ -232,7 +234,7 @@ readable on legacy consoles and codepage-limited shells:
 | timeline markers `◆ ─ ┬`                   | `* - +`                         |
 | ellipsis `…` in truncated text             | literal `...`                   |
 
-Two things are deliberately **not** transliterated: user-provided label/title
+Two things are deliberately __not__ transliterated: user-provided label/title
 text is rendered verbatim in both modes, and colors are an independent dimension
 (see `WithNoColor`). Force either mode explicitly with `WithUnicode(bool)` /
 `tuichart.SetUnicode(bool)`; the package test suite pins ASCII purity for every
@@ -244,7 +246,7 @@ Environment handling follows the usual conventions: honors `NO_COLOR`,
 
 ## Formatters
 
-Formatters control the **text of axis tick labels**. Every diagram accepts:
+Formatters control the __text of axis tick labels__. Every diagram accepts:
 
 ```go
 p.SetXFormatter(func(v float64) string { ... })
@@ -268,7 +270,7 @@ p.SetYFormatter(func(v float64) string {
 b.SetYFormatter(func(v float64) string { return units.BytesSize(v) })
 ```
 
-**Default behavior when no formatter is set:** tick labels are chosen
+__Default behavior when no formatter is set:__ tick labels are chosen
 automatically — decimals are derived from the spacing between ticks (e.g. steps
 of 0.25 get 2 decimals), trailing zeros are trimmed, so you normally never need
 one.
@@ -283,7 +285,7 @@ labels_. The rules, in order:
 | nothing                 | auto positions + auto labels                   |
 | formatter only          | auto positions, your labels                    |
 | ticks only              | your positions, your labels verbatim           |
-| ticks **and** formatter | your positions, formatter re-labels each value |
+| ticks __and__ formatter | your positions, formatter re-labels each value |
 
 `ResetTicks()` / `ResetFormatters()` undo the respective override.
 
@@ -294,10 +296,10 @@ and are not affected by `SetXFormatter`/`SetYFormatter`.
 
 ### Timeline
 
-A `Timeline` x-axis is time-based: the formatter receives **unix seconds** as
+A `Timeline` x-axis is time-based: the formatter receives __unix seconds__ as
 the `float64`. Precedence, highest first:
 
-1. `SetXFormatter(func)` — full control:
+1. `SetXFormatter(func)` for full control:
 
     ```go
     tl.SetXFormatter(func(v float64) string {
@@ -305,26 +307,26 @@ the `float64`. Precedence, highest first:
     })
     ```
 
-2. `.Format(layout)` — any Go reference-time layout:
+2. `.Format(layout)` for any Go reference-time layout:
 
     ```go
     tl.Format("2006-01-02 15:04")
     ```
 
-3. unset — an automatic preset is picked from the covered span (`15:04:05` < 90
+3. unset for an automatic preset is picked from the covered span (`15:04:05` < 90
    s, `15:04` < 24 h, `Jan 02 15:04` < 30 days, else `2006-01-02`).
    `.Format("")` restores this.
 
 ### Value annotations
 
-Numbers drawn **on** the diagram (not on axes) are toggled per diagram with
+Numbers drawn __on__ the diagram (not on axes) are toggled per diagram with
 `ShowValues(true)` / `SetShowValues(bool)` / `ResetShowValues()`:
 
-- **Bar chart** — each bar's value printed just above its top (stacked charts
+- __Bar chart__: each bar's value printed just above its top (stacked charts
   label the stack total). Horizontal bars always show values at the bar end.
-- **Heatmap** — the value inside each cell, but only when it fits (`CellWidth`
+- __Heatmap__: the value inside each cell, but only when it fits (`CellWidth`
   helps here).
-- **Pie** — raw values in the legend next to the percentage (`home 42 (42%)`);
+- __Pie__: raw values in the legend next to the percentage (`home 42 (42%)`);
   terminal slices are too small for on-slice text.
 
 All annotations use the same compact number rendering as axis defaults
@@ -364,7 +366,7 @@ type Drawable interface {
 ```
 
 `Ctx` carries resolved terminal info (`Info{Level, Unicode}`); `Canvas` provides
-cell primitives — `Set(x, y, ch, style)`, `Text`, `Border`, `Sub` views, `Blit`
+cell primitives: `Set(x, y, ch, style)`, `Text`, `Border`, `Sub` views, `Blit`
 overlays. Compose your own axes, glyphs, or layouts and pass the result to
 `Board.Add`/`Board.Row` like any built-in diagram.
 
@@ -395,26 +397,26 @@ lv.Run(context.Background())         // blocks; Ctrl+C / ctx cancel exits
   for a target frame rate use `WithInterval(time.Second/fps)`.
 - `OnUpdate(fn)` is your data pump; it is invoked before every frame while the
   render lock is held.
-- `lv.Update(fn)` mutates and repaints immediately — use it for event-driven
+- `lv.Update(fn)` mutates and repaints immediately, use it for event-driven
   updates between ticks.
 - `lv.Frame(w)` renders one frame as a plain string without touching the screen
   (handy for tests and custom loops).
 - `lv.Stop()` ends `Run`; `lv.Done()` reports exit. Terminal state (alternate
   screen, cursor visibility) is always restored.
-- Frames are painted **incrementally**: each new frame is diffed cell-by-cell
+- Frames are painted __incrementally__: each new frame is diffed cell-by-cell
   against the last painted frame, so only the changed runs reach the terminal
   (row re-positioning + cursor-forward jumps) and an entirely unchanged frame
-  writes nothing at all — small output, zero flicker. Full repaints happen only
+  writes nothing at all: small output, zero flicker. Full repaints happen only
   on the first frame or after a resize.
-- Every event source — the frame ticker, terminal resizes, and update/repaint
-  requests — funnels into one central channel consumed by a single loop, so
+- Every event source: the frame ticker, terminal resizes, and update/repaint
+  requests funnel into one central channel consumed by a single loop, so
   diagram state is only ever mutated under the render lock and concurrent
   producers never race the painter.
 - Stray input never leaks onto the screen: while `Run` is active echo and
   canonical mode are disabled on the terminal and typed keys, arrow/scroll
   escape sequences, and mouse bytes are swallowed (polled via `select(2)` on
   Unix, console mode on Windows). On exit the terminal is restored exactly,
-  including any bytes that arrived in the final instant — nothing is replayed
+  including any bytes that arrived in the final instant, so nothing is replayed
   into the shell afterwards.
 - Window resizes are picked up automatically without polling: SIGWINCH on Unix
   (when the output is a real TTY), console polling on Windows otherwise. A
@@ -431,13 +433,13 @@ Try it: `go run ./examples/06_live`
 ## Embedding in TUI frameworks
 
 Charts drop into Bubble Tea, tview, tcell, gocui, and friends with no adapter
-dependencies — see [INTEGRATION.md](INTEGRATION.md) for per-framework recipes.
+dependencies. See [INTEGRATION.md](INTEGRATION.md) for per-framework recipes.
 The building blocks:
 
-- `Board.RenderLines(w)` — one ANSI string per terminal row
-- `Canvas.CellAt` / `Canvas.EachCell` — per-cell access for custom screen
+- `Board.RenderLines(w)`: one ANSI string per terminal row
+- `Canvas.CellAt` / `Canvas.EachCell`: per-cell access for custom screen
   buffers (`Cell{Ch, Fg, Bg, Bold}`)
-- `Color.RGB()` — resolves any color (indexed or RGB) to concrete components for
+- `Color.RGB()`: resolves any color (indexed or RGB) to concrete components for
   mapping onto framework color types
 
 ## Examples
@@ -506,8 +508,8 @@ Measured on:
 - `BoardRender`
 renders a board holding one sparkline.
 
-Figures are indicative only — absolute numbers
-shift with hardware, Go version, and terminal size, but the allocation counts show where
+Figures are indicative only, absolute numbers may
+be different with hardware, Go version, and terminal size, but the allocation counts show where
 the hot path spends its work.
 
 ## License
