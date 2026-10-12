@@ -25,9 +25,9 @@ import (
 )
 
 func main() {
-    g := tuichart.New(tuichart.WithWidth(72))
-    p := tuichart.NewPlot()
-    p.Add(tuichart.NewLineVals("sin", func() []float64 {
+    board := tuichart.New(tuichart.WithWidth(72))
+    plot := tuichart.NewPlot()
+    plot.Add(tuichart.NewLineVals("sin", func() []float64 {
         v := make([]float64, 60)
 
         for i := range v {
@@ -36,8 +36,8 @@ func main() {
 
         return v
     }()))
-    g.Add(p)
-    fmt.Print(g.Render())
+    board.Add(plot)
+    fmt.Print(board.Render())
 }
 ```
 
